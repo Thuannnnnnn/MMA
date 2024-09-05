@@ -10,4 +10,10 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
+  {
+    rules: {
+        "no-unused-vars": "error",
+        "no-undef": "error"
+    }
+}
 ];
