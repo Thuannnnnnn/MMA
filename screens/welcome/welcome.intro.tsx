@@ -71,8 +71,11 @@ export default function WelcomeIntro() {
         </View>
       )}
       showSkipButton={false}
-      bottomButton={false}
+      bottomButton={true}
       scrollEnabled={true}
+      dotStyle={{backgroundColor:"#C6C7CC",borderRadius: 5, marginHorizontal: 5}}
+      activeDotStyle={{backgroundColor: "#2467Ec",borderRadius: 5, marginHorizontal: 5}}
+      
        />
     )
     
