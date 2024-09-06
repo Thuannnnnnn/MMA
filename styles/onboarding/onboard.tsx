@@ -70,12 +70,13 @@ const styles = StyleSheet.create({
     },
     welcomeButtonStyle:{
         backgroundColor: "#2467EC",
-        width: responsiveWidth(88),
+        width: responsiveWidth(92),
         height: responsiveHeight(5.5),
         alignSelf: "center",
         justifyContent: "center",
         alignItems: "center",
         borderRadius: 5,
+        
       },
       title: {
         fontSize: hp("4%"),
