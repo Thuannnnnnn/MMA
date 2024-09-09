@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Dimensions, StyleSheet } from "react-native";
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp
@@ -13,11 +13,15 @@ import {
     useResponsiveWidth
   } from "react-native-responsive-dimensions";
 
+  
+
 const styles = StyleSheet.create({
+    
     firstContainer:{
         alignItems: "center",
         marginTop: 50,
     },
+   
     logo:{
         width: wp("30%"),
         height: hp("15%"),

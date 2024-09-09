@@ -25,6 +25,8 @@ export default function RootLayout() {
                 ) : (
                     <Stack screenOptions={{ headerShown: false }}>
                         <Stack.Screen name='index'/>
+                        <Stack.Screen name="(routes)/welcome-intro/index" />
+                        <Stack.Screen name="(routes)/login/index" />
                     </Stack>
                 )
             }

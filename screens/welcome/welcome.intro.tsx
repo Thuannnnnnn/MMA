@@ -55,6 +55,12 @@ export default function WelcomeIntro() {
        
        renderItem={renderItem}
        data={onboardingSwiperData}
+       onDone={() =>{
+        router.push("/login")
+    }}
+        onSkip={() =>{
+        router.push("/login")
+    }}
        renderNextButton={() => (
         <View style={[styles.welcomeButtonStyle]}>
           <Text style={[styles.buttonText]}>
