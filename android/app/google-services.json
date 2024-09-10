@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "808061016876",
+    "project_id": "course-education",
+    "storage_bucket": "course-education.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:808061016876:android:57211dd5aed98b30cd6a89",
+        "android_client_info": {
+          "package_name": "com.redFlagGodenStar.MMA"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "808061016876-9dtebdc3fromcqpd6bfcf9470kjvr8l7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtgKQxBi-gpvi1kPzUr9VteC6LfymGXVw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "808061016876-9dtebdc3fromcqpd6bfcf9470kjvr8l7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "808061016876-mg8l567meoceehi79bvmj810qtj4usf2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.redFlagGodenStar.MMA"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
