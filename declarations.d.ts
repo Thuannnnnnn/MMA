@@ -18,6 +18,6 @@ declare module '*.png' {
     export default value;
   }
   declare module '@env' {
-    export const API_URL: string;
+    export const EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY: string;
   }
   

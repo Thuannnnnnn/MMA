@@ -12,10 +12,12 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import SignInPng from '@/assets/sign-in/sign_in.png';
-import { API_URL } from '@env';
+import { EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY } from '@env';
+import axios, { AxiosError } from 'axios';
+//import AsyncStorage from "@react-native-async-storage/async-storage";
 export default function LoginScreen() { 
   const [isPasswordVisible, setPasswordVisible] = useState(false);
-  const [buttonSpinner, setButtonSpinner] = useState(false);
+  const [buttonSpinner, setButtonSpinner ] = useState(false);
   const [userInfo, setUserInfo] = useState({
     email: '',
     password: '',
@@ -56,30 +58,34 @@ export default function LoginScreen() {
   const handleSignIn = async () => {
     try {
       setButtonSpinner(true);
-
-      const response = await axios.post(API_URL, {
+  
+      const response = await axios.post(`${EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/base`, {
         email: userInfo.email,
         password: userInfo.password,
       });
-
+  
       console.log('Login successful:', response.data);
-
-      router.push('/home'); // Navigate to your home screen
-
+  
+      //router.push('/home'); // Navigate to your home screen
+  
       setButtonSpinner(false);
-
     } catch (error) {
-      console.error('Login failed:', error.response ? error.response.data : error.message);
-
-      setError({
-        ...error,
-        password: 'Login failed. Please try again.',
-      });
-
+      console.error('Login failed:');
+  
+      if (error instanceof AxiosError) {
+        setError({
+          ...error.response?.data,
+          password: 'Login failed. Please try again.',
+        });
+      } else {
+        setError({
+          password: 'An unexpected error occurred. Please try again.',
+        });
+      }
+  
       setButtonSpinner(false);
     }
   };
-
   return (
     <LinearGradient colors={['#E5ECF9', '#F6F7F9']} style={{ flex: 1, paddingTop: 20 }}>
       <ScrollView>
