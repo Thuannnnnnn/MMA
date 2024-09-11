@@ -4,91 +4,66 @@ import {
   Entypo,
   FontAwesome,
   Fontisto,
-  Ionicons,
-  SimpleLineIcons,
 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
 import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
-import SignInPng from '@/assets/sign-in/sign_in.png';
-import { API_URL } from '@env';
-export default function LoginScreen() { 
-  const [isPasswordVisible, setPasswordVisible] = useState(false);
-  const [buttonSpinner, setButtonSpinner] = useState(false);
+import signInImage from '@/assets/sign-in/signup.png';
+
+export default function SignUpScreen() {
+  //const [isPasswordVisible, setPasswordVisible] = useState(false);
+  const [buttonSpinner] = useState(false);
   const [userInfo, setUserInfo] = useState({
     email: '',
     password: '',
   });
   const [required] = useState('');
-  const [error,setError] = useState({
-    password: "",
-  })
-  const handlePasswordValidation = (value: string) => {
-    const password = value;
-    const passwordSpecialCharacter = /(?=.*[!@#$&*])/;
-    const passwordOneNumber = /(?=.*[0-9])/;
-    const passwordSixValue = /(?=.{6,})/;
+  // const [error,setError] = useState({
+  //   password: "",
+  // })
+  // const handlePasswordValidation = (value: string) => {
+  //   const password = value;
+  //   const passwordSpecialCharacter = /(?=.*[!@#$&*])/;
+  //   const passwordOneNumber = /(?=.*[0-9])/;
+  //   const passwordSixValue = /(?=.{6,})/;
 
-    if(!passwordSpecialCharacter.test(password)) {
-        setError({
-            ...error,
-            password: "write at least one special character"
-        });
-        setUserInfo({... userInfo, password: ""})
-    }else if(!passwordOneNumber.test(password)){
-        setError({
-            ...error,
-            password: "write at least one number"
-        })
-    }else if(!passwordSixValue.test(password)){
-        setError({
-            ...error,
-            password: "write at least 6  character"
-        })
-    }else{
-        setUserInfo({
-            ... userInfo,
-            password: ""
-        })
-    }
-  };
-  const handleSignIn = async () => {
-    try {
-      setButtonSpinner(true);
-
-      const response = await axios.post(API_URL, {
-        email: userInfo.email,
-        password: userInfo.password,
-      });
-
-      console.log('Login successful:', response.data);
-
-      router.push('/home'); // Navigate to your home screen
-
-      setButtonSpinner(false);
-
-    } catch (error) {
-      console.error('Login failed:', error.response ? error.response.data : error.message);
-
-      setError({
-        ...error,
-        password: 'Login failed. Please try again.',
-      });
-
-      setButtonSpinner(false);
-    }
-  };
+  //   if(!passwordSpecialCharacter.test(password)) {
+  //       setError({
+  //           ...error,
+  //           password: "write at least one special character"
+  //       });
+  //       setUserInfo({... userInfo, password: ""})
+  //   }else if(!passwordOneNumber.test(password)){
+  //       setError({
+  //           ...error,
+  //           password: "write at least one number"
+  //       })
+  //   }else if(!passwordSixValue.test(password)){
+  //       setError({
+  //           ...error,
+  //           password: "write at least 6  character"
+  //       })
+  //   }else{
+  //       setUserInfo({
+  //           ... userInfo,
+  //           password: ""
+  //       })
+  //   }
+  // };
+  const handleSignIn = () =>{
+    // router.push("/(tabs)/");
+  }
 
   return (
     <LinearGradient colors={['#E5ECF9', '#F6F7F9']} style={{ flex: 1, paddingTop: 20 }}>
       <ScrollView>
    
-        <Image style={style.signInImage} source={SignInPng} />
+      <Image style={style.signInImage} source={signInImage} />
 
 
-        <Text style={style.welcomeText}>Welcome Back!</Text>
-        <Text style={style.learningText}>Login to your existing account of Tung dep zai</Text>
+        <Text style={style.welcomeText}>Welcome</Text>
+        <Text style={style.learningText}>Please enter your email to register a new account</Text>
 
 
         <View style={[style.inputContainer]}>
@@ -109,74 +84,13 @@ export default function LoginScreen() {
                 <Entypo name="cross" size={18} color={'red'} />
               </View>
             )}
-          
-          <View style={{ marginTop: 15 }}>
-      
-            <TextInput
-              style={[style.input, { paddingLeft: 35 }]}
-              keyboardType="default"
-              secureTextEntry={!isPasswordVisible}
-              value={userInfo.password}
-              placeholder="********"
-              onChangeText={(value) => {
-                handlePasswordValidation(value);
-                setUserInfo({ ...userInfo, password: value });
-              }}
-            />
-
-            <TouchableOpacity
-            style={style.visibleIcon}
-            onPress={()  => setPasswordVisible(!isPasswordVisible)}
-            >
-                {
-                    isPasswordVisible ?(
-                        <Ionicons
-                        name='eye-off-outline'
-                        size={23}
-                        color={"#747474"}
-                        />
-                    ):(
-                        <Ionicons
-                        name='eye-outline'
-                        size={23}
-                        color={"#747474"}
-                        />
-                    )
-                }
-            </TouchableOpacity>
-
-            <SimpleLineIcons
-            style={style.icon2}
-            name='lock'
-            size={20}
-            color={"#A1A1A1"}
-            />
-          </View>
-          {
-            error.password &&(
-                <View style={[CommonStyles.errorContainer,{top: 145}]}>
-                    <Entypo name='cross' size={18} color={"red"} />
-                    <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.password}</Text>
-                </View>
-            )
-          }
-          <TouchableOpacity
-        //   onPress={() => router.push("/(routes)/forgot-password")}
-          >
-            <Text
-            style={[ style.forgotSection]}
-            >
-                Forgot Password?
-            </Text>
-          </TouchableOpacity>
-
           <TouchableOpacity
           style={{
             padding: 16,
             borderRadius: 8,
             marginHorizontal: 16,
             backgroundColor: "#2467EC",
-            marginTop: 10
+            marginTop: 30
           }}
           onPress={handleSignIn}
           >
@@ -194,7 +108,7 @@ export default function LoginScreen() {
                         fontWeight: 600
                     }}
                     >
-                        Sign In
+                        Sign Up
                     </Text>
                 )
             }
@@ -203,17 +117,17 @@ export default function LoginScreen() {
 
           <View style={style.signUpRedirect}>
             <Text style={{fontSize: 18}}>
-            Don&apos;t have an account?
+                You have an account?
             </Text>
             <TouchableOpacity
             onPress={() => {
-                 router.push("/(routes)/sign-up")
+                 router.push("/(routes)/login")
             }}
             >
                 <Text
                 style={{fontSize: 18, color: "#2467Ec", marginLeft: 5}}
                 >
-                    Sign Up
+                    Login
                 </Text>
 
             </TouchableOpacity>

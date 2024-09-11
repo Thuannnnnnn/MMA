@@ -11,7 +11,7 @@ import TabsLayout from './(tabs)/_layout';
 
 export default function RootLayout() { 
   
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoggedIn] = useState(false);
 
     useEffect(() => {
         console.log('isLoggedIn:', isLoggedIn);
@@ -27,6 +27,7 @@ export default function RootLayout() {
                         <Stack.Screen name='index'/>
                         <Stack.Screen name="(routes)/welcome-intro/index" />
                         <Stack.Screen name="(routes)/login/index" />
+                        <Stack.Screen name="(routes)/sign-up/index" />
                     </Stack>
                 )
             }
