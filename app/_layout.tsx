@@ -28,6 +28,8 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/welcome-intro/index" />
                         <Stack.Screen name="(routes)/login/index" />
                         <Stack.Screen name="(routes)/sign-up/index" />
+                        <Stack.Screen name="(routes)/sign-up/otp" />
+                        <Stack.Screen name="(routes)/sign-up/info" />
                     </Stack>
                 )
             }

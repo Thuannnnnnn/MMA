@@ -1,9 +1,8 @@
-import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import {
   Entypo,
   FontAwesome,
-  Fontisto,
 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
@@ -11,28 +10,41 @@ import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
 import {EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY} from '@env';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError } from 'axios';
-export default function SignUpScreen() {
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { OtpInput } from 'react-native-otp-entry';
+export default function OtpSignUpScreen ()  {
   const [buttonSpinner, setButtonSpinner ] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    email: '',
+    otp: '',
+    email:'',
   });
   const [error,setError] = useState({
     message: ''
   })
   const [required] = useState('');
+
+  const handleOtpChange = async (otp: string) => {
+    const emailUser = await AsyncStorage.getItem('email');
+    setUserInfo({
+      ...userInfo,
+      otp: otp,
+      email: emailUser?? '',
+    });
+  };
   const handleSignIn = async () => {
     try {
+      
       setButtonSpinner(true);
-      const response = await axios.post(`${EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/sendOtpRegister`, {
+      const response = await axios.post(`${EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/validate-otp`, {
         email: userInfo.email,
+        otpCode: userInfo.otp
       });
       if(response.status === 200){
+        await AsyncStorage.setItem('otpCode', userInfo.otp);
         router.push({
-          pathname: '/(routes)/sign-up/otp',
+          pathname: '/(routes)/sign-up/info',
         });
-        await AsyncStorage.setItem('email', userInfo.email);
       };
       setButtonSpinner(false);
     } catch (error) {
@@ -60,22 +72,26 @@ export default function SignUpScreen() {
 
 
         <Text style={style.welcomeText}>Welcome</Text>
-        <Text style={style.learningText}>Please enter your email to register a new account</Text>
+        <Text style={style.learningText}>Enter Your Verification Code</Text>
 
 
         <View style={[style.inputContainer]}>
           <View>
   
-            <TextInput
-              style={[style.input, { paddingLeft: 35 }]}
-              keyboardType="email-address"
-              value={userInfo.email}
-              placeholder="Please enter your Email"
-              onChangeText={(value) => setUserInfo({ ...userInfo, email: value })}
+          <OtpInput
+              numberOfDigits={4}
+              onTextChange={handleOtpChange}
+              focusColor={'#2467EC'}
+              focusStickBlinkingDuration={400}
+              theme={{
+                pinCodeContainerStyle: {
+                  backgroundColor: '#fff',
+                  width: 58,
+                  height: 58,
+                  borderRadius: 12,
+                },
+              }}
             />
-     
-            <Fontisto style={{ position: 'absolute', left: 26, top: 17.8 }} name="email" size={20} color={'#A1A1A1'} />
-         
             {required && (
               <View style={CommonStyles.errorContainer}>
                 <Entypo name="cross" size={18} color={'red'} />
@@ -234,4 +250,5 @@ const style = StyleSheet.create({
       marginBottom: 10,
       marginTop: 10
     },
-  });
+});
+

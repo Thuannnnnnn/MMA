@@ -70,7 +70,7 @@ export default function LoginScreen() {
   
       setButtonSpinner(false);
     } catch (error) {
-      console.error('Login failed:');
+      console.error('Login failed:',error);
   
       if (error instanceof AxiosError) {
         setError({
