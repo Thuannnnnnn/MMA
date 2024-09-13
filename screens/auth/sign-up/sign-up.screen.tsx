@@ -30,7 +30,7 @@ export default function SignUpScreen() {
       });
       if(response.status === 200){
         router.push({
-          pathname: '/(routes)/sign-up/otp',
+          pathname: '/(routes)sign-upotp',
         });
         await AsyncStorage.setItem('email', userInfo.email);
       };
