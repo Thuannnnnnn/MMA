@@ -12,7 +12,7 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import SignInPng from '@/assets/sign-in/sign_in.png';
-// import { API_URL } from '@env';
+import { EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY } from '@env';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth, useOAuth, useUser } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
@@ -31,6 +31,8 @@ export default function LoginScreen() {
   // sign gg
   useWarmUpBrowser();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google"})
+  const {user}= useUser();
+  const {isSignedIn} = useAuth();
 
   const onPress = React.useCallback(async () => {
     try {
@@ -48,15 +50,34 @@ export default function LoginScreen() {
     }
   }, [startOAuthFlow]);
 
-  const {user}= useUser();
-  const {isSignedIn} = useAuth();
-  console.log(user);
+ 
   useEffect(() => {
     if(isSignedIn){
       router.push("/(routes)/onboarding")
     }
-  }, [])
+  }, [isSignedIn, router])
+  useEffect(() => {
+    if(user) {
+      loginGoogle();
+    }
+  }, [user]);
+  const loginGoogle = async() => {
+    try {
+      if(user) {
+        const response = await axios.post(EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY+":3030/api/auth/login/withGoogle", {
+          email: user.emailAddresses?.toString(),
+          name: user.fullName?.toString()
+        });
 
+        if(response.status == 200) {
+          console.log(response.data);
+          // router.push("/(routes)/home");
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
   // sign tranditional
 
   const [isPasswordVisible, setPasswordVisible] = useState(false);
