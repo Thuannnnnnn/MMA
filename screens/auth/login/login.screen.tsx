@@ -1,5 +1,5 @@
-import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator} from 'react-native';
+import React, { useEffect, useState } from 'react';
 import {
   Entypo,
   FontAwesome,
@@ -12,10 +12,53 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import SignInPng from '@/assets/sign-in/sign_in.png';
-import { EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY } from '@env';
-import axios, { AxiosError } from 'axios';
-//import AsyncStorage from "@react-native-async-storage/async-storage";
+// import { API_URL } from '@env';
+import * as WebBrowser from 'expo-web-browser';
+import { useAuth, useOAuth, useUser } from '@clerk/clerk-expo';
+import * as Linking from 'expo-linking';
+import axios from 'axios';
+
+export const useWarmUpBrowser = () => {
+  React.useEffect(() => {
+    return () => {
+      void WebBrowser.coolDownAsync();
+    };
+  }, []);
+};
+WebBrowser.maybeCompleteAuthSession();
+
 export default function LoginScreen() { 
+  // sign gg
+  useWarmUpBrowser();
+  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google"})
+
+  const onPress = React.useCallback(async () => {
+    try {
+      const { createdSessionId, setActive } = await startOAuthFlow({
+        redirectUrl: Linking.createURL("/home", { scheme: "myapp" }),
+      });
+  
+      if (createdSessionId) {
+        setActive!({ session: createdSessionId });
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error("OAuth Error:", error);
+    }
+  }, [startOAuthFlow]);
+
+  const {user}= useUser();
+  const {isSignedIn} = useAuth();
+  console.log(user);
+  useEffect(() => {
+    if(isSignedIn){
+      router.push("/(routes)/onboarding")
+    }
+  }, [])
+
+  // sign tranditional
+
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [buttonSpinner, setButtonSpinner ] = useState(false);
   const [userInfo, setUserInfo] = useState({
@@ -65,9 +108,9 @@ export default function LoginScreen() {
       });
   
       console.log('Login successful:', response.data);
-  
-      //router.push('/home'); // Navigate to your home screen
-  
+
+      // router.push('/home'); // Navigate to your home screen
+
       setButtonSpinner(false);
     } catch (error) {
       console.error('Login failed:',error);
@@ -227,7 +270,7 @@ export default function LoginScreen() {
           </View>
         
 
-          <TouchableOpacity>
+          <TouchableOpacity onPress={onPress}>
           <View
           style={{
             padding: 16,
@@ -238,6 +281,7 @@ export default function LoginScreen() {
             borderColor: "black",
             borderWidth: 1,       
         }}
+        
           >
             <Text
                 style={{
