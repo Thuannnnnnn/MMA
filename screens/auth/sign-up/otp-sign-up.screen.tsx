@@ -43,7 +43,7 @@ export default function OtpSignUpScreen ()  {
       if(response.status === 200){
         await AsyncStorage.setItem('otpCode', userInfo.otp);
         router.push({
-          pathname: '/(routes)sign-upinfo',
+          pathname: '/(routes)/sign-up/info',
         });
       };
       setButtonSpinner(false);
