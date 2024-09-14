@@ -12,11 +12,10 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import SignInPng from '@/assets/sign-in/sign_in.png';
-import { EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY } from '@env';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth, useOAuth, useUser } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
@@ -64,7 +63,7 @@ export default function LoginScreen() {
   const loginGoogle = async() => {
     try {
       if(user) {
-        const response = await axios.post(EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY+":3030/api/auth/login/withGoogle", {
+        const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/withGoogle`, {
           email: user.emailAddresses?.toString(),
           name: user.fullName?.toString()
         });
@@ -123,7 +122,7 @@ export default function LoginScreen() {
     try {
       setButtonSpinner(true);
   
-      const response = await axios.post(`${EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/base`, {
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/base`, {
         email: userInfo.email,
         password: userInfo.password,
       });

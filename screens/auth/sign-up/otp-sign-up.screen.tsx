@@ -9,7 +9,6 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
-import {EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY} from '@env';
 import axios, { AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { OtpInput } from 'react-native-otp-entry';
@@ -36,7 +35,7 @@ export default function OtpSignUpScreen ()  {
     try {
       
       setButtonSpinner(true);
-      const response = await axios.post(`${EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/validate-otp`, {
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/validate-otp`, {
         email: userInfo.email,
         otpCode: userInfo.otp
       });

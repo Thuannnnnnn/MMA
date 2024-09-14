@@ -10,7 +10,6 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
-import {EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY} from '@env';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError } from 'axios';
 export default function SignUpScreen() {
@@ -25,7 +24,7 @@ export default function SignUpScreen() {
   const handleSignIn = async () => {
     try {
       setButtonSpinner(true);
-      const response = await axios.post(`${EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/sendOtpRegister`, {
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/sendOtpRegister`, {
         email: userInfo.email,
       });
       if(response.status === 200){
