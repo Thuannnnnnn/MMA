@@ -6,7 +6,6 @@ import {
 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
-import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
 import axios, { AxiosError } from 'axios';
@@ -92,7 +91,7 @@ export default function OtpSignUpScreen ()  {
               }}
             />
             {required && (
-              <View style={CommonStyles.errorContainer}>
+              <View style={style.errorContainer}>
                 <Entypo name="cross" size={18} color={'red'} />
               </View>
             )}
@@ -248,6 +247,13 @@ const style = StyleSheet.create({
       justifyContent: "center",
       marginBottom: 10,
       marginTop: 10
+    },
+    errorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginHorizontal: 16,
+      position: "absolute",
+      top: 60,
     },
 });
 

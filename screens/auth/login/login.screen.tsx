@@ -9,7 +9,6 @@ import {
 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
-import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import SignInPng from '@/assets/sign-in/sign_in.png';
 import * as WebBrowser from 'expo-web-browser';
@@ -174,7 +173,7 @@ export default function LoginScreen() {
             <Fontisto style={{ position: 'absolute', left: 26, top: 17.8 }} name="email" size={20} color={'#A1A1A1'} />
          
             {required && (
-              <View style={CommonStyles.errorContainer}>
+              <View style={style.errorContainer}>
                 <Entypo name="cross" size={18} color={'red'} />
               </View>
             )}
@@ -223,7 +222,7 @@ export default function LoginScreen() {
           </View>
           {
             error.password &&(
-                <View style={[CommonStyles.errorContainer,{top: 145}]}>
+                <View style={[style.errorContainer,{top: 145}]}>
                     <Entypo name='cross' size={18} color={"red"} />
                     <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.password}</Text>
                 </View>
@@ -390,5 +389,12 @@ const style = StyleSheet.create({
       justifyContent: "center",
       marginBottom: 10,
       marginTop: 10
+    },
+    errorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginHorizontal: 16,
+      position: "absolute",
+      top: 60,
     },
   });

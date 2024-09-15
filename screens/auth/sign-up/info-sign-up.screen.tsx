@@ -140,7 +140,7 @@ export default function InfoSignUpScreen() {
             </View>
          
             {required && (
-              <View style={CommonStyles.errorContainer}>
+              <View style={style.errorContainer}>
                 <Entypo name="cross" size={18} color={'red'} />
               </View>
             )}
@@ -220,7 +220,7 @@ export default function InfoSignUpScreen() {
       </TouchableOpacity>
       {
             error.message &&(
-                <View style={[CommonStyles.errorContainer,{top: 145}]}>
+                <View style={[style.errorContainer,{top: 145}]}>
                     <Entypo name='cross' size={18} color={"red"} />
                     <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.message}</Text>
                 </View>
@@ -382,5 +382,12 @@ const style = StyleSheet.create({
       justifyContent: "center",
       marginBottom: 10,
       marginTop: 10
+    },
+    errorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginHorizontal: 16,
+      position: "absolute",
+      top: 60,
     },
   });

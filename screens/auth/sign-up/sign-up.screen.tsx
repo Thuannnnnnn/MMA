@@ -76,7 +76,7 @@ export default function SignUpScreen() {
             <Fontisto style={{ position: 'absolute', left: 26, top: 17.8 }} name="email" size={20} color={'#A1A1A1'} />
          
             {required && (
-              <View style={CommonStyles.errorContainer}>
+              <View style={style.errorContainer}>
                 <Entypo name="cross" size={18} color={'red'} />
               </View>
             )}
@@ -232,5 +232,12 @@ const style = StyleSheet.create({
       justifyContent: "center",
       marginBottom: 10,
       marginTop: 10
+    },
+    errorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginHorizontal: 16,
+      position: "absolute",
+      top: 60,
     },
   });
