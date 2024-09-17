@@ -90,7 +90,7 @@ export default function ChangePasswordScreen() {
       if (handlePasswordValidation(userInfo.newPW, userInfo.reNewPW)) {
         setButtonSpinner(true);
         const response = await axios.post(
-          `http://192.168.1.8:8080/api/auth/changePWUser`,
+          `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/changePWUser`,
           {
             email: userInfo.email,
             oldPW: userInfo.oldPW,
@@ -99,8 +99,7 @@ export default function ChangePasswordScreen() {
           }
         );
         if (response.status === 200) {
-          //   await AsyncStorage.removeItem("email");
-          //   await AsyncStorage.removeItem("otp");
+         await AsyncStorage.removeItem("email");
           router.push({
             pathname: "/(routes)/login",
           });

@@ -9,7 +9,6 @@ import {
 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
-import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
