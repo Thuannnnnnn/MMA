@@ -12,7 +12,8 @@ import { ScrollView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
+import { signUp } from '@/API/SignUp/SignUpApi';
 export default function InfoSignUpScreen() {
   const [buttonSpinner, setButtonSpinner ] = useState(false);
   const [userInfo, setUserInfo] = useState({
@@ -76,17 +77,11 @@ export default function InfoSignUpScreen() {
     }
     return true
   };
-  const handleSignIn = async () => {
+  const handleSignUp = async () => {
     try {
       if(handlePasswordValidation(userInfo.password, userInfo.rePassword)){
       setButtonSpinner(true);
-      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/register`, {
-        email: userInfo.email,
-        otp : userInfo.otp,
-        name : userInfo.name,
-        password: userInfo.password
-      });
-      if(response.status === 201){
+      await signUp({email: userInfo.email, otp: userInfo.otp, password: userInfo.password, rePassword: userInfo.rePassword, name: userInfo.name });
         await AsyncStorage.removeItem("email");
         await AsyncStorage.removeItem("otp");
         router.push({
@@ -94,8 +89,7 @@ export default function InfoSignUpScreen() {
         });
       };
       setButtonSpinner(false);
-    }
-    } catch (error) {
+    }catch (error) {
       console.error('SignUp failed:',error);
   
       if (error instanceof AxiosError) {
@@ -240,7 +234,7 @@ export default function InfoSignUpScreen() {
             backgroundColor: "#2467EC",
             marginTop: 30
           }}
-          onPress={handleSignIn}
+          onPress={handleSignUp}
           >
             {
                 buttonSpinner ?(

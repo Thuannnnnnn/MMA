@@ -8,9 +8,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { OtpInput } from 'react-native-otp-entry';
+import { validateOtp } from '@/API/SignUp/SignUpApi';
 export default function OtpSignUpScreen ()  {
   const [buttonSpinner, setButtonSpinner ] = useState(false);
   const [userInfo, setUserInfo] = useState({
@@ -30,20 +31,14 @@ export default function OtpSignUpScreen ()  {
       email: emailUser?? '',
     });
   };
-  const handleSignIn = async () => {
-    try {
-      
+  const handleSignUp = async () => {
+    try {     
       setButtonSpinner(true);
-      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/validate-otp`, {
-        email: userInfo.email,
-        otpCode: userInfo.otp
-      });
-      if(response.status === 200){
+      await validateOtp({email: userInfo.email, otpCode: userInfo.otp });
         await AsyncStorage.setItem('otpCode', userInfo.otp);
         router.push({
           pathname: '/(routes)/sign-up/info',
         });
-      };
       setButtonSpinner(false);
     } catch (error) {
       console.error('SignUp failed:',error);
@@ -103,7 +98,7 @@ export default function OtpSignUpScreen ()  {
             backgroundColor: "#2467EC",
             marginTop: 30
           }}
-          onPress={handleSignIn}
+          onPress={handleSignUp}
           >
             {
                 buttonSpinner ?(

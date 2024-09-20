@@ -33,6 +33,7 @@ export default function HomeScreen() {
         setCourses(fetchedCourses);
         setDisplayedCourses(fetchedCourses.slice(0, 4));
       } catch (error) {
+        console.error(error)
         Alert.alert('Error', 'Please try again later.');
       } finally {
         setLoading(false);
