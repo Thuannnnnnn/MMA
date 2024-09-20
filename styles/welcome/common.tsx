@@ -1,10 +1,10 @@
 import { StyleSheet } from "react-native";
 import {
-    useResponsiveHeight,
+    // useResponsiveHeight,
     useResponsiveWidth
   } from "react-native-responsive-dimensions";
 import {
-    widthPercentageToDP as wp,
+    // widthPercentageToDP as wp,
     heightPercentageToDP as hp,
   } from "react-native-responsive-screen";
 

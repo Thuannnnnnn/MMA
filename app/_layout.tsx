@@ -36,6 +36,7 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/sign-up/index" />
                         <Stack.Screen name="(routes)/sign-up/otp" />
                         <Stack.Screen name="(routes)/sign-up/info" />
+                        <Stack.Screen name="(routes)/change-password/index" />
                     </Stack>
                     </ClerkProvider>
                 )
