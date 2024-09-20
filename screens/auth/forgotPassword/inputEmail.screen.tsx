@@ -1,4 +1,4 @@
-import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons'; // Importing FontAwesome for the email icon
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError } from 'axios';
-import { styles } from '@/styles/forgotPassword/forgotPassword';
+import { styles } from '@/styles/forgotPassword/forgotPassword'
 
 export default function InputEmailScreen() {
   const [buttonSpinner, setButtonSpinner] = useState(false);
