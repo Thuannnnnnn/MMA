@@ -1,27 +1,32 @@
-import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { Entypo } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
-import axios, { AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { OtpInput } from 'react-native-otp-entry';
 import { styles } from '@/styles/forgotPassword/forgotPassword';
+import { validateOtp } from '@/API/ForgotPassword/forgotPassword';
 
 export default function InputOtpScreen() {
   const [buttonSpinner, setButtonSpinner] = useState(false);
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
+ 
   const [error, setError] = useState({ message: '' });
+  const [userInfo, setUserInfo] = useState({
+    otp: '',
+    email:'',
+  });
+  
 
   
   useEffect(() => {
     const retrieveEmail = async () => {
       const storedEmail = await AsyncStorage.getItem('email');
       if (storedEmail === null) {
-        console.log('Email not saved or deleted.');
+        
         router.push({
           pathname: '/(routes)/login',
           
@@ -35,44 +40,26 @@ export default function InputOtpScreen() {
   }, []);
 
   const handleOtpChange = (text: string) => {
-    setOtp(text);
+    setUserInfo((prevState) => ({
+      ...prevState,
+      otp: text,
+    }));
   };
 
   const handleVerifyOtp = async () => {
     try {
       setButtonSpinner(true);
-      const response = await axios.post(
-        // `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/auth/validate-otp`,
-        `http://192.168.1.8:8080/api/auth/validate-otp`,
-        
-        {
-          email,
-          otpCode: otp,
-        }
-      );
+      await validateOtp({ email, otpCode: userInfo.otp });
 
-      if (response.status === 200) {
-        await AsyncStorage.setItem('otpCode', otp);
-        router.push({
-          pathname: '/(routes)/forgotPassword/newPassword',
-          params: { email },
-        });
-      } else {
-        setError({ message: 'Invalid OTP code. Please try again.' });
-      }
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const { status, data } = error.response;
-        if (status === 404) {
-          setError({ message: data.message || 'OTP not found. Please try again.' });
-        } else if (status === 400) {
-          setError({ message: data.message || 'OTP has expired. Please request a new one.' });
-        } else {
-          setError({ message: 'An unexpected error occurred. Please try again.' });
-        }
-      } else {
-        setError({ message: 'A connection error occurred. Please check your network and try again.' });
-      }
+      await AsyncStorage.setItem('otpCode', userInfo.otp);
+      router.push({
+        pathname: '/(routes)/forgotPassword/newPassword',
+        params: { email },
+      });
+    } catch (error: any) {
+      setError({
+        message: error.message || 'An unexpected error occurred. Please try again.',
+      });
     } finally {
       setButtonSpinner(false);
     }

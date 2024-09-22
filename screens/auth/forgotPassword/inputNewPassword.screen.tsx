@@ -3,16 +3,15 @@ import React, { useEffect, useState } from 'react';
 import { FontAwesome, Entypo } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
-import axios from 'axios';
 import { useRoute } from '@react-navigation/native';
 import signInImage from '@/assets/sign-in/signup.png';
 import { styles } from '@/styles/forgotPassword/forgotPassword';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ForgotPassword } from '@/API/ForgotPassword/forgotPassword';
+import { AxiosError } from 'axios';
 
 export default function InputNewPasswordScreen() {
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [buttonSpinner, setButtonSpinner] = useState(false);
@@ -26,12 +25,13 @@ export default function InputNewPasswordScreen() {
 
   const [error, setError] = useState({
     errorMessage: '',
-   
   });
+
   useEffect(() => {
     const getOtpandEmail = async () => {
       const emailUser = await AsyncStorage.getItem('email');
       const otpCode = await AsyncStorage.getItem('otpCode');
+      
       setUserInfo((prevState) => ({
         ...prevState,
         otp: otpCode ?? '',
@@ -40,39 +40,34 @@ export default function InputNewPasswordScreen() {
     };
     getOtpandEmail();
   }, []);
+
   const route = useRoute();
   const { email } = route.params as { email: string };
-  const handlePasswordValidation = (password: string, rePassword: string ) => {
 
+  const handlePasswordValidation = (password: string, rePassword: string ) => {
     const passwordSpecialCharacter = /(?=.*[!@#$%^&*()_\-+=<>?/{}~|[\]\\:;'"`.,])/;
     const passwordOneNumber = /(?=.*[0-9])/;
     const passwordSixValue = /(?=.{6,})/;
-
-    let errorMessage = '';
 
     if (!passwordSpecialCharacter.test(password) || !passwordSpecialCharacter.test(rePassword)) {
         setError ({errorMessage: 'Password must contain at least one special character.'});
         setUserInfo({... userInfo, password: "", rePassword: ""})
         return false;
-      } 
-
+    } 
 
     if (!passwordOneNumber.test(password) || !passwordOneNumber.test(rePassword)) {
         setError ({errorMessage: 'Password must contain at least one number.'});
         setUserInfo({... userInfo, password: "", rePassword: ""})
         return false;
-      }
+    }
 
     if (!passwordSixValue.test(password) || !passwordSixValue.test(rePassword)) {
         setError ({errorMessage: 'Password must contain at least six characters.'});
         setUserInfo({... userInfo, password: "", rePassword: ""})
         return false;
-      }
+    }
 
-    
-    
     return true;
-    
   };
 
   const handleResetPassword = async () => {
@@ -81,7 +76,6 @@ export default function InputNewPasswordScreen() {
       setError({ errorMessage: '' });
 
       if (!handlePasswordValidation(userInfo.password, userInfo.rePassword)) {
-        
         setButtonSpinner(false);
         return;
       }
@@ -91,27 +85,30 @@ export default function InputNewPasswordScreen() {
         return;
       }
      
-      
-      const response = await axios.post(
-        // `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/auth/change-password`,
-        `http://192.168.1.8:8080/api/auth/change-password`,
-        { email: userInfo.email,
-          otpCode : userInfo.otp,
-          oldPW: userInfo.password,
-          newPW: userInfo.rePassword }
-      );
-   
-      if (response.status === 200) {
-        console.log('Password reset successful');
+      if(handlePasswordValidation(userInfo.password, userInfo.rePassword)){
+        setButtonSpinner(true);
+        
+        await ForgotPassword({email: userInfo.email, otpCode: userInfo.otp, oldPW: userInfo.password, newPW: userInfo.rePassword});
+        await AsyncStorage.removeItem("email");
+        await AsyncStorage.removeItem("otp");
         router.push({
           pathname: '/(routes)/login',
         });
-      } else {
-        setError({ errorMessage: response.data.message || 'An error occurred, please try again1.' });
       }
+      setButtonSpinner(false);
     } catch (error) {
-      setError({ errorMessage: 'An error occurred, please try again.' });
-    } finally {
+      console.error('Reset password failed:', error);
+
+      if (error instanceof AxiosError) {
+        setError({
+          ...error.response?.data,
+        });
+      } else {
+        setError({
+          errorMessage: 'An error occurred during the reset password process ...',
+        });
+      }
+
       setButtonSpinner(false);
     }
   };
@@ -130,8 +127,7 @@ export default function InputNewPasswordScreen() {
               style={styles1.textInput}
               placeholder="New Password"
               secureTextEntry={!showNewPassword}
-               value={userInfo.password}
-              
+              value={userInfo.password}
               onChangeText={(value) => {
                 setUserInfo({ ...userInfo, password: value });
               }}
@@ -141,8 +137,6 @@ export default function InputNewPasswordScreen() {
             </TouchableOpacity>
           </View>
 
-          
-
           <View style={styles1.passwordInput}>
             <FontAwesome name="lock" size={20} color="gray" />
             <TextInput
@@ -150,7 +144,6 @@ export default function InputNewPasswordScreen() {
               placeholder="Confirm Password"
               secureTextEntry={!showConfirmPassword}
               value={userInfo.rePassword}
-             
               onChangeText={(value) => {
                 setUserInfo({ ...userInfo, rePassword: value });
               }}
