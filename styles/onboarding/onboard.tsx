@@ -1,4 +1,4 @@
-import { Dimensions, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import {
     widthPercentageToDP as wp,
     heightPercentageToDP as hp
@@ -8,10 +8,7 @@ import {
     responsiveHeight,
     responsiveWidth,
   } from "react-native-responsive-dimensions";
-  import {
-    useResponsiveHeight,
-    useResponsiveWidth
-  } from "react-native-responsive-dimensions";
+
 
   
 

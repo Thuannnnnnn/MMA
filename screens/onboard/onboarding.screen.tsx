@@ -1,7 +1,7 @@
-import { View, Text, Image, TouchableOpacity } from 'react-native'
+import { View, Text, Image } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { LinearGradient } from 'expo-linear-gradient'
-import { router, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import styles from '@/styles/onboarding/onboard'
 
 export default function OnBoardingScreen() { 

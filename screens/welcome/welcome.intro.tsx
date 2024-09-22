@@ -5,7 +5,6 @@ import AppIntroSlider from 'react-native-app-intro-slider'
 import { router } from 'expo-router'
 import { onboardingSwiperData } from "@/constants/constants";
 import styles from '@/styles/onboarding/onboard'
-import { CommonStyles } from '@/styles/welcome/common'
 
 
 export default function WelcomeIntro() {

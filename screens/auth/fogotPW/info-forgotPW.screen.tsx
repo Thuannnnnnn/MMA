@@ -2,26 +2,23 @@ import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ActivityInd
 import React, { useEffect, useState } from 'react';
 import {
   Entypo,
-  FontAwesome,
-  Fontisto,
   Ionicons,
   SimpleLineIcons,
 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
+import { CommonStyles } from '@/styles/welcome/common';
 import { router } from 'expo-router';
 import signInImage from '@/assets/sign-in/signup.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AxiosError } from 'axios';
-import { signUp } from '@/API/SignUp/SignUpApi';
-export default function InfoSignUpScreen() {
+import axios, { AxiosError } from 'axios';
+export default function InfoForgotPWScreen() {
   const [buttonSpinner, setButtonSpinner ] = useState(false);
   const [userInfo, setUserInfo] = useState({
     email: '',
     otp: '',
     password: '',
     rePassword:'',
-    name:''
   });
   const [error,setError] = useState({
     message: '',
@@ -77,11 +74,17 @@ export default function InfoSignUpScreen() {
     }
     return true
   };
-  const handleSignUp = async () => {
+  const handleSignIn = async () => {
     try {
       if(handlePasswordValidation(userInfo.password, userInfo.rePassword)){
       setButtonSpinner(true);
-      await signUp({email: userInfo.email, otp: userInfo.otp, password: userInfo.password, rePassword: userInfo.rePassword, name: userInfo.name });
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/change-password`, {
+        email: userInfo.email,
+        otpCode : userInfo.otp,
+        oldPW: userInfo.password,
+        newPW: userInfo.rePassword
+      });
+      if(response.status === 200){
         await AsyncStorage.removeItem("email");
         await AsyncStorage.removeItem("otp");
         router.push({
@@ -89,7 +92,8 @@ export default function InfoSignUpScreen() {
         });
       };
       setButtonSpinner(false);
-    }catch (error) {
+    }
+    } catch (error) {
       console.error('SignUp failed:',error);
   
       if (error instanceof AxiosError) {
@@ -115,25 +119,13 @@ export default function InfoSignUpScreen() {
 
 
         <Text style={style.welcomeText}>Welcome</Text>
-        <Text style={style.learningText}>Please enter your Name and Password to register a new account</Text>
+        <Text style={style.learningText}>Please enter your password to change passwrod</Text>
 
 
         <View style={[style.inputContainer]}>
-          <View>
-            <View>
-            <TextInput
-              style={[style.input, { paddingLeft: 35}]}
-              keyboardType="email-address"
-              value={userInfo.name}
-              placeholder="Please enter your Name"
-              onChangeText={(value) => setUserInfo({ ...userInfo, name: value })}
-            />
-     
-            <Fontisto style={{ position: 'absolute', left: 26, top: 17.8 }} name="passport-alt" size={20} color={'#A1A1A1'} />
-            </View>
-         
+          <View>     
             {required && (
-              <View style={style.errorContainer}>
+              <View style={CommonStyles.errorContainer}>
                 <Entypo name="cross" size={18} color={'red'} />
               </View>
             )}
@@ -213,7 +205,7 @@ export default function InfoSignUpScreen() {
       </TouchableOpacity>
       {
             error.message &&(
-                <View style={[style.errorContainer,{top: 145}]}>
+                <View style={[CommonStyles.errorContainer,{top: 145}]}>
                     <Entypo name='cross' size={18} color={"red"} />
                     <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.message}</Text>
                 </View>
@@ -234,7 +226,7 @@ export default function InfoSignUpScreen() {
             backgroundColor: "#2467EC",
             marginTop: 30
           }}
-          onPress={handleSignUp}
+          onPress={handleSignIn}
           >
             {
                 buttonSpinner ?(
@@ -250,13 +242,11 @@ export default function InfoSignUpScreen() {
                         fontWeight: 600
                     }}
                     >
-                        Sign Up
+                        Change Password
                     </Text>
                 )
             }
           </TouchableOpacity>
-
-
           <View style={style.signUpRedirect}>
             <Text style={{fontSize: 18}}>
                 You have an account?
@@ -275,36 +265,6 @@ export default function InfoSignUpScreen() {
             </TouchableOpacity>
 
           </View>
-        
-
-          <TouchableOpacity>
-          <View
-          style={{
-            padding: 16,
-            borderRadius: 8,
-            marginHorizontal: 16,
-            backgroundColor: "white",
-            marginTop: 10,
-            borderColor: "black",
-            borderWidth: 1,       
-        }}
-          >
-            <Text
-                style={{
-                        color: "black",
-                        textAlign: "center",
-                        fontSize: 16,
-                        fontWeight: 600
-                    }}
-                    >
-                        
-            <FontAwesome
-            name='google' size={24}
-            />
-            continue with google
-            </Text>
-          </View>
-          </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -375,12 +335,5 @@ const style = StyleSheet.create({
       justifyContent: "center",
       marginBottom: 10,
       marginTop: 10
-    },
-    errorContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginHorizontal: 16,
-      position: "absolute",
-      top: 60,
     },
   });
