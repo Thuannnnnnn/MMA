@@ -42,7 +42,9 @@ export default function InputOtpScreen() {
     try {
       setButtonSpinner(true);
       const response = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/auth/validate-otp`, // Ensure you have the correct base URL here
+        // `${process.env.EXPO_PUBLIC_API_BASE_URL}/api/auth/validate-otp`,
+        `http://192.168.1.8:8080/api/auth/validate-otp`,
+        
         {
           email,
           otpCode: otp,
@@ -50,6 +52,7 @@ export default function InputOtpScreen() {
       );
 
       if (response.status === 200) {
+        await AsyncStorage.setItem('otpCode', otp);
         router.push({
           pathname: '/(routes)/forgotPassword/newPassword',
           params: { email },

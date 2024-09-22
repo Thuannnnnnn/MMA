@@ -1,6 +1,6 @@
 import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import React, { useState } from 'react';
-import { FontAwesome } from '@expo/vector-icons'; // Importing FontAwesome for the email icon
+import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
@@ -14,10 +14,25 @@ export default function InputEmailScreen() {
   const [email, setEmail] = useState('');
   const [error, setError] = useState({ message: '' });
 
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleForgotPassword = async () => {
+    
+    setError({ message: '' });
+
+    
+    if (!isValidEmail(email)) {
+      setError({ message: 'Please enter a valid email address.' });
+      return;
+    }
+
     try {
       setButtonSpinner(true);
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/sendOtpForgotPW`, {
+      // const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/fogot-password`, {
+        const response = await axios.post(`http://192.168.1.8:8080/api/auth/fogot-password`, {
         email,
       });
       if (response.status === 200) {
@@ -52,7 +67,7 @@ export default function InputEmailScreen() {
         <Text style={styles.learningText}>Enter your email address to reset your password</Text>
 
         <View style={[styles.inputContainer]}>
-          {/* Email Input with Icon */}
+          
           <View style={styles.emailInputContainer}>
             <FontAwesome name="envelope" size={20} color="gray" style={styles.icon} />
             <TextInput
@@ -82,6 +97,12 @@ export default function InputEmailScreen() {
             <TouchableOpacity onPress={() => router.push("/(routes)/login")}>
               <Text style={styles.redirectText}>Login</Text>
             </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/(routes)/forgotPassword/inputOTP")}>
+              <Text style={styles.redirectText}>Login</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/(routes)/forgotPassword/newPassword")}>
+              <Text style={styles.redirectText}>Login</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -92,5 +113,3 @@ export default function InputEmailScreen() {
     </LinearGradient>
   );
 }
-
-
