@@ -38,6 +38,7 @@
     "react-native-app-intro-slider": "^4.0.4",
     "react-native-gesture-handler": "^2.19.0",
     "react-native-otp-entry": "^1.7.1",
+    "react-native-paper": "^5.12.5",
     "react-native-reanimated": "~3.10.1",
     "react-native-responsive-dimensions": "^3.1.1",
     "react-native-responsive-screen": "^1.4.2",

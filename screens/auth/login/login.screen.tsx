@@ -246,7 +246,7 @@ export default function LoginScreen() {
             )
           }
           <TouchableOpacity
-        onPress={() => router.push("/(routes)/content/content-video")}
+        onPress={() => router.push("/(routes)/content/content-list")}
           >
             <Text
             style={[ style.forgotSection]}
