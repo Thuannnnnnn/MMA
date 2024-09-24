@@ -1,18 +1,18 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, SafeAreaView, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Video, ResizeMode } from 'expo-av';
+import { Video, ResizeMode, VideoFullscreenUpdate, VideoFullscreenUpdateEvent } from 'expo-av';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 export default function ContentVideo() {
   const [item, setItem] = useState<{ title: string; videoUri: string } | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<Video>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const storedItem = await AsyncStorage.getItem('@selectedItem');
-        console.log(storedItem);
         if (storedItem) {
           setItem(JSON.parse(storedItem));
         }
@@ -25,14 +25,20 @@ export default function ContentVideo() {
   }, []);
 
   useEffect(() => {
-    if (item) {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-    }
+    const handleFullscreen = async () => {
+      if (isFullscreen) {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      } else {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
+      }
+    };
+
+    handleFullscreen();
 
     return () => {
-      ScreenOrientation.unlockAsync();
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
     };
-  }, [item]);
+  }, [isFullscreen]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -43,9 +49,20 @@ export default function ContentVideo() {
           rate={1.0}
           volume={1.0}
           isMuted={false}
-          resizeMode={ResizeMode.COVER}
+          resizeMode={ResizeMode.CONTAIN}
           shouldPlay
           style={styles.video}
+          useNativeControls
+          onFullscreenUpdate={(event: VideoFullscreenUpdateEvent) => {
+            switch (event.fullscreenUpdate) {
+              case VideoFullscreenUpdate.PLAYER_DID_PRESENT:           
+                setIsFullscreen(true);
+                break;          
+              case VideoFullscreenUpdate.PLAYER_DID_DISMISS:            
+                setIsFullscreen(false);
+                break;
+            }
+          }}
         />
       ) : (
         <Text>Loading...</Text>

@@ -14,16 +14,19 @@ type ItemProps = {
   progress: number;
 };
 
-useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
-  }
-, []);
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function ContentList() {
   const router = useRouter();
   
+  useEffect(() => {
+    const lockOrientation = async () => {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
+    };
+    lockOrientation();
+  }, []);
+
   const DATA: ItemProps[] = [
     {
       id: '1',
@@ -65,13 +68,43 @@ export default function ContentList() {
     } catch (e) {
       console.error('Error saving item', e);
     }
-    router.push({
-      pathname: '/(routes)/content/content-video',
-      params: {
-        title: item.title,
-        videoUri: item.videoUri,
-      },
-    });
+    switch(item.type){
+      case 'video':
+        router.push({
+          pathname: '/(routes)/content/content-video',
+          params: {
+            title: item.title,
+            videoUri: item.videoUri,
+          },
+        });
+        break;
+        case 'docs':
+          router.push({
+            pathname: '/(routes)/content/content-video',
+            params: {
+              title: item.title,
+              videoUri: item.videoUri,
+            },
+          });
+          break;
+        case 'quiz':
+          router.push({
+            pathname: '/(routes)/content/content-video',
+            params: {
+              title: item.title,
+              videoUri: item.videoUri,
+            },
+          });
+          break;
+        case 'exam':
+          router.push({
+            pathname: '/(routes)/content/content-video',
+            params: {
+              title: item.title,
+              videoUri: item.videoUri,
+            },
+          });
+    }
   };
 
   const renderCourse = ({ item }: { item: ItemProps }) => {
@@ -148,11 +181,14 @@ const styles = StyleSheet.create({
   iconContainerType: {
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 10,
-    padding: 20,
+    alignSelf: 'center',
+    marginLeft:10,
+    width: 60, 
+    height: 60,
     backgroundColor: '#CAF4FF',
-    borderRadius: 50,
+    borderRadius: 30,
   },
+  
   iconContainerPlay: {
     justifyContent: 'center',
     alignItems: 'center',
