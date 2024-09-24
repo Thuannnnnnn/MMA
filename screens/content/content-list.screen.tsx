@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, SafeAreaView, FlatList, Text, Dimensions, View } from 'react-native';
 import { Entypo, AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
 import { ProgressBar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import * as ScreenOrientation from 'expo-screen-orientation';
 type ItemProps = {
   id: string;
   title: string;
@@ -13,6 +13,11 @@ type ItemProps = {
   type: string;
   progress: number;
 };
+
+useEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
+  }
+, []);
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -24,7 +29,7 @@ export default function ContentList() {
       id: '1',
       title: 'First Item',
       uri: 'https://example.com/image1.png',
-      videoUri: 'https://sdn111.blob.core.windows.net/videosdn/video1.mp4',
+      videoUri: 'https://sdn111.blob.core.windows.net/videosdn/70ced783-489a-41d0-841a-4612fc7e8d67.mp4',
       type: 'video',
       progress: 1,
     },
