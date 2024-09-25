@@ -227,30 +227,51 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
 
-              <SimpleLineIcons
-                style={style.icon2}
-                name="lock"
-                size={20}
-                color={"#A1A1A1"}
-              />
-            </View>
-            {error.password && (
-              <View style={[style.errorContainer, { top: 145 }]}>
-                <Entypo name="cross" size={18} color={"red"} />
-                <Text style={{ color: "red", fontSize: 11, marginTop: -1 }}>
-                  {error.password}
-                </Text>
-              </View>
-            )}
-            <TouchableOpacity
-              onPress={() => router.push("/(routes)/forgotPassword")}
+            <SimpleLineIcons
+            style={style.icon2}
+            name='lock'
+            size={20}
+            color={"#A1A1A1"}
+            />
+          </View>
+          {
+            error.password &&(
+                <View style={[style.errorContainer,{top: 145}]}>
+                    <Entypo name='cross' size={18} color={"red"} />
+                    <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.password}</Text>
+                </View>
+            )
+          }
+          <TouchableOpacity
+       onPress={() => router.push("/(routes)/forgotPassword")}
+          >
+            <Text
+            style={[ style.forgotSection]}
             >
-              <Text style={[style.forgotSection]}>Forgot Password?</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+                Forgot Password?
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             onPress={()=> router.push("/(routes)/cart")}>
               <Text style={[style.forgotSection]}>CartCsreen</Text>
             </TouchableOpacity>
+          {
+            error.password &&(
+                <View style={[style.errorContainer,{top: 145}]}>
+                    <Entypo name='cross' size={18} color={"red"} />
+                    <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.password}</Text>
+                </View>
+            )
+          }
+          <TouchableOpacity
+        onPress={() => router.push("/(routes)/content/content-list")}
+          >
+            <Text
+            style={[ style.forgotSection]}
+            >
+                content-video
+            </Text>
+          </TouchableOpacity>
 
             <TouchableOpacity
               style={{
