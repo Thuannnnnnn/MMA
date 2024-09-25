@@ -128,7 +128,7 @@ export default function LoginScreen() {
   
       console.log('Login successful:', response.data);
 
-      // router.push('/home'); // Navigate to your home screen
+      router.replace("/(tabs)/");
 
       setButtonSpinner(false);
     } catch (error) {
