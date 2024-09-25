@@ -66,9 +66,9 @@ const TabsLayout: React.FC = () => {
       }}
     >
        <Tabs.Screen name="index"/>
-      <Tabs.Screen name='cart'  options={{ headerShown: true, headerTitle: "Cart" }} />
-      <Tabs.Screen name='course' options={{ headerShown: true, headerTitle: "Course" }} />
-      <Tabs.Screen name='profile' options={{ headerShown: true, headerTitle: "Profile" }} />
+      <Tabs.Screen name='cart/index'  options={{ headerShown: true, headerTitle: "Cart" }} />
+      <Tabs.Screen name='course/index' options={{ headerShown: true, headerTitle: "Course" }} />
+      <Tabs.Screen name='profile/index' options={{ headerShown: true, headerTitle: "Profile" }} />
     </Tabs>
   );
 }
