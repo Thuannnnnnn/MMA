@@ -237,6 +237,23 @@ export default function LoginScreen() {
                 Forgot Password?
             </Text>
           </TouchableOpacity>
+          {
+            error.password &&(
+                <View style={[style.errorContainer,{top: 145}]}>
+                    <Entypo name='cross' size={18} color={"red"} />
+                    <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.password}</Text>
+                </View>
+            )
+          }
+          <TouchableOpacity
+        onPress={() => router.push("/(routes)/content/content-list")}
+          >
+            <Text
+            style={[ style.forgotSection]}
+            >
+                content-video
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
        onPress={() => router.push("/(routes)/quiz-exam")}
