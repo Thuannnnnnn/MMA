@@ -48,7 +48,8 @@
     "react-native-video": "^6.6.1",
     "react-native-svg": "^15.7.1",
     "react-native-web": "~0.19.10",
-    "expo-screen-orientation": "~7.0.5"
+    "expo-screen-orientation": "~7.0.5",
+    "react-native-webview": "13.8.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

@@ -1,24 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, SafeAreaView, FlatList, Text, Dimensions, View } from 'react-native';
 import { Entypo, AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
-import { ProgressBar } from 'react-native-paper';
+// import { ProgressBar } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ScreenOrientation from 'expo-screen-orientation';
-type ItemProps = {
-  id: string;
-  title: string;
-  uri: string; 
-  videoUri: string;  
-  type: string;
-  progress: number;
-};
-
+import { getContentById } from '@/API/Content/ContentApi';
+import { Course, Content } from '@/constants/Content/contentList';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function ContentList() {
   const router = useRouter();
+  const [data, setData] = useState<Content[]>([]);
+  const contentId = 't_introduction_to_programming';
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          const result: Course = await getContentById(contentId, token);
+          setData(result.contents);
+        } else {
+          console.warn('Token is null, unable to fetch content');
+        }
+      } catch (error) {
+        console.error('Error fetching content:', error);
+      }
+    };
+  
+    fetchData();
+  }, [contentId]);
+  
+
   
   useEffect(() => {
     const lockOrientation = async () => {
@@ -27,98 +41,51 @@ export default function ContentList() {
     lockOrientation();
   }, []);
 
-  const DATA: ItemProps[] = [
-    {
-      id: '1',
-      title: 'First Item',
-      uri: 'https://example.com/image1.png',
-      videoUri: 'https://sdn111.blob.core.windows.net/videosdn/70ced783-489a-41d0-841a-4612fc7e8d67.mp4',
-      type: 'video',
-      progress: 1,
-    },
-    {
-      id: '2',
-      title: 'Second Item',
-      uri: 'https://example.com/image2.png',
-      videoUri: 'https://sdn111.blob.core.windows.net/videosdn/video2.mp4',
-      type: 'document',
-      progress: 1,
-    },
-    {
-      id: '3',
-      title: 'Third Item',
-      uri: 'https://example.com/image3.png',
-      videoUri: 'https://sdn111.blob.core.windows.net/videosdn/video3.mp4',
-      type: 'quiz',
-      progress: 0.5,
-    },
-    {
-      id: '4',
-      title: 'Fourth Item',
-      uri: 'https://example.com/image4.png',
-      videoUri: 'https://sdn111.blob.core.windows.net/videosdn/video4.mp4',
-      type: 'quiz',
-      progress: 0,
-    },
-  ];
-
-  const handlePress = async (item: ItemProps) => {
+ 
+  const handlePress = async (item: Content) => {
     try {
       await AsyncStorage.setItem('@selectedItem', JSON.stringify(item));
     } catch (e) {
       console.error('Error saving item', e);
     }
-    switch(item.type){
-      case 'video':
+    switch (item.contentType) {
+      case 'videos':
         router.push({
           pathname: '/(routes)/content/content-video',
-          params: {
-            title: item.title,
-            videoUri: item.videoUri,
-          },
         });
+        break; 
+      case 'docs':
+        router.push({
+          pathname: '/(routes)/content/content-docs',
+        });
+        break; 
+      case 'questions':
+        router.push({
+          pathname: '/(routes)/content/content-video',
+        });
+        break; 
+      case 'exams':
+        router.push({
+          pathname: '/(routes)/content/content-video',
+        });
+        break; 
+      default:
         break;
-        case 'docs':
-          router.push({
-            pathname: '/(routes)/content/content-video',
-            params: {
-              title: item.title,
-              videoUri: item.videoUri,
-            },
-          });
-          break;
-        case 'quiz':
-          router.push({
-            pathname: '/(routes)/content/content-video',
-            params: {
-              title: item.title,
-              videoUri: item.videoUri,
-            },
-          });
-          break;
-        case 'exam':
-          router.push({
-            pathname: '/(routes)/content/content-video',
-            params: {
-              title: item.title,
-              videoUri: item.videoUri,
-            },
-          });
     }
   };
 
-  const renderCourse = ({ item }: { item: ItemProps }) => {
+  const renderCourse = ({ item }: { item: Content }) => {
     return (
       <View style={styles.courseCard} onTouchEnd={() => handlePress(item)}>
         <View style={styles.iconContainerType}>
           <Entypo name="video" size={30} color="black" />
         </View>
         <View style={styles.courseDetails}>
-          <Text style={styles.courseTitle}>{item.title}</Text>
+          <Text style={styles.courseTitle}>{item.contentName}</Text>
           <Text style={styles.courseType}>
-            <MaterialCommunityIcons name="format-list-bulleted-type" size={18} color="black" /> {item.type}
+            <MaterialCommunityIcons name="format-list-bulleted-type" size={18} color="black" /> {item.contentType}
           </Text>
-          <ProgressBar progress={item.progress} color="#3FA2F6" style={styles.progressBar} />
+          {/* <ProgressBar progress={0} color="#3FA2F6" style={styles.progressBar} /> */}
         </View>
         <View style={styles.iconContainerPlay}>
           <AntDesign name="caretright" size={20} color="black" />
@@ -131,15 +98,16 @@ export default function ContentList() {
     <SafeAreaView style={styles.container}>
       <Text style={styles.titleHeader}>Content List</Text>
       <FlatList
-        data={DATA}
-        renderItem={renderCourse} // Sử dụng trực tiếp renderCourse
-        keyExtractor={(item) => item.id}
+        data={data}
+        renderItem={renderCourse}
+        keyExtractor={(item) => item.contentId}
         onEndReachedThreshold={0.5}
       />
     </SafeAreaView>
   );
 }
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -182,13 +150,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginLeft:10,
-    width: 60, 
+    marginLeft: 10,
+    width: 60,
     height: 60,
     backgroundColor: '#CAF4FF',
     borderRadius: 30,
   },
-  
   iconContainerPlay: {
     justifyContent: 'center',
     alignItems: 'center',
