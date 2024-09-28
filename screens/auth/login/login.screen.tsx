@@ -239,6 +239,16 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
+       onPress={() => router.push("/(routes)/quiz-exam")}
+          >
+            <Text
+            style={[ style.forgotSection]}
+            >
+                FQuizz
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
           style={{
             padding: 16,
             borderRadius: 8,

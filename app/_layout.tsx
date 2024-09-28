@@ -40,10 +40,15 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/forgotPassword/index" />
                         <Stack.Screen name="(routes)/forgotPassword/inputOTP" />
                         <Stack.Screen name="(routes)/forgotPassword/newPassword" />
+                        {/* Add the quiz exam route */}
+                        <Stack.Screen name="(routes)/quiz-exam/index" />
+                        <Stack.Screen name="(routes)/quiz-review/index" />
+
                     </Stack>
                     </ClerkProvider>
                 )
             }
         </GestureHandlerRootView>
+
       )
 }
