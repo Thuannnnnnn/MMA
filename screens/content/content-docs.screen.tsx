@@ -1,52 +1,79 @@
+import { Content } from '@/constants/Content/contentList'; // Adjust import based on actual structure
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, Button } from 'react-native';
+import React, {useEffect, useState } from 'react';
+import { View, StyleSheet, ActivityIndicator, Button, Text, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
 const PDFViewer = () => {
   const navigation = useNavigation();
-  const [key, setKey] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [item, setItem] = useState<Content | null>(null);
 
-  const pdfUrl = `https://docs.google.com/gview?embedded=true&url=https://www.aeee.in/wp-content/uploads/2020/08/Sample-pdf.pdf?nocache=${new Date().getTime()}`;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const storedItem = await AsyncStorage.getItem('@selectedItem');
+        if (storedItem) {
+          setItem(JSON.parse(storedItem));
+        }
+      } catch (e) {
+        console.error('Error fetching item', e);
+      }
+    };
 
-  const handleBackButtonPress = () => {
+    fetchData();
+  }, []);
+
+  // Type guard to check if item is of type Docs
+  const isDocs = (item: Content): item is Extract<Content, { contentType: 'docs' }> => {
+    return item.contentType === 'docs' && item.contentRef?.docsLink !== undefined;
+  };
+
+  // Construct PDF URL if item is of type Docs
+  const pdfUrl = item && isDocs(item) 
+    ? `https://docs.google.com/gview?embedded=true&url=${item.contentRef.docsLink}?nocache=${new Date().getTime()}`
+    : '';
+
+  const MakeIsComplete = () => {
     navigation.goBack();
   };
 
-  const reloadPDF = useCallback(() => {
-    setLoading(true);
-    setKey(prevKey => prevKey + 1); // Tăng key để tái tạo WebView
-  }, []);
+  const handleWebViewError = (syntheticEvent: { nativeEvent: any; }) => {
+    const { nativeEvent } = syntheticEvent;
+    console.warn('Error loading page', nativeEvent);
+    Alert.alert("Error", "Failed to load PDF document.");
+  };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {loading && (
         <ActivityIndicator size="large" color="#0000ff" style={styles.loadingIndicator} />
       )}
-      <WebView
-        key={key}
-        source={{ uri: pdfUrl }}
-        style={styles.webView}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        cacheEnabled={false}
-        cacheMode="LOAD_NO_CACHE"
-        startInLoadingState={false}
-        onLoadEnd={() => setLoading(false)}
-        onHttpError={(syntheticEvent) => {
-          const { nativeEvent } = syntheticEvent;
-          console.warn('HTTP Error', nativeEvent);
-        }}
-        onError={(syntheticEvent) => {
-          const { nativeEvent } = syntheticEvent;
-          console.warn('Error loading page', nativeEvent);
-        }}
-      />
+      {pdfUrl ? (
+        <WebView
+          source={{ uri: pdfUrl }}
+          style={styles.webView}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          cacheEnabled={false}
+          cacheMode="LOAD_NO_CACHE"
+          startInLoadingState={false}
+          onLoadEnd={() => setLoading(false)}
+          onHttpError={handleWebViewError}
+          onError={handleWebViewError}
+        />
+      ) : (
+        <View style={styles.errorContainer}>
+          <Text>No PDF available to display.</Text>
+          <Button title="Go Back" onPress={MakeIsComplete} />
+        </View>
+      )}
       <View>
-        <Button title="make complete" onPress={reloadPDF} />
+        <Button title="Make is Complete" onPress={MakeIsComplete} />
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -63,6 +90,11 @@ const styles = StyleSheet.create({
     left: '50%',
     marginLeft: -20,
     marginTop: -20,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
