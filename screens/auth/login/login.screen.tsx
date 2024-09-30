@@ -15,7 +15,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useAuth, useOAuth, useUser } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
 import axios, { AxiosError } from 'axios';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
     return () => {
@@ -125,10 +125,8 @@ export default function LoginScreen() {
         email: userInfo.email,
         password: userInfo.password,
       });
-  
-      console.log('Login successful:', response.data);
-
-      // router.push('/home'); // Navigate to your home screen
+      await AsyncStorage.setItem('token', response.data.token);
+      router.replace("/(tabs)/");
 
       setButtonSpinner(false);
     } catch (error) {
@@ -235,6 +233,23 @@ export default function LoginScreen() {
             style={[ style.forgotSection]}
             >
                 Forgot Password?
+            </Text>
+          </TouchableOpacity>
+          {
+            error.password &&(
+                <View style={[style.errorContainer,{top: 145}]}>
+                    <Entypo name='cross' size={18} color={"red"} />
+                    <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.password}</Text>
+                </View>
+            )
+          }
+          <TouchableOpacity
+        onPress={() => router.push("/(routes)/content/content-list")}
+          >
+            <Text
+            style={[ style.forgotSection]}
+            >
+                content-video
             </Text>
           </TouchableOpacity>
 
