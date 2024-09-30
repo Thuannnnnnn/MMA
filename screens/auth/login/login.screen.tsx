@@ -23,6 +23,7 @@ import * as WebBrowser from "expo-web-browser";
 import { useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as Linking from "expo-linking";
 import axios, { AxiosError } from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
@@ -128,11 +129,13 @@ export default function LoginScreen() {
     }
   };
   const handleSignIn = async () => {
-    try {
-      setButtonSpinner(true);
+    console.log("handleSignIn called");
+    setButtonSpinner(true);
 
+    try {
+      console.log("Making request to login API");
       const response = await axios.post(
-        `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/base`,
+        `http://192.168.38.150:8080/api/auth/login/base`,
         {
           email: userInfo.email,
           password: userInfo.password,
@@ -140,25 +143,43 @@ export default function LoginScreen() {
       );
 
       console.log("Login successful:", response.data);
-
-      // router.push('/home'); // Navigate to your home screen
-
-      setButtonSpinner(false);
+      router.push("/(tabs)/");
     } catch (error) {
       console.error("Login failed:", error);
 
-      if (error instanceof AxiosError) {
-        setError({
-          ...error.response?.data,
-          password: "Login failed. Please try again.",
-        });
+      if (axios.isAxiosError(error)) {
+        console.log("Error is an Axios error");
+        if (error.response) {
+          console.log("Error response:", error.response);
+          switch (error.response.status) {
+            case 401:
+              setError({ password: "Incorrect email or password." });
+              break;
+            case 503:
+              setError({
+                password:
+                  "Server is currently unavailable. Please try again later.",
+              });
+              break;
+            default:
+              setError({ password: "Login failed. Please try again." });
+              break;
+          }
+        } else {
+          console.log("Error has no response");
+          setError({
+            password: "An unexpected error occurred. Please try again.",
+          });
+        }
       } else {
+        console.log("Error is not an Axios error");
         setError({
           password: "An unexpected error occurred. Please try again.",
         });
       }
-
-      setButtonSpinner(false);
+    } finally {
+      console.log("Stopping button spinner");
+      setButtonSpinner(false); // Đảm bảo dừng vòng quay
     }
   };
   return (
@@ -227,52 +248,27 @@ export default function LoginScreen() {
                 )}
               </TouchableOpacity>
 
-            <SimpleLineIcons
-            style={style.icon2}
-            name='lock'
-            size={20}
-            color={"#A1A1A1"}
-            />
-          </View>
-          {
-            error.password &&(
-                <View style={[style.errorContainer,{top: 145}]}>
-                    <Entypo name='cross' size={18} color={"red"} />
-                    <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.password}</Text>
-                </View>
-            )
-          }
-          <TouchableOpacity
-       onPress={() => router.push("/(routes)/forgotPassword")}
-          >
-            <Text
-            style={[ style.forgotSection]}
+              <SimpleLineIcons
+                style={style.icon2}
+                name="lock"
+                size={20}
+                color={"#A1A1A1"}
+              />
+            </View>
+            {error.password && (
+              <View style={[style.errorContainer, { top: 145 }]}>
+                <Entypo name="cross" size={18} color={"red"} />
+                <Text style={{ color: "red", fontSize: 11, marginTop: -1 }}>
+                  {error.password}
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity
+            //   onPress={() => router.push("/(routes)/forgot-password")}
             >
-                Forgot Password?
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={()=> router.push("/(routes)/cart")}>
-              <Text style={[style.forgotSection]}>CartCsreen</Text>
+              <Text style={[style.forgotSection]}>Forgot Password?</Text>
             </TouchableOpacity>
-          {
-            error.password &&(
-                <View style={[style.errorContainer,{top: 145}]}>
-                    <Entypo name='cross' size={18} color={"red"} />
-                    <Text style={{color: "red", fontSize: 11, marginTop: -1}}>{error.password}</Text>
-                </View>
-            )
-          }
-          <TouchableOpacity
-        onPress={() => router.push("/(routes)/content/content-list")}
-          >
-            <Text
-            style={[ style.forgotSection]}
-            >
-                content-video
-            </Text>
-          </TouchableOpacity>
-
+          
             <TouchableOpacity
               style={{
                 padding: 16,
