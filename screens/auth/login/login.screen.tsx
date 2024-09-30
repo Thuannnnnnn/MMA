@@ -287,6 +287,24 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
           </View>
+          <View style={style.signUpRedirect}>
+            <Text style={{fontSize: 18}}>
+            Don&apos;t have an account?
+            </Text>
+            <TouchableOpacity
+            onPress={() => {
+                 router.push("/(routes)/payment")
+            }}
+            >
+                <Text
+                style={{fontSize: 18, color: "#2467Ec", marginLeft: 5}}
+                >
+                    Sign Up
+                </Text>
+
+            </TouchableOpacity>
+
+          </View>
         
 
           <TouchableOpacity onPress={onPress}>
