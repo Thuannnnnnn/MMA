@@ -22,8 +22,7 @@ import SignInPng from "@/assets/sign-in/sign_in.png";
 import * as WebBrowser from "expo-web-browser";
 import { useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as Linking from "expo-linking";
-import axios, { AxiosError } from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
@@ -135,7 +134,7 @@ export default function LoginScreen() {
     try {
       console.log("Making request to login API");
       const response = await axios.post(
-        `http://192.168.38.150:8080/api/auth/login/base`,
+        `http://192.168.1.12:3030/api/auth/login/base`,
         {
           email: userInfo.email,
           password: userInfo.password,
@@ -268,7 +267,7 @@ export default function LoginScreen() {
             >
               <Text style={[style.forgotSection]}>Forgot Password?</Text>
             </TouchableOpacity>
-          
+
             <TouchableOpacity
               style={{
                 padding: 16,
