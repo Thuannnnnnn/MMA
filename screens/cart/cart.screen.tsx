@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   body: {
-    flex: 1, // Cho phép phần body chiếm không gian còn lại
+    flex: 1.
   },
   cart: {
     margin: 5,
