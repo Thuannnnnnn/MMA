@@ -15,7 +15,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useAuth, useOAuth, useUser } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
 import axios, { AxiosError } from 'axios';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
     return () => {
@@ -125,10 +125,8 @@ export default function LoginScreen() {
         email: userInfo.email,
         password: userInfo.password,
       });
-  
-      console.log('Login successful:', response.data);
-
-      // router.push('/home'); // Navigate to your home screen
+      await AsyncStorage.setItem('token', response.data.token);
+      router.replace("/(tabs)/");
 
       setButtonSpinner(false);
     } catch (error) {
@@ -252,6 +250,16 @@ export default function LoginScreen() {
             style={[ style.forgotSection]}
             >
                 content-video
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+       onPress={() => router.push("/(routes)/quiz-exam")}
+          >
+            <Text
+            style={[ style.forgotSection]}
+            >
+                FQuizz
             </Text>
           </TouchableOpacity>
 
