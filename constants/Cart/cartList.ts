@@ -23,14 +23,19 @@ export interface Course {
 
 export interface CartItem {
   _id: string;
-  courseId: Course; // Adjusted to reflect the correct property structure
+  courseId: Course;
   updateDate: string;
 }
 
 export interface Cart {
   _id: string;
   cartId: string;
-  courses: CartItem[]; // Should be an array of CartItem
+  courses: CartItem[];
   userGenerated: string;
   __v: number;
+}
+
+export interface Res {
+  cart: Cart;
+  Message: string;
 }

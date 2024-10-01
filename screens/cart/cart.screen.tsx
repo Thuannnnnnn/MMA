@@ -6,30 +6,39 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { deleteById, getAllCartByEmail } from "@/API/Cart/cartAPI";
 import { Cart, CartItem } from "@/constants/Cart/cartList";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<Cart | null>(null);
   const email = "user@example.com";
-  const token = "your_token_here";
-
   const calculateTotal = () => {
     const total = cartItems?.courses?.reduce((total, item) => {
-      return total + parseFloat(item.courseId.price || 0);
+      const price = item.courseId.price ? item.courseId.price : "0";
+      return total + parseFloat(price);
     }, 0);
-    
+  
     return total ? total.toLocaleString("vi-VN") + " ₫" : "0 ₫";
   };
-
+  
   const cartLength = cartItems?.courses?.length ?? 0;
   const courseIdToDelete = (item: CartItem) => item.courseId._id;
-  
+
   const handleDeleteCourse = async (courseId: string) => {
     try {
-      await deleteById(cartItems.cartId, token, courseId);
-      const updatedCart = await getAllCartByEmail(email, token);
-      setCartItems(updatedCart);
+      const token = "nhap token";
+      if (token) {
+        if (cartItems && cartItems.cartId) {
+          await deleteById(cartItems.cartId, token, courseId);
+          const updatedCart = await getAllCartByEmail(email, token);
+          setCartItems(updatedCart);
+        } else {
+          console.error("cartItems or cartId is null");
+        }
+      } else {
+        Alert.alert("Xin lỗi!", "Bạn cần đăng nhập để thực hiện hành động này");
+      }
     } catch (error) {
       console.error("Error deleting course:", error);
     }
@@ -38,10 +47,14 @@ export default function CartScreen() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = "nhap token";
         if (token) {
-          const result = await getAllCartByEmail(email, token);
+          const result: Cart= await getAllCartByEmail(email, token);
+          console.log("Test result: " + result.Cart);
           if (result && result.Cart) {
-            const coursesArray = Array.isArray(result.Cart.courses) ? result.Cart.courses : [];
+            const coursesArray = Array.isArray(result.Cart.courses)
+              ? result.Cart.courses
+              : [];
             setCartItems({
               ...result.Cart,
               courses: coursesArray,
@@ -62,6 +75,7 @@ export default function CartScreen() {
         console.error("Error fetching content:", error);
       }
     };
+    console.log("Test cartItem: " + cartItems);
     fetchData();
   }, [email]);
 
@@ -80,7 +94,10 @@ export default function CartScreen() {
   };
 
   return (
-    <LinearGradient colors={["#ffffff", "#e2e9f9", "#d7e2fb"]} style={styles.gradient}>
+    <LinearGradient
+      colors={["#ffffff", "#e2e9f9", "#d7e2fb"]}
+      style={styles.gradient}
+    >
       <SafeAreaView style={styles.container}>
         <View style={styles.headerCart}>
           <TouchableOpacity onPress={() => {}}>
@@ -94,7 +111,9 @@ export default function CartScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.bodyOne}>
-          <Text style={styles.bodyOne_Text}>You have {cartLength} items in your cart</Text>
+          <Text style={styles.bodyOne_Text}>
+            You have {cartLength} items in your cart
+          </Text>
         </View>
         <View style={styles.body}>
           {cartItems && cartItems.courses && cartItems.courses.length > 0 ? (
@@ -105,9 +124,14 @@ export default function CartScreen() {
                 </View>
                 <View style={styles.cart_Text}>
                   <View>
-                    <Text style={styles.cart_Text_One}>{item.courseId.courseName}</Text>
+                    <Text style={styles.cart_Text_One}>
+                      {item.courseId.courseName}
+                    </Text>
                     <Text></Text>
-                    <Text style={styles.cart_Text_One}>{parseFloat(item.courseId.price).toLocaleString("vi-VN")} ₫</Text>
+                    <Text style={styles.cart_Text_One}>
+                      {parseFloat(item.courseId.price).toLocaleString("vi-VN")}{" "}
+                      ₫
+                    </Text>
                   </View>
                 </View>
                 <View>
@@ -155,7 +179,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 10,
-    height: height * 0.10,
+    height: height * 0.1,
   },
   headerCart_Text: {
     fontSize: 22,
@@ -178,7 +202,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   body: {
-    flex: 1.
+    flex: 1,
   },
   cart: {
     margin: 5,
