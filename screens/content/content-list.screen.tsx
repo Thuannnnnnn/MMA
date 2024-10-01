@@ -1,78 +1,87 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, SafeAreaView, FlatList, Text, Dimensions, View } from 'react-native';
-import { Entypo, AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useEffect, useState } from "react";
+import {
+  StyleSheet,
+  SafeAreaView,
+  FlatList,
+  Text,
+  Dimensions,
+  View,
+} from "react-native";
+import { Entypo, AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 // import { ProgressBar } from 'react-native-paper';
-import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as ScreenOrientation from 'expo-screen-orientation';
-import { getContentById } from '@/API/Content/ContentApi';
-import { Course, Content } from '@/constants/Content/contentList';
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ScreenOrientation from "expo-screen-orientation";
+import { getContentById } from "@/API/Content/ContentApi";
+import { Course, Content } from "@/constants/Content/contentList";
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 export default function ContentList() {
   const router = useRouter();
   const [data, setData] = useState<Content[]>([]);
-  const contentId = 't_introduction_to_programming';
+  const contentId = "t_introduction_to_programming";
+  const token =
+    "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRyYW5xdW9jdGh1YW4yMDAzQGdtYWlsLmNvbSIsIm5hbWUiOiJUcmFuIFF1b2MgVGh1YW4iLCJpYXQiOjE3Mjc2MjkxNjgsImV4cCI6MTcyNzYzNjM2OH0.fW-EldYVy9kgWdAPDAbXxzCF9TNjM0U_S8sQwaHekII";
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = await AsyncStorage.getItem('token');
+        // const token = await AsyncStorage.getItem('token');
         if (token) {
           const result: Course = await getContentById(contentId, token);
           setData(result.contents);
         } else {
-          console.warn('Token is null, unable to fetch content');
+          console.warn("Token is null, unable to fetch content");
         }
       } catch (error) {
-        console.error('Error fetching content:', error);
+        console.error("Error fetching content:", error);
       }
     };
-  
+
     fetchData();
   }, [contentId]);
-  
 
-  
   useEffect(() => {
     const lockOrientation = async () => {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
+      await ScreenOrientation.lockAsync(
+        ScreenOrientation.OrientationLock.PORTRAIT
+      );
     };
     lockOrientation();
   }, []);
 
- 
   const handlePress = async (item: Content) => {
     try {
-      await AsyncStorage.setItem('@selectedItem', JSON.stringify(item));
+      await AsyncStorage.setItem("@selectedItem", JSON.stringify(item));
     } catch (e) {
-      console.error('Error saving item', e);
+      console.error("Error saving item", e);
     }
     switch (item.contentType) {
-      case 'videos':
+      case "videos":
         router.push({
-          pathname: '/(routes)/content/content-video',
+          pathname: "/(routes)/content/content-video",
         });
-        break; 
-      case 'docs':
+        break;
+      case "docs":
         router.push({
-          pathname: '/(routes)/content/content-docs',
+          pathname: "/(routes)/content/content-docs",
         });
-        break; 
-      case 'questions':
+        break;
+      case "questions":
         router.push({
-          pathname: '/(routes)/content/content-video',
+          pathname: "/(routes)/content/content-video",
         });
-        break; 
-      case 'exams':
+        break;
+      case "exams":
         router.push({
-          pathname: '/(routes)/content/content-video',
+          pathname: "/(routes)/content/content-exam",
         });
-        break; 
+        break;
       default:
         break;
     }
   };
+  
 
   const renderCourse = ({ item }: { item: Content }) => {
     return (
@@ -83,7 +92,12 @@ export default function ContentList() {
         <View style={styles.courseDetails}>
           <Text style={styles.courseTitle}>{item.contentName}</Text>
           <Text style={styles.courseType}>
-            <MaterialCommunityIcons name="format-list-bulleted-type" size={18} color="black" /> {item.contentType}
+            <MaterialCommunityIcons
+              name="format-list-bulleted-type"
+              size={18}
+              color="black"
+            />{" "}
+            {item.contentType}
           </Text>
           {/* <ProgressBar progress={0} color="#3FA2F6" style={styles.progressBar} /> */}
         </View>
@@ -111,24 +125,24 @@ export default function ContentList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   titleHeader: {
     fontSize: 30,
     marginTop: 30,
     marginLeft: 30,
-    fontWeight: '900',
+    fontWeight: "900",
     marginBottom: 40,
   },
   courseCard: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: screenHeight * 0.02,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: screenWidth * 0.02,
     elevation: 2,
     marginLeft: 20,
     marginRight: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 1,
@@ -139,26 +153,26 @@ const styles = StyleSheet.create({
   },
   courseTitle: {
     fontSize: screenWidth * 0.045,
-    fontWeight: 'bold',
-    color: '#FF7F3E',
+    fontWeight: "bold",
+    color: "#FF7F3E",
   },
   courseType: {
     fontSize: screenWidth * 0.04,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   iconContainerType: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    alignSelf: "center",
     marginLeft: 10,
     width: 60,
     height: 60,
-    backgroundColor: '#CAF4FF',
+    backgroundColor: "#CAF4FF",
     borderRadius: 30,
   },
   iconContainerPlay: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     margin: 10,
   },
   progressBar: {
