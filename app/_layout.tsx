@@ -40,6 +40,7 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/forgotPassword/inputOTP" />
                         <Stack.Screen name="(routes)/forgotPassword/newPassword" />
                         <Stack.Screen name="(routes)/cart/index" />
+                        <Stack.Screen name="(routes)/courseDetails" options={{ headerShown: true, title: "Course Details", headerBackTitle: "Back" }} />
                     </Stack>
                     </ClerkProvider>
                 )

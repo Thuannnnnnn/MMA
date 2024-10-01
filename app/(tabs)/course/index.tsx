@@ -1,13 +1,9 @@
 import { View, Text } from 'react-native'
 import React from 'react'
-
+import { Redirect } from 'expo-router'
 
 export default function course() {
   return(
-    <View>
-        <Text>
-            trang course đầy rực rỡ
-        </Text>
-    </View>
+    <Redirect href={"/(routes)/courseDetails"} />
   )
 }
