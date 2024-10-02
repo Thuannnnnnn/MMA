@@ -17,7 +17,7 @@ export default function ErrorScreen() {
         <Text style={styles.message}>An error occurred during the payment process. Please try again later.</Text>
 
         <View style={styles.buttonsContainer}>
-          <TouchableOpacity style={styles.goBackButton} onPress={handleGoBack}>              
+          <TouchableOpacity style={styles.goBackButton} onPress={handleGoBack}>
             <Text style={styles.buttonText}>Go Back to Home</Text>
           </TouchableOpacity>
         </View>
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   goBackButton: {
-    backgroundColor: '#1e90ff', // Màu xanh dương để quay lại trang chính
+    backgroundColor: '#1e90ff',
     paddingVertical: 12,
     paddingHorizontal: 30,
     borderRadius: 25,
