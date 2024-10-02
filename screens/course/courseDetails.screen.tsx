@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import img from '@/assets/Course/BgCourseDetail.png';
-import { router } from 'expo-router';
 import { Course } from '@/constants/Course/CourseDetails';
 import { getCourseById } from '@/API/Course/CourseDetailsAPI';
 const { width, height } = Dimensions.get('window');
