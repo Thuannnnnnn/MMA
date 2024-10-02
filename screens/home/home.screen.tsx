@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, FlatList, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, FlatList, Alert, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AvatarPng from '@/assets/homePage/avatar.png';
 import { fetchCourses } from '@/API/HomePage/homePageAPI';
 import { Course } from '@/constants/HomePage/course';
 import { SlideData } from '@/constants/HomePage/slideData';
+import { router } from 'expo-router';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -109,6 +110,15 @@ export default function HomeScreen() {
                 </View>
               ))}
             </ScrollView>
+            <TouchableOpacity
+        onPress={() => router.push("/(routes)/payment")}
+          >
+            <Text
+            >
+                payment
+            </Text>
+          </TouchableOpacity>
+
           </View>
           {loading ? (
             <ActivityIndicator size="large" color="#0000ff" />
@@ -122,6 +132,7 @@ export default function HomeScreen() {
               ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#0000ff" /> : null}
             />
           )}
+          
         </View>
       </SafeAreaView>
     </LinearGradient>

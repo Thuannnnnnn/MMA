@@ -39,6 +39,8 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/forgotPassword/index" />
                         <Stack.Screen name="(routes)/forgotPassword/inputOTP" />
                         <Stack.Screen name="(routes)/forgotPassword/newPassword" />
+                        <Stack.Screen name="(routes)/payment/index" />
+                        <Stack.Screen name="(routes)/payment/paymentSuccess" />
                         <Stack.Screen name="(routes)/cart/index" />
                     </Stack>
                     </ClerkProvider>

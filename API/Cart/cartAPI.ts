@@ -4,7 +4,7 @@ import axios from 'axios';
 
 export const getAllCartByEmail = async (Email: string, token: string): Promise<Cart> => {
   try {
-    const response = await axios.get<Cart>(`http://192.168.1.14:3030/api/cart/getByEmail/`, {
+    const response = await axios.get<Cart>(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/cart/getByEmail/`, {
       headers: {
         Authorization: token
       },
