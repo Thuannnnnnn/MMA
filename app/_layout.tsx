@@ -1,26 +1,23 @@
+import { Stack } from "expo-router";
+import { useEffect, useState } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import "react-native-reanimated";
+import TabsLayout from "./(tabs)/_layout";
+import { ClerkProvider } from "@clerk/clerk-expo";
 
-import { Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import 'react-native-reanimated';
-import TabsLayout from './(tabs)/_layout';
-import { ClerkProvider } from '@clerk/clerk-expo';
+export default function RootLayout() {
+  const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  if (!publishableKey) {
+    throw new Error(
+      "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env"
+    );
+  }
 
+  const [isLoggedIn] = useState(false);
 
-export default function RootLayout() { 
-    const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
-    if (!publishableKey) {
-        throw new Error(
-          'Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env',
-        )
-      }
-      
-  
-    const [isLoggedIn] = useState(false);
-
-    useEffect(() => {
-        console.log('isLoggedIn:', isLoggedIn);
-      }, [isLoggedIn]);
+  useEffect(() => {
+    console.log("isLoggedIn:", isLoggedIn);
+  }, [isLoggedIn]);
 
       return(
         <GestureHandlerRootView>
@@ -44,6 +41,7 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/forgotPassword/newPassword" />
                         <Stack.Screen name="(routes)/payment/index" />
                         <Stack.Screen name="(routes)/payment/paymentSuccess" />
+                        <Stack.Screen name="(routes)/cart/index" />
                     </Stack>
                     </ClerkProvider>
                 )

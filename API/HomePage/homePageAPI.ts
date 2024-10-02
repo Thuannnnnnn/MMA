@@ -4,7 +4,7 @@ import { Course } from '@/constants/HomePage/course';
 
 export const fetchCourses = async (): Promise<Course[]> => {
   try {
-    const response = await axios.get('http://192.168.101.11:8080/api/course/getAll');
+    const response = await axios.get('http://192.168.1.12:3030/api/course/getAll');
     return response.data.map((course: any) => ({
       courseId: course.courseId,
       courseName: course.courseName,
