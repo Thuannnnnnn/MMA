@@ -6,13 +6,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { deleteById, getAllCartByEmail } from "@/API/Cart/cartAPI";
 import { Cart, CartItem } from "@/constants/Cart/cartList";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<Cart | null>(null);
-  const email = "user@example.com";
+  const email = "tranquocthuan2003@gmail.com";
   const calculateTotal = () => {
     const total = cartItems?.courses?.reduce((total, item) => {
       const price = item.courseId.price ? item.courseId.price : "0";
@@ -50,13 +49,13 @@ export default function CartScreen() {
         const token = "nhap token";
         if (token) {
           const result: Cart= await getAllCartByEmail(email, token);
-          console.log("Test result: " + result.Cart);
-          if (result && result.Cart) {
-            const coursesArray = Array.isArray(result.Cart.courses)
-              ? result.Cart.courses
+          console.log("Test result: " + result);
+          if (result && result) {
+            const coursesArray = Array.isArray(result.courses)
+              ? result.courses
               : [];
             setCartItems({
-              ...result.Cart,
+              ...result,
               courses: coursesArray,
             });
           } else {
