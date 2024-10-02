@@ -1,19 +1,19 @@
-import { Cart } from '@/constants/Cart/cartList';
+import { Cart, Res } from '@/constants/Cart/cartList';
 import axios from 'axios';
 
 
 export const getAllCartByEmail = async (Email: string, token: string): Promise<Cart> => {
   try {
-    const response = await axios.get<Cart>(`http://192.168.1.14:3030/api/cart/getByEmail/`, {
+    const response = await axios.get<Res>(`http://10.66.222.17:3030/api/cart/getByEmail/`, {
       headers: {
         Authorization: token
       },
       params: {
         userGenerated: Email,
       },
-    }); 
-
-    return response.data;
+    });
+    const Cart = response.data.Cart;
+    return Cart;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('Axios error:', error.response?.data || error.message);
@@ -26,7 +26,7 @@ export const getAllCartByEmail = async (Email: string, token: string): Promise<C
 
 export const deleteById = async (cartId: string, token: string, courseId: string): Promise<Cart> => {
   try {
-    const response = await axios.post<Cart>(`http://192.168.1.14:3030/api/cart/deteleCourseOutCart`, {
+    const response = await axios.post<Cart>(`http://10.66.222.17:3030/api/cart/deteleCourseOutCart`, {
       cartId: cartId,
       courseId: courseId,
     }, {
@@ -49,7 +49,7 @@ export const deleteById = async (cartId: string, token: string, courseId: string
 
 export const addToCart = async (cartId: string, token: string, courseId: string): Promise<Cart> => {
   try {
-    const response = await axios.post<Cart>(`http://192.168.1.14:3030/api/cart/addToCart`, {
+    const response = await axios.post<Cart>(`http://10.66.222.17:3030/api/cart/addToCart`, {
       headers: {
         Authorization: token
       },

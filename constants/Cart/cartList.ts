@@ -36,6 +36,6 @@ export interface Cart {
 }
 
 export interface Res {
-  cart: Cart;
+  Cart: Cart;
   Message: string;
 }

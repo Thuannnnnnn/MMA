@@ -134,7 +134,7 @@ export default function LoginScreen() {
     try {
       console.log("Making request to login API");
       const response = await axios.post(
-        `http://192.168.1.12:3030/api/auth/login/base`,
+        `http://10.66.222.17:3030/api/auth/login/base`,
         {
           email: userInfo.email,
           password: userInfo.password,
