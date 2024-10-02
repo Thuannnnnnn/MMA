@@ -1,9 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Text, View, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import img from '@/assets/Course/BgCourseDetail.png';
-
+import { router } from 'expo-router';
+import { Course } from '@/constants/Course/CourseDetails';
+import { getCourseById } from '@/API/Course/CourseDetailsAPI';
 const { width, height } = Dimensions.get('window');
 export default function CourseDetailsScreen() {
+
+  const renderHTMLText = (htmlString: string) => {
+    const parts = htmlString.split(/(<strong>|<\/strong>|<p>|<\/p>|<i>|<\/i>)/g);
+  
+    return parts.map((part, index) => {
+      if (part === '<p>' || part === '</p>' || part === '<i>' || part === '</i>' || part === '<strong>' || part === '</strong>') {
+        return null;
+      }
+      const isBold = parts[index - 1] === '<strong>';
+
+      return (
+        <Text key={index} style={isBold ? styles.boldText : styles.regularText}>
+          {part}
+        </Text>
+      );
+    });
+  };
+
+  const courseId = 't_introduction_to_programming';
+  const [course, setCourse] = useState<Course | null>(null);
+  
+  useEffect(() => {
+    const fetchCourse = async () => {
+      try {
+        const fetchedCourse = await getCourseById(courseId);
+        setCourse(fetchedCourse);
+      } catch (error) {
+        console.error('Failed to fetch course:', error);
+      }
+    };
+    fetchCourse();
+  }, [courseId]);
+  
+  if (!course) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -12,7 +54,7 @@ export default function CourseDetailsScreen() {
           <View style={styles.label}>
             <Text style={styles.labelText}>BESTSELLER</Text>
           </View>
-          <Text style={styles.courseTitle}>ProductDesign v1.0</Text>
+          <Text style={styles.courseTitle}>{course.courseName}</Text>
           <Image source={img} style={styles.courseImage} />
         </View>
 
@@ -20,13 +62,13 @@ export default function CourseDetailsScreen() {
           {/* About Course Section */}
           <View style={styles.aboutCourse}>
             <View style={styles.courseSection}>
-              <Text style={styles.courseTitleChild}>ProductDesign v1.0</Text>
-              <Text style={styles.price}>$74.00</Text>
+              <Text style={styles.courseTitleChild}>{course.courseName}</Text>
+              <Text style={styles.price}>{course.price}$</Text>
             </View>
-            <Text style={styles.courseInfo}>6h 14min · 24 Lessons</Text>
+
             <Text style={styles.aboutTitle}>About this course</Text>
             <Text style={styles.aboutDescription}>
-              Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.
+            {renderHTMLText(course.description)}
             </Text>
           </View>
 
@@ -198,7 +240,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#2E86DE',
     width: width* 0.1,
     height: height*0.06,
-    borderRadius: width*0.6,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -211,7 +253,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#cccccc',
     width: width* 0.1,
     height: height*0.06,
-    borderRadius: width*0.6,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -253,7 +295,7 @@ const styles = StyleSheet.create({
   favoriteButton: {
     justifyContent: 'flex-start',
     backgroundColor: '#FDEDEC',
-    paddingVertical: height * 0.02,
+    paddingVertical: 8,
     borderRadius: 10,
     alignItems: 'center',
     width: width * 0.4,
@@ -263,5 +305,11 @@ const styles = StyleSheet.create({
     color: '#E74C3C',
     fontSize: width * 0.04,
     fontWeight: 'bold',
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  regularText: {
+    fontWeight: 'normal',
   },
 });

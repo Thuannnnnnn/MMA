@@ -4,7 +4,7 @@ import { Content } from "../Content/contentList";
     courseName: string;
     description: string;
     posterLink: string;
-    createDate: string; // Hoặc Date nếu bạn xử lý dạng ngày
+    createDate: string;
     videoIntro: string;
     userGenerated: string;
     price: string;
