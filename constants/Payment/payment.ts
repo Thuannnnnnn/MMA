@@ -1,3 +1,3 @@
 export interface paymentUrl {
-    amount: string;
+  paymentUrl: string;
   }

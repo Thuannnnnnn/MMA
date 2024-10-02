@@ -1,41 +1,70 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { WebView } from 'react-native-webview';
-import { StyleSheet, Alert } from 'react-native';
+import { StyleSheet, Alert, ActivityIndicator, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-//import { useNavigation } from '@react-navigation/native'; // Make sure you have react-navigation installed
+import { getPaymentUrl } from '@/API/Payment/paymentAPI';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { paymentUrl } from '@/constants/Payment/payment';
+import queryString from 'query-string';
 
 export default function Payment() {
-  //const navigation = useNavigation();
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);  // Added state for loading
 
-  const handleNavigationChange = (navState: { url: any; }) => {
+  useEffect(() => {
+    const getUrl = async () => {
+      try {
+        const token =`Bearer ${await AsyncStorage.getItem('token')}`
+        console.log(token)
+        const amount = 10000
+        if (token) {
+          const result: paymentUrl = await getPaymentUrl(amount, token);
+          setUrl(result.paymentUrl);
+        } else {
+          console.warn('Token is null, unable to fetch payment URL');
+        }
+      } catch (error) {
+        console.error('Error fetching payment URL:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getUrl();
+  }, []);
+  console.log(url)
+  const handleNavigationChange = (navState: { url: string }) => {
     const { url } = navState;
 
-    // Check if the URL is the return URL after payment
     if (url.startsWith('http://localhost:8080/vnpay-return')) {
-      // Handle the response from the payment gateway
-      // You can parse the URL to get payment status and other parameters if needed
-      const params = new URL(url).searchParams;
-      const paymentStatus = params.get('paymentStatus'); // Example: Get payment status
+      const parsedParams = queryString.parseUrl(url).query;
+      const paymentStatus = parsedParams.paymentStatus || 'Unknown';
       Alert.alert('Payment Status', `Payment was: ${paymentStatus}`);
-      router.push("/(routes)/login")
+      router.push("/(routes)/payment/paymentSuccess");
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <WebView
-        source={{
-          uri: 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=2000000&vnp_Command=pay&vnp_CreateDate=20241001181530&vnp_CurrCode=VND&vnp_IpAddr=%3A%3A1&vnp_Locale=vn&vnp_OrderInfo=Payment+for+buy+course&vnp_OrderType=other&vnp_ReturnUrl=http%3A%2F%2Flocalhost%3A8080%2Fvnpay-return&vnp_TmnCode=05HCIENO&vnp_TxnRef=1234567&vnp_Version=2.1.0&vnp_SecureHash=90010d81dd4cfcaa254491c62179038b12320a5ab1ef49487f02b27bba0366edc871931a01798bc6c495c640f62723f1763c40672fb7dfba44bae862628a5f68',
-        }}
-        style={styles.webview}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        cacheEnabled={false}
-        cacheMode="LOAD_NO_CACHE"
-        startInLoadingState={true}
-        onNavigationStateChange={handleNavigationChange} // Listen for navigation changes
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      ) : (
+        url && (
+          <WebView
+            source={{ uri: url }}
+            style={styles.webview}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            cacheEnabled={false}
+            cacheMode="LOAD_NO_CACHE"
+            startInLoadingState={true}
+            onNavigationStateChange={handleNavigationChange} // Listen for navigation changes
+          />
+        )
+      )}
     </SafeAreaView>
   );
 }
@@ -46,5 +75,10 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

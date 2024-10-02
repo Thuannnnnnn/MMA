@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { paymentUrl } from '@/constants/Payment/payment';
 
-export const getPaymentUrl= async (amount: paymentUrl, token: string): Promise<paymentUrl> => {
+export const getPaymentUrl= async (amount: number, token: string): Promise<paymentUrl> => {
   try {
-    const response = await axios.post<paymentUrl>(`http://192.168.1.24:8080/api/payment/create`,amount, {
+    const response = await axios.post<paymentUrl>(`http://192.168.1.24:8080/api/payment/create`,{ amount }, {
       headers: {
         Authorization: token
       }
