@@ -23,6 +23,7 @@ import * as WebBrowser from "expo-web-browser";
 import { useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as Linking from "expo-linking";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
@@ -140,8 +141,9 @@ export default function LoginScreen() {
           password: userInfo.password,
         }
       );
-
-      console.log("Login successful:", response.data);
+      await AsyncStorage.setItem("token", response.data.token);
+      const userData = JSON.stringify(response.data.user);
+      await AsyncStorage.setItem("user", userData);
       router.push("/(tabs)/");
     } catch (error) {
       console.error("Login failed:", error);
@@ -178,7 +180,7 @@ export default function LoginScreen() {
       }
     } finally {
       console.log("Stopping button spinner");
-      setButtonSpinner(false); // Đảm bảo dừng vòng quay
+      setButtonSpinner(false);
     }
   };
   return (
