@@ -3,22 +3,21 @@ import { Text, View, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions
 import img from '@/assets/Course/BgCourseDetail.png';
 import { Course } from '@/constants/Course/CourseDetails';
 import { getCourseById } from '@/API/Course/CourseDetailsAPI';
-const { width, height } = Dimensions.get('window');
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {  getAllCartByEmail } from '@/API/Cart/cartAPI';
-import {  useRouter } from 'expo-router';
+import { getAllCartByEmail, addToCart } from '@/API/Cart/cartAPI';
+import { useRouter } from 'expo-router';
+
+const { width, height } = Dimensions.get('window');
 
 export default function CourseDetailsScreen() {
+  const router = useRouter(); // Initialize router
   const courseId = 't_introduction_to_programming';
   const [course, setCourse] = useState<Course | null>(null);
-  
 
-  // Function to handle HTML rendering, with text styles.
   const renderHTMLText = (htmlString: string) => {
     const parts = htmlString.split(/(<strong>|<\/strong>|<p>|<\/p>|<i>|<\/i>)/g);
-
     return parts.map((part, index) => {
-      if (part === '<p>' || part === '</p>' || part === '<i>' || part === '</i>' || part === '<strong>' || part === '</strong>') {
+      if (['<p>', '</p>', '<i>', '</i>', '<strong>', '</strong>'].includes(part)) {
         return null;
       }
       const isBold = parts[index - 1] === '<strong>';
@@ -29,12 +28,10 @@ export default function CourseDetailsScreen() {
       );
     });
   };
-
-  // Fetching course details using AsyncStorage and API call.
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const token = await AsyncStorage.getItem('token');
+        const token = `Bearer ${await AsyncStorage.getItem('token')}`;
         if (token) {
           const fetchedCourse = await getCourseById(courseId, token);
           setCourse(fetchedCourse);
@@ -45,39 +42,36 @@ export default function CourseDetailsScreen() {
     };
     fetchCourse();
   }, [courseId]);
-
-  // Function to handle adding course to cart
- const handleAddToCart = async (_id: string) => {
-  const router = useRouter(); // Initialize router
-  console.log('Trying to add course to cart with ID:', _id);
-
-  try {
-    const token = await AsyncStorage.getItem('token'); // Get token from AsyncStorage
-    let cartId = await AsyncStorage.getItem('cartId'); // Get cartId from AsyncStorage
-
-    console.log('Token:', token);
-    console.log('Cart ID from AsyncStorage:', cartId);
-
-    if (token) {
-      // If cartId is not available, fetch it from the API
-      if (!cartId) {
-        console.log('No cartId found, fetching from API...');
-        const cartResponse = await getAllCartByEmail(token); // Adjust to use the correct function
-        cartId = cartResponse.cartId; // Save cartId from API
-        await AsyncStorage.setItem('cartId', cartId); // Save cartId in AsyncStorage
+  const handleAddToCart = async (_id: string) => {
+    try {
+      const userString = await AsyncStorage.getItem("user");
+      if (!userString) {
+        console.warn("No user found in AsyncStorage.");
+        return;
       }
+      const user = JSON.parse(userString);
+      const email = user.email;
+      const token = `Bearer ${await AsyncStorage.getItem('token')}`;
 
-      // Call API to add course to cart
-      const response = await handleAddToCart(token, _id, cartId);
-      console.log('Successfully added course to cart:', response);
-      router.push('/(routes)/cart'); // Redirect to cart
-    } else {
-      console.warn('Token is null, unable to add course to cart.');
+      if (token) {
+        const cartResponse = await getAllCartByEmail(email, token);
+        const cartId = cartResponse?.cartId;
+
+        if (!cartId) {
+          console.warn('No cartId found, unable to add course to cart.');
+          return;
+        }
+        await addToCart(cartId, token, _id);
+        router.push('/(routes)/cart');
+      } else {
+        console.warn('Token is null, unable to add course to cart.');
+      }
+    } catch (error) {
+      console.error('Error adding course to cart:', error);
     }
-  } catch (error) {
-    console.error('Error adding course to cart:', error);
-  }
-};
+  };
+  
+  
 
   if (!course) {
     return (

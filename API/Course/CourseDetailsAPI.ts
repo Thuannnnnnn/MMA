@@ -5,13 +5,14 @@ import { Course } from '@/constants/Course/CourseDetails';
 
 export const getCourseById = async (courseId: string, token: string): Promise<Course | null> => {
   try {
-    const response = await axios.get<{ course: Course }>(`http://192.168.101.11:8080/api/course/getById/${courseId}`, {
+    const response = await axios.get<{ course: Course }>(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/course/getById/${courseId}`, {
       headers: {
         Authorization: token,
       },
     });
 
     if (response.data && response.data.course) {
+      console.log(response.data.course)
       return response.data.course;
     } else {
       console.error('Course data is undefined or null');

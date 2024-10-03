@@ -84,15 +84,15 @@ export const deleteCourseOrder = async (
 
 export const addToCart = async (cartId: string, token: string, courseId: string): Promise<Cart> => {
   try {
-    const response = await axios.post<Cart>(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/cart/addToCart`, {
-      headers: {
-        Authorization: token
-      },
-      data: {
-        cartId: cartId,
-        courseId: courseId,
-      },
-    }); 
+    const response = await axios.post<Cart>(
+      `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/cart/addToCart`,
+      { cartId, courseId },
+      {
+        headers: {
+          Authorization: token,
+        },
+      }
+    );
 
     return response.data;
   } catch (error) {
@@ -101,6 +101,6 @@ export const addToCart = async (cartId: string, token: string, courseId: string)
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to add cart');
+    throw new Error('Failed to add to cart');
   }
 };
