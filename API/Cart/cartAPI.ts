@@ -26,13 +26,13 @@ export const getAllCartByEmail = async (Email: string, token: string): Promise<C
 
 export const deleteById = async (cartId: string, token: string, courseId: string): Promise<Cart> => {
   try {
-    const response = await axios.post<Cart>(`http://10.66.222.17:3030/api/cart/deteleCourseOutCart`, {
+    const response = await axios.post<Cart>(`http://192.168.1.14:3030/api/cart/deteleCourseOutCart`, {
       cartId: cartId,
       courseId: courseId,
     }, {
       headers: {
         Authorization: token,
-        'Content-Type': 'application/json', // Có thể thêm header này nếu cần
+        'Content-Type': 'application/json',
       },
     }); 
 
@@ -49,7 +49,7 @@ export const deleteById = async (cartId: string, token: string, courseId: string
 
 export const addToCart = async (cartId: string, token: string, courseId: string): Promise<Cart> => {
   try {
-    const response = await axios.post<Cart>(`http://10.66.222.17:3030/api/cart/addToCart`, {
+    const response = await axios.post<Cart>(`http://192.168.1.14:3030/api/cart/addToCart`, {
       headers: {
         Authorization: token
       },
