@@ -1,13 +1,33 @@
-import { Image, StyleSheet } from 'react-native';
-import React from 'react';
-import { Tabs } from 'expo-router';
+import { Image, StyleSheet, BackHandler } from 'react-native';
+import React, { useEffect } from 'react';
+import { Tabs, useNavigation } from 'expo-router';
 
 import houseIcon from '@/assets/icons/HouseSimple.png';
 import cartIcon from '@/assets/icons/ShoppingCart.png';
 import bookIcon from '@/assets/icons/BookBookmark.png';
 import userIcon from '@/assets/icons/User.png';
 
-export default function TabsLayout() {
+const TabsLayout: React.FC = () => {
+  const navigation = useNavigation();
+
+  const handleBackButtonPress = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      BackHandler.exitApp();
+    }
+    return true;
+  };
+
+  useEffect(() => {
+    const backAction = BackHandler.addEventListener(
+      "hardwareBackPress",
+      handleBackButtonPress
+    );
+
+    return () => backAction.remove();
+  }, []);
+
   return (
     <Tabs
       screenOptions={({ route }) => {
@@ -19,7 +39,7 @@ export default function TabsLayout() {
             } else if (route.name === "cart/index") {
               iconName = cartIcon;
             } else if (route.name === "course/index") {
-              iconName = bookIcon ;
+              iconName = bookIcon;
             } else if (route.name === "profile/index") {
               iconName = userIcon;
             }
@@ -45,8 +65,8 @@ export default function TabsLayout() {
         };
       }}
     >
-      <Tabs.Screen name='index' />
-      <Tabs.Screen name='cart/index' options={{ headerShown: true, headerTitle: "Cart" }} />
+       <Tabs.Screen name="index"/>
+      <Tabs.Screen name='cart/index'  options={{ headerShown: false, headerTitle: "Cart" }} />
       <Tabs.Screen name='course/index' options={{ headerShown: true, headerTitle: "Course" }} />
       <Tabs.Screen name='profile/index' options={{ headerShown: true, headerTitle: "Profile" }} />
     </Tabs>
@@ -55,12 +75,13 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBarStyle: {
-  flexDirection: 'row',
-  justifyContent: 'center',
-  alignItems: 'center',
-  backgroundColor: '#fff',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
   },
   tabBarItemStyle: {
     padding: 10,
   },
 });
+export default TabsLayout;

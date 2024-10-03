@@ -6,6 +6,7 @@ import AvatarPng from '@/assets/homePage/avatar.png';
 import { fetchCourses } from '@/API/HomePage/homePageAPI';
 import { Course } from '@/constants/HomePage/course';
 import { SlideData } from '@/constants/HomePage/slideData';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -29,7 +30,8 @@ export default function HomeScreen() {
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        const fetchedCourses = await fetchCourses();
+        const token = `Bearer ${await AsyncStorage.getItem('token')}`;
+        const fetchedCourses = await fetchCourses(token);
         setCourses(fetchedCourses);
         setDisplayedCourses(fetchedCourses.slice(0, 4));
       } catch (error) {
@@ -122,6 +124,7 @@ export default function HomeScreen() {
               ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#0000ff" /> : null}
             />
           )}
+          
         </View>
       </SafeAreaView>
     </LinearGradient>

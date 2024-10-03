@@ -3,12 +3,12 @@ import { StyleSheet, SafeAreaView, Text } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Video, ResizeMode, VideoFullscreenUpdate, VideoFullscreenUpdateEvent } from 'expo-av';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import { Content } from '@/constants/Content/contentList';
 
 export default function ContentVideo() {
-  const [item, setItem] = useState<{ title: string; videoUri: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const videoRef = useRef<Video>(null);
-
+  const [item, setItem] = useState<Content | null>(null);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -23,7 +23,6 @@ export default function ContentVideo() {
 
     fetchData();
   }, []);
-
   useEffect(() => {
     const handleFullscreen = async () => {
       if (isFullscreen) {
@@ -42,10 +41,10 @@ export default function ContentVideo() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {item ? (
+      {item && item.contentRef && item.contentType === 'videos' ? (
         <Video
           ref={videoRef}
-          source={{ uri: item.videoUri }}
+          source={{ uri: item.contentRef.videoLink }}
           rate={1.0}
           volume={1.0}
           isMuted={false}
