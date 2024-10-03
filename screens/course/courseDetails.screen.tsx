@@ -4,17 +4,24 @@ import img from '@/assets/Course/BgCourseDetail.png';
 import { Course } from '@/constants/Course/CourseDetails';
 import { getCourseById } from '@/API/Course/CourseDetailsAPI';
 const { width, height } = Dimensions.get('window');
-export default function CourseDetailsScreen() {
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {  getAllCartByEmail } from '@/API/Cart/cartAPI';
+import {  useRouter } from 'expo-router';
 
+export default function CourseDetailsScreen() {
+  const courseId = 't_introduction_to_programming';
+  const [course, setCourse] = useState<Course | null>(null);
+  
+
+  // Function to handle HTML rendering, with text styles.
   const renderHTMLText = (htmlString: string) => {
     const parts = htmlString.split(/(<strong>|<\/strong>|<p>|<\/p>|<i>|<\/i>)/g);
-  
+
     return parts.map((part, index) => {
       if (part === '<p>' || part === '</p>' || part === '<i>' || part === '</i>' || part === '<strong>' || part === '</strong>') {
         return null;
       }
       const isBold = parts[index - 1] === '<strong>';
-
       return (
         <Text key={index} style={isBold ? styles.boldText : styles.regularText}>
           {part}
@@ -23,21 +30,55 @@ export default function CourseDetailsScreen() {
     });
   };
 
-  const courseId = 't_introduction_to_programming';
-  const [course, setCourse] = useState<Course | null>(null);
-  
+  // Fetching course details using AsyncStorage and API call.
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const fetchedCourse = await getCourseById(courseId);
-        setCourse(fetchedCourse);
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+          const fetchedCourse = await getCourseById(courseId, token);
+          setCourse(fetchedCourse);
+        }
       } catch (error) {
         console.error('Failed to fetch course:', error);
       }
     };
     fetchCourse();
   }, [courseId]);
-  
+
+  // Function to handle adding course to cart
+ const handleAddToCart = async (_id: string) => {
+  const router = useRouter(); // Initialize router
+  console.log('Trying to add course to cart with ID:', _id);
+
+  try {
+    const token = await AsyncStorage.getItem('token'); // Get token from AsyncStorage
+    let cartId = await AsyncStorage.getItem('cartId'); // Get cartId from AsyncStorage
+
+    console.log('Token:', token);
+    console.log('Cart ID from AsyncStorage:', cartId);
+
+    if (token) {
+      // If cartId is not available, fetch it from the API
+      if (!cartId) {
+        console.log('No cartId found, fetching from API...');
+        const cartResponse = await getAllCartByEmail(token); // Adjust to use the correct function
+        cartId = cartResponse.cartId; // Save cartId from API
+        await AsyncStorage.setItem('cartId', cartId); // Save cartId in AsyncStorage
+      }
+
+      // Call API to add course to cart
+      const response = await handleAddToCart(token, _id, cartId);
+      console.log('Successfully added course to cart:', response);
+      router.push('/(routes)/cart'); // Redirect to cart
+    } else {
+      console.warn('Token is null, unable to add course to cart.');
+    }
+  } catch (error) {
+    console.error('Error adding course to cart:', error);
+  }
+};
+
   if (!course) {
     return (
       <View style={styles.container}>
@@ -45,10 +86,10 @@ export default function CourseDetailsScreen() {
       </View>
     );
   }
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-
         <View style={styles.banner}>
           <View style={styles.label}>
             <Text style={styles.labelText}>BESTSELLER</Text>
@@ -66,9 +107,7 @@ export default function CourseDetailsScreen() {
             </View>
 
             <Text style={styles.aboutTitle}>About this course</Text>
-            <Text style={styles.aboutDescription}>
-            {renderHTMLText(course.description)}
-            </Text>
+            <Text style={styles.aboutDescription}>{renderHTMLText(course.description)}</Text>
           </View>
 
           {/* Lessons List */}
@@ -77,10 +116,10 @@ export default function CourseDetailsScreen() {
               <Text style={styles.lessonIndex}>01</Text>
               <View style={styles.lessonDetails}>
                 <Text style={styles.lessonTitle}>Welcome to the Course</Text>
-                <Text style={styles.lessonTime}>6:10 mins</Text>
+
               </View>
               <TouchableOpacity style={styles.playButton}>
-              <Text style={styles.playButtonText}>Play</Text>
+                <Text style={styles.playButtonText}>Play</Text>
               </TouchableOpacity>
             </View>
 
@@ -88,7 +127,7 @@ export default function CourseDetailsScreen() {
               <Text style={styles.lessonIndex}>02</Text>
               <View style={styles.lessonDetails}>
                 <Text style={styles.lessonTitle}>Process overview</Text>
-                <Text style={styles.lessonTime}>6:10 mins</Text>
+
               </View>
               <TouchableOpacity style={styles.playButton}>
                 <Text style={styles.playButtonText}>Play</Text>
@@ -99,10 +138,9 @@ export default function CourseDetailsScreen() {
               <Text style={styles.lessonIndex}>03</Text>
               <View style={styles.lessonDetails}>
                 <Text style={styles.lessonTitle}>Discovery</Text>
-                <Text style={styles.lessonTime}>6:10 mins</Text>
               </View>
               <TouchableOpacity style={styles.lockButton}>
-              <Text style={styles.playButtonText}>Lock</Text>
+                <Text style={styles.playButtonText}>Lock</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -111,8 +149,8 @@ export default function CourseDetailsScreen() {
 
       <View style={styles.footer}>
         <View style={styles.footerChildren}>
-          <TouchableOpacity style={styles.favoriteButton}>
-            <Text style={styles.favoriteIcon}>Add</Text>
+          <TouchableOpacity style={styles.favoriteButton} onPress={() => handleAddToCart(course._id)}>
+            <Text style={styles.favoriteIcon}>Add to cart</Text>
           </TouchableOpacity>
         </View>
 
@@ -143,7 +181,6 @@ const styles = StyleSheet.create({
     padding: width * 0.05,
     backgroundColor: '#fff',
     flex: 1,
-    
   },
   banner: {
     paddingTop: height * 0.01,
@@ -192,11 +229,6 @@ const styles = StyleSheet.create({
     color: '#3D5CFF',
     marginBottom: 10,
   },
-  courseInfo: {
-    fontSize: width * 0.025,
-    color: '#6c757d',
-    paddingBottom: height * 0.02,
-  },
   aboutCourse: {
     marginBottom: 20,
     zIndex: 1,
@@ -221,7 +253,7 @@ const styles = StyleSheet.create({
   lessonIndex: {
     fontSize: width * 0.08,
     fontWeight: 'light',
-    marginRight: width*0.05,
+    marginRight: width * 0.05,
     color: '#cdcdcd',
   },
   lessonDetails: {
@@ -231,79 +263,51 @@ const styles = StyleSheet.create({
     fontSize: width * 0.04,
     fontWeight: 'bold',
   },
-  lessonTime: {
-    fontSize: width * 0.03,
-    color: '#6c757d',
-  },
   playButton: {
-    backgroundColor: '#2E86DE',
-    width: width* 0.1,
-    height: height*0.06,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#3D5CFF',
+    borderRadius: 8,
   },
   playButtonText: {
-    fontSize: width * 0.03,
     color: '#fff',
-    fontWeight: 'bold',  
   },
   lockButton: {
-    backgroundColor: '#cccccc',
-    width: width* 0.1,
-    height: height*0.06,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: '#ccc',
+    borderRadius: 8,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#ffffff',
-    borderTopRightRadius: width * 0.025,
-    borderTopLeftRadius: width * 0.025,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
-    height: height * 0.15,
-    bottom: 20,
-    marginBottom: -20
+    padding: width * 0.05,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
   },
   footerChildren: {
-    flex: 1,
+    width: '48%',
+  },
+  favoriteButton: {
+    paddingVertical: 10,
+    backgroundColor: '#FF0000',
+    borderRadius: 8,
     alignItems: 'center',
   },
   buyButton: {
-    backgroundColor: '#2E86DE',
-    paddingVertical: height * 0.02,
-    width: width * 0.5,
-    height: height * 0.08,
-    borderRadius: 10,
+    paddingVertical: 10,
+    backgroundColor: '#3D5CFF',
+    borderRadius: 8,
     alignItems: 'center',
+  },
+  favoriteIcon: {
+    color: '#fff',
+    fontSize: width * 0.035,
   },
   buyButtonText: {
     color: '#fff',
-    fontSize: width * 0.04,
-    fontWeight: 'bold',
-  },
-  favoriteButton: {
-    justifyContent: 'flex-start',
-    backgroundColor: '#FDEDEC',
-    paddingVertical: 8,
-    borderRadius: 10,
-    alignItems: 'center',
-    width: width * 0.4,
-    height: height * 0.08,
-  },
-  favoriteIcon: {
-    color: '#E74C3C',
-    fontSize: width * 0.04,
-    fontWeight: 'bold',
+    fontSize: width * 0.035,
   },
   boldText: {
     fontWeight: 'bold',

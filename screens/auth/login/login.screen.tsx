@@ -15,6 +15,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { useAuth, useOAuth, useUser } from '@clerk/clerk-expo';
 import * as Linking from 'expo-linking';
 import axios, { AxiosError } from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
@@ -119,35 +120,39 @@ export default function LoginScreen() {
   };
   const handleSignIn = async () => {
     try {
-      setButtonSpinner(true);
-  
-      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/base`, {
-        email: userInfo.email,
-        password: userInfo.password,
-      });
-  
-      console.log('Login successful:', response.data);
+        setButtonSpinner(true);
 
-      router.replace("/(tabs)/");
+        const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/base`, {
+            email: userInfo.email,
+            password: userInfo.password,
+        });
 
-      setButtonSpinner(false);
+        console.log('Login successful:', response.data);
+
+        const token = response.data.token;
+        await AsyncStorage.setItem('token', token);
+        console.log('Token saved:', token);
+
+        router.replace("/(tabs)/");
+
+        setButtonSpinner(false);
     } catch (error) {
-      console.error('Login failed:',error);
-  
-      if (error instanceof AxiosError) {
-        setError({
-          ...error.response?.data,
-          password: 'Login failed. Please try again.',
-        });
-      } else {
-        setError({
-          password: 'An unexpected error occurred. Please try again.',
-        });
-      }
-  
-      setButtonSpinner(false);
+        console.error('Login failed:', error);
+
+        if (error instanceof AxiosError) {
+            setError({
+                ...error.response?.data,
+                password: 'Login failed. Please try again.',
+            });
+        } else {
+            setError({
+                password: 'An unexpected error occurred. Please try again.',
+            });
+        }
+
+        setButtonSpinner(false);
     }
-  };
+};
   return (
     <LinearGradient colors={['#E5ECF9', '#F6F7F9']} style={{ flex: 1, paddingTop: 20 }}>
       <ScrollView>
