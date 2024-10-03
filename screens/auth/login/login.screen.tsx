@@ -14,7 +14,7 @@ import SignInPng from "@/assets/sign-in/sign_in.png";
 import * as WebBrowser from "expo-web-browser";
 import { useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as Linking from "expo-linking";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const useWarmUpBrowser = () => {
@@ -149,11 +149,6 @@ export default function LoginScreen() {
             password: "An unexpected error occurred. Please try again.",
           });
         }
-      } else {
-        console.log("Error is not an Axios error");
-        setError({
-          password: "An unexpected error occurred. Please try again.",
-        });
       }
     } finally {
       console.log("Stopping button spinner");
