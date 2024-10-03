@@ -15,6 +15,7 @@ export default function ContentList() {
   const [data, setData] = useState<Content[]>([]);
   const contentId = 't_introduction_to_programming';
   useEffect(() => {
+
     const fetchData = async () => {
       try {
         const token = await AsyncStorage.getItem('token');

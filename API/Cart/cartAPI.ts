@@ -33,7 +33,7 @@ export const deleteById = async (cartId: string, token: string, courseId: string
     }, {
       headers: {
         Authorization: token,
-        'Content-Type': 'application/json', // Có thể thêm header này nếu cần
+        'Content-Type': 'application/json',
       },
     }); 
 
