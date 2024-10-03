@@ -2,9 +2,12 @@
 import axios from 'axios';
 import { Course } from '@/constants/HomePage/course';
 
-export const fetchCourses = async (): Promise<Course[]> => {
+export const fetchCourses = async (token:string): Promise<Course[]> => {
   try {
-    const response = await axios.get('http://192.168.1.12:3030/api/course/getAll');
+    const response = await axios.get(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/course/getAll`,{
+      headers: {
+      Authorization: token
+    },});
     return response.data.map((course: any) => ({
       courseId: course.courseId,
       courseName: course.courseName,

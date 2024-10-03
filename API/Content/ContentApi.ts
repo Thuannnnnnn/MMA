@@ -3,7 +3,7 @@ import { Course } from '@/constants/Content/contentList';
 
 export const getContentById = async (contentId: string, token: string): Promise<Course> => {
   try {
-    const response = await axios.get<Course>(`http://192.168.1.12:3030/api/course/getContentByCourseId/${contentId}`, {
+    const response = await axios.get<Course>(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/course/getContentByCourseId/${contentId}`, {
       headers: {
         Authorization: token
       }

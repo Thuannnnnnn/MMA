@@ -6,19 +6,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import { deleteById, getAllCartByEmail } from "@/API/Cart/cartAPI";
 import { Cart, CartItem } from "@/constants/Cart/cartList";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<Cart | null>(null);
   const email = "tranquocthuan2003@gmail.com";
+  const router = useRouter(); // Use router for navigation
+
   const calculateTotal = () => {
     const total = cartItems?.courses?.reduce((total, item) => {
       const price = item.courseId.price ? item.courseId.price : "0";
       return total + parseFloat(price);
     }, 0);
   
-    return total ? total.toLocaleString("vi-VN") + " ₫" : "0 ₫";
+    return total ? `${total} đ` : "0 đ";
   };
   
   const cartLength = cartItems?.courses?.length ?? 0;
@@ -43,13 +47,26 @@ export default function CartScreen() {
     }
   };
 
+  const handleCheckout = async () => {
+    try {
+      if (cartItems) {
+        const totalPrice = calculateTotal();
+        await AsyncStorage.setItem("cartItems", JSON.stringify(cartItems));
+        await AsyncStorage.setItem("totalPrice", totalPrice);
+        console.log("Cart items saved to AsyncStorage.");
+      }
+      router.push("/(routes)/payment");
+    } catch (error) {
+      console.error("Error during checkout:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = "nhap token";
+        const token = `Bearer ${await AsyncStorage.getItem('token')}`;
         if (token) {
-          const result: Cart= await getAllCartByEmail(email, token);
-          console.log("Test result: " + result);
+          const result: Cart = await getAllCartByEmail(email, token);
           if (result && result) {
             const coursesArray = Array.isArray(result.courses)
               ? result.courses
@@ -74,10 +91,8 @@ export default function CartScreen() {
         console.error("Error fetching content:", error);
       }
     };
-    console.log("Test cartItem: " + cartItems);
     fetchData();
   }, [email]);
-
   const confirmDeleteCourse = (item: CartItem) => {
     Alert.alert(
       "Xác nhận xóa",
@@ -147,7 +162,7 @@ export default function CartScreen() {
 
         {/* Footer */}
         <View>
-          <TouchableOpacity onPress={() => {}}>
+          <TouchableOpacity onPress={handleCheckout}>
             <View style={styles.checkoutContainer}>
               <View style={styles.checkoutBackground}>
                 <Text style={styles.totalPriceText}>{calculateTotal()}</Text>

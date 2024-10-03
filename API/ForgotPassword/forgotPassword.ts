@@ -5,7 +5,7 @@ import { UserPassword } from '@/constants/ForgotPassword/userPassword';
 
 export const sendOtpForgotPassword = async (user: UserEmail): Promise<any> => {
     try {
-      const response = await axios.post('http://192.168.1.8:8080/api/auth/fogot-password', user);
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/fogot-password`, user);
       
       return response.data;
     } catch (error) {
@@ -21,7 +21,7 @@ export const sendOtpForgotPassword = async (user: UserEmail): Promise<any> => {
 
   export const validateOtp = async (user: UserOtp): Promise<any> => {
     try {
-      const response = await axios.post('http://192.168.1.8:8080/api/auth/validate-otp', user);
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/validate-otp`, user);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -37,7 +37,7 @@ export const sendOtpForgotPassword = async (user: UserEmail): Promise<any> => {
   
   export const ForgotPassword = async (user: UserPassword): Promise<any> => {
     try {
-      const response = await axios.post('http://192.168.1.8:8080/api/auth/change-password', user);
+      const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/change-password`, user);
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {

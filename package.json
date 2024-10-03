@@ -15,11 +15,11 @@
   "dependencies": {
     "@clerk/clerk-expo": "^2.2.10",
     "@expo/vector-icons": "^14.0.2",
-    "@react-native-async-storage/async-storage": "^2.0.0",
+    "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-navigation/native": "^6.0.2",
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
-    "expo": "~51.0.28",
+    "expo": "~51.0.35",
     "expo-av": "~14.0.7",
     "expo-constants": "^16.0.2",
     "expo-font": "~12.0.9",
@@ -27,7 +27,7 @@
     "expo-linking": "~6.3.1",
     "expo-router": "~3.5.23",
     "expo-screen-orientation": "~7.0.5",
-    "expo-splash-screen": "~0.27.5",
+    "expo-splash-screen": "~0.27.6",
     "expo-status-bar": "~1.12.1",
     "expo-system-ui": "~3.0.7",
     "expo-video": "^1.2.6",
@@ -37,7 +37,7 @@
     "react-dom": "18.2.0",
     "react-native": "0.74.5",
     "react-native-app-intro-slider": "^4.0.4",
-    "react-native-gesture-handler": "^2.19.0",
+    "react-native-gesture-handler": "~2.16.1",
     "react-native-otp-entry": "^1.7.1",
     "react-native-paper": "^5.12.5",
     "react-native-reanimated": "~3.10.1",
@@ -48,8 +48,8 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-video": "^6.6.1",
     "react-native-web": "~0.19.10",
-    "expo-screen-orientation": "~7.0.5",
-    "react-native-webview": "~13.6.4"
+    "react-native-webview": "13.8.6",
+    "version": "^0.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
