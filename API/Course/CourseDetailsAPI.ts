@@ -26,6 +26,21 @@ export const getCourseById = async (courseId: string, token: string): Promise<Co
   }
 };
 
+export const checkCourseOwnership = async (courseId: string, email: string, token: string) => {
+  try {
+    // Construct the URL for the API request
+    const response = await axios.get(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/coursePurchased/checkCourseOwnership/${email}/${courseId}`, {
+      headers: { Authorization: token },
+    });
+
+    return response.data.ownsCourse; // Ensure the API response has this property
+  } catch (error) {
+    console.error('Failed to check course ownership:', error);
+    return false; // Return false if there's an error
+  }
+};
+
+
 // export const getCourseById = async (courseId: string): Promise<Course> => {
 //     console.log(`Fetching course with ID: ${courseId}`);
 //     try {

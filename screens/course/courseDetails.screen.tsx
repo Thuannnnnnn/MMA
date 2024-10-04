@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Text, View, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import img from '@/assets/Course/BgCourseDetail.png';
 import { Course } from '@/constants/Course/CourseDetails';
-import { getCourseById } from '@/API/Course/CourseDetailsAPI';
+import { getCourseById, checkCourseOwnership } from '@/API/Course/CourseDetailsAPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllCartByEmail, addToCart } from '@/API/Cart/cartAPI';
 import { useRouter } from 'expo-router';
@@ -13,7 +13,7 @@ export default function CourseDetailsScreen() {
   const router = useRouter(); // Initialize router
   const courseId = 't_introduction_to_programming';
   const [course, setCourse] = useState<Course | null>(null);
-
+  const [isOwner, setIsOwner] = useState<boolean>(false); // State for course ownership
   const renderHTMLText = (htmlString: string) => {
     const parts = htmlString.split(/(<strong>|<\/strong>|<p>|<\/p>|<i>|<\/i>)/g);
     return parts.map((part, index) => {
@@ -36,12 +36,26 @@ export default function CourseDetailsScreen() {
           const fetchedCourse = await getCourseById(courseId, token);
           setCourse(fetchedCourse);
         }
+        const userString = await AsyncStorage.getItem('user');
+        if (userString) {
+          const user = JSON.parse(userString);
+          const courseId = course?._id;
+          if (courseId) {
+            const isCourseOwner = await checkCourseOwnership(courseId, user.email, token);
+            setIsOwner(isCourseOwner);
+          } else {
+            console.error('Course ID is undefined');
+            setIsOwner(false);
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch course:', error);
       }
     };
+  
     fetchCourse();
   }, [courseId]);
+
   const handleAddToCart = async (_id: string) => {
     try {
       const userString = await AsyncStorage.getItem("user");
@@ -82,7 +96,9 @@ export default function CourseDetailsScreen() {
     router.push('/(routes)/payment');
   };
   
-  
+  const handleGotoCourse= async(courseId :string) =>{
+    console.log(`Go to ${courseId}`)
+  }
 
   if (!course) {
     return (
@@ -151,21 +167,33 @@ export default function CourseDetailsScreen() {
           </View>
         </View>
       </ScrollView>
-
       <View style={styles.footer}>
-        <View style={styles.footerChildren}>
-          <TouchableOpacity style={styles.favoriteButton} onPress={() => handleAddToCart(course._id)}>
-            <Text style={styles.favoriteIcon}>Add to cart</Text>
-          </TouchableOpacity>
-        </View>
+  <View style={styles.footerChildren}>
+    {!isOwner ? ( // Check if user is not the owner
+      <TouchableOpacity style={styles.favoriteButton} onPress={() => handleAddToCart(course._id)}>
+        <Text style={styles.favoriteIcon}>Add to cart</Text>
+      </TouchableOpacity>
+    ) : null}
+  </View>
 
-        {/* Nút Buy Now */}
-        <View style={styles.footerChildren}>
-          <TouchableOpacity style={styles.buyButton} onPress={() => handleBuyNow(course._id, course.price)}>
-            <Text style={styles.buyButtonText}>Buy Now</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+  {!isOwner ? (
+    <View style={styles.footerChildren}>
+      <TouchableOpacity style={styles.buyButton} onPress={() => handleBuyNow(course._id, course.price)}>
+        <Text style={styles.buyButtonText}>Buy Now</Text>
+      </TouchableOpacity>
+    </View>
+  ) : null}
+</View>
+
+{isOwner && (
+  <View style={styles.footer}>
+  <View style={styles.footerGotoCourse}>
+    <TouchableOpacity style={styles.goToCourse} onPress={() => handleGotoCourse(courseId)}>
+      <Text style={styles.buyButtonText}>Go to Course</Text>
+    </TouchableOpacity>
+  </View>
+  </View>
+)}
     </View>
   );
 }
@@ -294,6 +322,10 @@ const styles = StyleSheet.create({
   footerChildren: {
     width: '48%',
   },
+  footerGotoCourse: {   
+    width: '100%',    
+  },
+  
   favoriteButton: {
     paddingVertical: 10,
     backgroundColor: '#FF0000',
@@ -301,6 +333,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buyButton: {
+    paddingVertical: 10,
+    backgroundColor: '#3D5CFF',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  goToCourse: {
     paddingVertical: 10,
     backgroundColor: '#3D5CFF',
     borderRadius: 8,
