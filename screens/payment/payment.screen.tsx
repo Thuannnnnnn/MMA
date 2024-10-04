@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { WebView } from 'react-native-webview';
-import { StyleSheet, Alert, ActivityIndicator, View } from 'react-native';
+import { StyleSheet, ActivityIndicator, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { getPaymentUrl, creatOrder } from '@/API/Payment/paymentAPI';
@@ -20,14 +20,6 @@ export default function Payment() {
       try {
         setLoading(true);
         const token = `Bearer ${await AsyncStorage.getItem('token')}`;
-        const storedCartItems = await AsyncStorage.getItem("cartItems");
-        const cartItems = storedCartItems ? JSON.parse(storedCartItems) : null;
-        
-        if (!cartItems) {
-          console.warn("No cart items found in AsyncStorage.");
-          return;
-        }
-
         const amountString = await AsyncStorage.getItem("totalPrice");
         const amount = amountString ? parseFloat(amountString) : 0;
         if (token) {
@@ -48,7 +40,7 @@ export default function Payment() {
 
   const handleNavigationChange = async (navState: { url: string }) => {
     const { url } = navState;
-    setIsTransitioning(true); // Start spinner during transition
+    setIsTransitioning(true);
 
     if (url.startsWith('http://localhost:8080/vnpay-return')) {
       const parsedParams = queryString.parseUrl(url).query;
@@ -82,21 +74,48 @@ export default function Payment() {
             console.error('Error creating order:', error);
             router.push("/(routes)/payment/paymentError");
           }
-        } else {
-          console.warn('Cart items or user email not found.');
+        }
+        try {
+          const storedCourses = await AsyncStorage.getItem('courseId');
+          if (!storedCourses) {
+            console.warn("No courses found in AsyncStorage.");
+            return;
+          }
+          const parsedCourses = JSON.parse(storedCourses);
+          const courses = parsedCourses.map((course: any) => ({
+            courseId: course.courseId,
+            purchaseDate: new Date(), 
+          }));
+
+          const userString = await AsyncStorage.getItem("user");
+          if (!userString) {
+            console.warn("No user found in AsyncStorage.");
+            return;
+          }
+
+          const user = JSON.parse(userString);
+          const userEmail = user.email;
+          const amountString = await AsyncStorage.getItem("totalPrice");
+          const amount = amountString ? parseFloat(amountString) : 0;
+          creatOrder(userEmail, amount, courses, token);
+          await AsyncStorage.removeItem('courseId');
+          await AsyncStorage.removeItem('totalPrice');
+          router.push("/(routes)/payment/paymentSuccess");
+        } catch (error) {
+          console.error('Error creating order:', error);
+          router.push("/(routes)/payment/paymentError");
         }
       } else {
-        Alert.alert('Payment Status', `Payment failed with error code: ${responseCode}`);
         router.push("/(routes)/payment/paymentError");
       }
     }
 
-    setIsTransitioning(false); // Stop spinner after transition completes
+    setIsTransitioning(false);
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {loading || isTransitioning ? ( // Show loading if page is loading or transitioning
+      {loading || isTransitioning ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#0000ff" />
         </View>
@@ -110,7 +129,7 @@ export default function Payment() {
             cacheEnabled={false}
             cacheMode="LOAD_NO_CACHE"
             startInLoadingState={true}
-            onNavigationStateChange={handleNavigationChange} // Listen for navigation changes
+            onNavigationStateChange={handleNavigationChange}
           />
         )
       )}

@@ -71,6 +71,17 @@ export default function CourseDetailsScreen() {
     }
   };
   
+  const handleBuyNow = async(_id: string, amount: string) => {
+    const courseObj = {
+      courseId: _id,
+      purchaseDate: new Date(),
+    };
+  
+    await AsyncStorage.setItem('courseId', JSON.stringify([courseObj]));
+    await AsyncStorage.setItem('totalPrice', amount);
+    router.push('/(routes)/payment');
+  };
+  
   
 
   if (!course) {
@@ -150,7 +161,7 @@ export default function CourseDetailsScreen() {
 
         {/* Nút Buy Now */}
         <View style={styles.footerChildren}>
-          <TouchableOpacity style={styles.buyButton}>
+          <TouchableOpacity style={styles.buyButton} onPress={() => handleBuyNow(course._id, course.price)}>
             <Text style={styles.buyButtonText}>Buy Now</Text>
           </TouchableOpacity>
         </View>

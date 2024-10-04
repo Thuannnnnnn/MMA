@@ -10,9 +10,7 @@ export const getCourseById = async (courseId: string, token: string): Promise<Co
         Authorization: token,
       },
     });
-
     if (response.data && response.data.course) {
-      console.log(response.data.course)
       return response.data.course;
     } else {
       console.error('Course data is undefined or null');
