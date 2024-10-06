@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, FlatList, Alert, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, FlatList, Alert, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AvatarPng from '@/assets/homePage/avatar.png';
@@ -7,6 +7,7 @@ import { fetchCourses } from '@/API/HomePage/homePageAPI';
 import { Course } from '@/constants/HomePage/course';
 import { SlideData } from '@/constants/HomePage/slideData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -71,15 +72,21 @@ export default function HomeScreen() {
       }, 1000);
     }
   };
+  const goToDetail = async (courseId: string) =>{
+     AsyncStorage.setItem('courseId_detail', courseId);
+     router.push({
+      pathname: "/(routes)/courseDetails",
+    });
+  }
 
   const renderCourse = ({ item }: { item: Course }) => (
-    <View style={styles.courseCard}>
+    <TouchableOpacity onPress={() => goToDetail(item.courseId)} style={styles.courseCard}>
       <Image source={{ uri: item.posterLink }} style={styles.courseImage} />
       <View style={styles.courseDetails}>
         <Text style={styles.courseTitle}>{item.courseName}</Text>
         <Text style={styles.coursePrice}>Price: {item.price}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

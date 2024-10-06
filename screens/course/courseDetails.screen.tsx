@@ -11,9 +11,10 @@ const { width, height } = Dimensions.get('window');
 
 export default function CourseDetailsScreen() {
   const router = useRouter(); // Initialize router
-  const courseId = 't_introduction_to_programming';
+  const [courseId, setCourseId] = useState<string | null>(null); // State for course ID
   const [course, setCourse] = useState<Course | null>(null);
   const [isOwner, setIsOwner] = useState<boolean>(false); // State for course ownership
+  
   const renderHTMLText = (htmlString: string) => {
     const parts = htmlString.split(/(<strong>|<\/strong>|<p>|<\/p>|<i>|<\/i>)/g);
     return parts.map((part, index) => {
@@ -28,28 +29,43 @@ export default function CourseDetailsScreen() {
       );
     });
   };
+  
   useEffect(() => {
-    const fetchCourse = async () => {
+    const fetchCourseId = async () => {
       try {
-        const token = `Bearer ${await AsyncStorage.getItem('token')}`;
-        if (token) {
-          const fetchedCourse = await getCourseById(courseId, token);
-          setCourse(fetchedCourse);
-        }
-        const userString = await AsyncStorage.getItem('user');
-        if (userString) {
-          const user = JSON.parse(userString);
-          const courseId = course?._id;
-          if (courseId) {
-            const isCourseOwner = await checkCourseOwnership(courseId, user.email, token);
-            setIsOwner(isCourseOwner);
-          } else {
-            console.error('Course ID is undefined');
-            setIsOwner(false);
-          }
+        const storedCourseId = await AsyncStorage.getItem('courseId_detail');
+        if (storedCourseId) {
+          setCourseId(storedCourseId); // Set the courseId state
+        } else {
+          console.error('No course ID found in AsyncStorage');       
         }
       } catch (error) {
-        console.error('Failed to fetch course:', error);
+        console.error('Failed to retrieve course ID:', error);
+      }
+    };
+  
+    fetchCourseId();
+  }, []);
+  
+  useEffect(() => {
+    const fetchCourse = async () => {
+      if (courseId) {
+        try {
+          const token = `Bearer ${await AsyncStorage.getItem('token')}`;
+          const fetchedCourse = await getCourseById(courseId, token);
+          setCourse(fetchedCourse);
+          const userString = await AsyncStorage.getItem('user');
+          if (userString) {
+            const user = JSON.parse(userString);
+            const courseIdOw = fetchedCourse?._id;
+            if(courseIdOw){
+              const isCourseOwner = await checkCourseOwnership(courseIdOw, user.email, token);
+              setIsOwner(isCourseOwner);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch course:', error);
+        }
       }
     };
   
@@ -188,7 +204,7 @@ export default function CourseDetailsScreen() {
 {isOwner && (
   <View style={styles.footer}>
   <View style={styles.footerGotoCourse}>
-    <TouchableOpacity style={styles.goToCourse} onPress={() => handleGotoCourse(courseId)}>
+    <TouchableOpacity style={styles.goToCourse} onPress={() => handleGotoCourse(course._id)}>
       <Text style={styles.buyButtonText}>Go to Course</Text>
     </TouchableOpacity>
   </View>

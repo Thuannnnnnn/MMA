@@ -123,7 +123,6 @@ export default function LoginScreen() {
         setButtonSpinner(true);
 
     try {
-      console.log("Making request to login API");
       const response = await axios.post(
         `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/base`,
         {
@@ -151,7 +150,6 @@ export default function LoginScreen() {
         }
       }
     } finally {
-      console.log("Stopping button spinner");
       setButtonSpinner(false);
     }
 };

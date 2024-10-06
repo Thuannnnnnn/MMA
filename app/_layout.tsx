@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import TabsLayout from "./(tabs)/_layout";
@@ -14,11 +14,6 @@ export default function RootLayout() {
   }
 
   const [isLoggedIn] = useState(false);
-
-  useEffect(() => {
-    console.log("isLoggedIn:", isLoggedIn);
-  }, [isLoggedIn]);
-
       return(
         <GestureHandlerRootView>
             {
@@ -43,7 +38,7 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/payment/paymentSuccess" />
                         <Stack.Screen name="(routes)/payment/paymentError" />
                         <Stack.Screen name="(routes)/cart/index" />
-                        <Stack.Screen name="(routes)/courseDetails" options={{ headerShown: true, title: "Course Details", headerBackTitle: "Back" }} />
+                        <Stack.Screen name="(routes)/courseDetails/index" options={{ headerShown: true, title: "Course Details", headerBackTitle: "Back" }} />
                     </Stack>
                     </ClerkProvider>
                 )
