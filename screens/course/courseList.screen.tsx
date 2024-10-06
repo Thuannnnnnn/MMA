@@ -67,6 +67,10 @@ const CourseListScreen = () => {
                 <Text>Course ID: {item.courseId._id}</Text>
                 <Text>Course Name: {item.courseId.courseName}</Text>
                 <Text>Description: {item.courseId.description}</Text>
+                <Text>posterLink: {item.courseId.posterLink}</Text>
+                <Text>createDate: {item.courseId.createDate}</Text>
+                <Text>videoIntro: {item.courseId.videoIntro}</Text>
+                <Text>userGenerated: {item.courseId.userGenerated}</Text>
               </>
             ) : (
               <Text>Course ID: Not available</Text>
