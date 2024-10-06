@@ -5,7 +5,7 @@ import { Redirect } from 'expo-router'
 export default function course() {
   return(
     <View>
-      <Redirect href={"/(routes)/courseDetails"} />
+      <Redirect href={"/(routes)/courseList"} />
       <Text>Course</Text>
     </View>
   )
