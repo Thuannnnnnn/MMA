@@ -13,14 +13,14 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 export default function ContentList() {
   const router = useRouter();
   const [data, setData] = useState<Content[]>([]);
-  const contentId = 't_introduction_to_programming';
   useEffect(() => {
 
     const fetchData = async () => {
       try {
-        const token = await AsyncStorage.getItem('token');
-        if (token) {
-          const result: Course = await getContentById(contentId, token);
+        const token = `Bearer ${await AsyncStorage.getItem('token')}`;
+        const courseId = await AsyncStorage.getItem('courseIdGotoContent');
+        if (token && courseId) {
+          const result: Course = await getContentById(courseId, token);
           setData(result.contents);
         } else {
           console.warn('Token is null, unable to fetch content');
@@ -31,9 +31,7 @@ export default function ContentList() {
     };
   
     fetchData();
-  }, [contentId]);
-  
-
+  }, []);
   
   useEffect(() => {
     const lockOrientation = async () => {

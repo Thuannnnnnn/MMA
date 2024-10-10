@@ -1,20 +1,30 @@
-// CourseListScreen.tsx
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { getCourseListByEmail } from '@/API/CourseList/courseListAPI';
-import { CoursePurchase } from '@/constants/CourseList/courseList';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Image,
+  TouchableOpacity,
+} from "react-native";
+import { getCourseListByEmail } from "@/API/CourseList/courseListAPI";
+import { CoursePurchase } from "@/constants/CourseList/courseList";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 const CourseListScreen = () => {
-  const [coursePurchase, setCoursePurchase] = useState<CoursePurchase | null>(null);
+  const [coursePurchase, setCoursePurchase] = useState<CoursePurchase | null>(
+    null
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const userEmail = 'tranquocthuan2003@gmail.com';
+  const userEmail = "tranquocthuan2003@gmail.com";
 
   useEffect(() => {
     const fetchCourseList = async () => {
       try {
-        const token = `Bearer ${await AsyncStorage.getItem('token')}`;
+        const token = `Bearer ${await AsyncStorage.getItem("token")}`;
         const courses = await getCourseListByEmail(userEmail, token);
         setCoursePurchase(courses);
       } catch (err) {
@@ -51,33 +61,60 @@ const CourseListScreen = () => {
     );
   }
 
+  const GotoContent =async (courseId: string) => {
+    await AsyncStorage.setItem('courseIdGotoContent', courseId)
+    router.push('/(routes)/content/content-list')
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Your Courses</Text>
       <FlatList
-        data={coursePurchase.courses}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <View style={styles.courseItem}>
-            <Text style={styles.courseText}>Purchase ID: {coursePurchase.purchaseId}</Text>
-            <Text style={styles.courseText}>User Email: {coursePurchase.userEmail}</Text>
-            <Text>Purchase Date: {new Date(item.purchaseDate).toLocaleDateString()}</Text>
-            {item.courseId ? (
-              <>
-                <Text>Course ID: {item.courseId._id}</Text>
-                <Text>Course Name: {item.courseId.courseName}</Text>
-                <Text>Description: {item.courseId.description}</Text>
-                <Text>posterLink: {item.courseId.posterLink}</Text>
-                <Text>createDate: {item.courseId.createDate}</Text>
-                <Text>videoIntro: {item.courseId.videoIntro}</Text>
-                <Text>userGenerated: {item.courseId.userGenerated}</Text>
-              </>
-            ) : (
-              <Text>Course ID: Not available</Text>
-            )}
-          </View>
-        )}
+  data={coursePurchase?.courses ?? []} 
+  keyExtractor={(item) => item?._id ?? Math.random().toString()}
+  renderItem={({ item }) => (
+    <TouchableOpacity
+      style={styles.courseCard}
+      onPress={() => {
+        if (item?.courseId?._id) {
+          GotoContent(item.courseId.courseId);
+        }
+      }}
+    >
+      {/* Course Poster */}
+      <Image
+        source={{
+          uri:
+            item?.courseId?.posterLink ??
+            "https://example.com/default-course-image.png", // Fallback to default image URL
+        }}
+        style={styles.posterImage}
       />
+
+      {/* Course Info */}
+      <View style={styles.courseInfo}>
+        <Text style={styles.courseName}>
+          {item?.courseId?.courseName ?? "Unknown Course"} {/* Fallback to 'Unknown Course' */}
+        </Text>
+        <Text style={styles.roleText}>
+          {coursePurchase?.userEmail ?? "Unknown Role"} {/* Fallback to 'Unknown Role' */}
+        </Text>
+
+        {/* Purchase Date */}
+        <Text style={styles.purchaseDate}>
+          Purchase Date:{" "}
+          {item?.purchaseDate
+            ? new Date(item.purchaseDate).toLocaleDateString()
+            : "Unknown Date"} {/* Fallback for missing date */}
+        </Text>
+
+        {/* Paid Badge */}
+        <View style={styles.paidBadge}>
+          <Text style={styles.paidText}>Paid</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  )}
+/>
     </View>
   );
 };
@@ -88,45 +125,81 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#fafafa", // Softer background for a cleaner look
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-  },
-  courseItem: {
+  courseCard: {
+    flexDirection: "row",
     padding: 16,
-    marginVertical: 8,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    shadowColor: '#000',
+    marginVertical: 10,
+    backgroundColor: "#ffffff",
+    borderRadius: 12,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
+    alignItems: "center",
   },
-  courseText: {
-    fontSize: 16,
+  posterImage: {
+    flex: 1,
+    width: 0,
+    aspectRatio: 1,
+    borderRadius: 10,
+    marginRight: 16,
+    backgroundColor: "#e0e0e0", // Placeholder background for missing images
+  },
+  courseInfo: {
+    flex: 2,
+    flexDirection: "column",
+  },
+  courseName: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: 4,
+  },
+  roleText: {
+    fontSize: 14,
+    color: "#888",
     marginBottom: 8,
+  },
+  purchaseDate: {
+    fontSize: 12,
+    color: "#aaa",
+    marginBottom: 8,
+  },
+  paidBadge: {
+    backgroundColor: "#4caf50",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+  },
+  paidText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   loaderContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fafafa",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fafafa",
   },
   errorText: {
-    color: 'red',
-    fontSize: 18,
+    color: "red",
+    fontSize: 16,
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fafafa",
   },
 });
