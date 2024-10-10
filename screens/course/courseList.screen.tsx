@@ -6,10 +6,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Image,
+  TouchableOpacity,
 } from "react-native";
 import { getCourseListByEmail } from "@/API/CourseList/courseListAPI";
 import { CoursePurchase } from "@/constants/CourseList/courseList";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 const CourseListScreen = () => {
   const [coursePurchase, setCoursePurchase] = useState<CoursePurchase | null>(
@@ -59,46 +61,60 @@ const CourseListScreen = () => {
     );
   }
 
+  const GotoContent =async (courseId: string) => {
+    await AsyncStorage.setItem('courseIdGotoContent', courseId)
+    router.push('/(routes)/content/content-list')
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
-        data={coursePurchase.courses}
-        keyExtractor={(item) => item._id}
-        renderItem={({ item }) => (
-          <View style={styles.courseCard}>
-            {/* Course Poster */}
-            <Image
-              source={{
-                uri:
-                  item.courseId?.posterLink ||
-                  "https://example.com/default-course-image.png", // Replace with actual default image URL
-              }}
-              style={styles.posterImage}
-            />
-
-            {/* Course Info */}
-            <View style={styles.courseInfo}>
-              <Text style={styles.courseName}>
-                {item.courseId?.courseName || "Unknown Course"}
-              </Text>
-              <Text style={styles.roleText}>
-                {coursePurchase.userEmail || "Unknown Role"}
-              </Text>
-
-              {/* Purchase Date */}
-              <Text style={styles.purchaseDate}>
-                Purchase Date:{" "}
-                {new Date(item.purchaseDate).toLocaleDateString()}
-              </Text>
-
-              {/* Paid Badge */}
-              <View style={styles.paidBadge}>
-                <Text style={styles.paidText}>Paid</Text>
-              </View>
-            </View>
-          </View>
-        )}
+  data={coursePurchase?.courses ?? []} 
+  keyExtractor={(item) => item?._id ?? Math.random().toString()}
+  renderItem={({ item }) => (
+    <TouchableOpacity
+      style={styles.courseCard}
+      onPress={() => {
+        if (item?.courseId?._id) {
+          GotoContent(item.courseId.courseId);
+        }
+      }}
+    >
+      {/* Course Poster */}
+      <Image
+        source={{
+          uri:
+            item?.courseId?.posterLink ??
+            "https://example.com/default-course-image.png", // Fallback to default image URL
+        }}
+        style={styles.posterImage}
       />
+
+      {/* Course Info */}
+      <View style={styles.courseInfo}>
+        <Text style={styles.courseName}>
+          {item?.courseId?.courseName ?? "Unknown Course"} {/* Fallback to 'Unknown Course' */}
+        </Text>
+        <Text style={styles.roleText}>
+          {coursePurchase?.userEmail ?? "Unknown Role"} {/* Fallback to 'Unknown Role' */}
+        </Text>
+
+        {/* Purchase Date */}
+        <Text style={styles.purchaseDate}>
+          Purchase Date:{" "}
+          {item?.purchaseDate
+            ? new Date(item.purchaseDate).toLocaleDateString()
+            : "Unknown Date"} {/* Fallback for missing date */}
+        </Text>
+
+        {/* Paid Badge */}
+        <View style={styles.paidBadge}>
+          <Text style={styles.paidText}>Paid</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  )}
+/>
     </View>
   );
 };
