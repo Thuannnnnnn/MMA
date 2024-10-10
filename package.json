@@ -49,7 +49,6 @@
     "react-native-video": "^6.6.1",
     "react-native-web": "~0.19.10",
     "react-native-webview": "13.8.6",
-    "version": "^0.1.2"
     "version": "^0.1.2",
     "expo-image-picker": "~15.0.7"
   },

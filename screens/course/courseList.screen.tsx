@@ -19,14 +19,20 @@ const CourseListScreen = () => {
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const userEmail = "tranquocthuan2003@gmail.com";
-
+  
   useEffect(() => {
     const fetchCourseList = async () => {
       try {
-        const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-        const courses = await getCourseListByEmail(userEmail, token);
-        setCoursePurchase(courses);
+        const userString = await AsyncStorage.getItem("user");
+        if(userString){
+          const user = JSON.parse(userString);
+          const userEmail = user.email;
+          const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+          if(userEmail){
+            const courses = await getCourseListByEmail(userEmail, token);
+            setCoursePurchase(courses);
+          }
+        }
       } catch (err) {
         setError(`Failed to fetch course list: ${err}`);
       } finally {

@@ -8,13 +8,12 @@ import { deleteById, getAllCartByEmail } from "@/API/Cart/cartAPI";
 import { Cart, CartItem } from "@/constants/Cart/cartList";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-
 const { width, height } = Dimensions.get("window");
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<Cart | null>(null);
   const email = "tranquocthuan2003@gmail.com";
-  const router = useRouter(); // Use router for navigation
+  const router = useRouter();
 
   const calculateTotal = () => {
     const total = cartItems?.courses?.reduce((total, item) => {
@@ -51,11 +50,17 @@ export default function CartScreen() {
     try {
       if (cartItems) {
         const totalPrice = calculateTotal();
-        await AsyncStorage.setItem("cartItems", JSON.stringify(cartItems));
-        await AsyncStorage.setItem("totalPrice", totalPrice);
-        console.log("Cart items saved to AsyncStorage.");
+        const totalPriceNumber = Number(totalPrice);
+        if(totalPriceNumber>0){
+          await AsyncStorage.setItem("cartItems", JSON.stringify(cartItems));
+          await AsyncStorage.setItem("totalPrice", totalPrice);
+          console.log("Cart items saved to AsyncStorage.");
+          router.push("/(routes)/payment");
+        }
+        else{
+          Alert.alert("No Course In Cart")
+        }
       }
-      router.push("/(routes)/payment");
     } catch (error) {
       console.error("Error during checkout:", error);
     }

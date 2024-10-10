@@ -10,10 +10,10 @@ import { useRouter } from 'expo-router';
 const { width, height } = Dimensions.get('window');
 
 export default function CourseDetailsScreen() {
-  const router = useRouter(); // Initialize router
-  const [courseId, setCourseId] = useState<string | null>(null); // State for course ID
+  const router = useRouter();
+  const [courseId, setCourseId] = useState<string | null>(null);
   const [course, setCourse] = useState<Course | null>(null);
-  const [isOwner, setIsOwner] = useState<boolean>(false); // State for course ownership
+  const [isOwner, setIsOwner] = useState<boolean>(false); 
   
   const renderHTMLText = (htmlString: string) => {
     const parts = htmlString.split(/(<strong>|<\/strong>|<p>|<\/p>|<i>|<\/i>)/g);
@@ -112,8 +112,9 @@ export default function CourseDetailsScreen() {
     router.push('/(routes)/payment');
   };
   
-  const handleGotoCourse= async(courseId :string) =>{
-    console.log(`Go to ${courseId}`)
+  const GotoContent =async (courseId: string) => {
+    await AsyncStorage.setItem('courseIdGotoContent', courseId)
+    router.push('/(routes)/content/content-list')
   }
 
   if (!course) {
@@ -204,7 +205,7 @@ export default function CourseDetailsScreen() {
 {isOwner && (
   <View style={styles.footer}>
   <View style={styles.footerGotoCourse}>
-    <TouchableOpacity style={styles.goToCourse} onPress={() => handleGotoCourse(course._id)}>
+    <TouchableOpacity style={styles.goToCourse} onPress={() => GotoContent(course.courseId)}>
       <Text style={styles.buyButtonText}>Go to Course</Text>
     </TouchableOpacity>
   </View>
