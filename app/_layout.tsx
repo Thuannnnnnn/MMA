@@ -38,6 +38,9 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/payment/paymentSuccess" />
                         <Stack.Screen name="(routes)/payment/paymentError" />
                         <Stack.Screen name="(routes)/cart/index" />
+                        <Stack.Screen name="(routes)/quizz/index" />
+                        <Stack.Screen name="(routes)/quizz/quizzSuccess" />
+                        <Stack.Screen name="(routes)/quizz/quizzResults" />
                         <Stack.Screen name="(routes)/courseDetails/index" options={{ headerShown: true, title: "Course Details", headerBackTitle: "Back" }} />
                     </Stack>
                     </ClerkProvider>

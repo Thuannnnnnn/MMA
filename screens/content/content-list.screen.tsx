@@ -60,7 +60,7 @@ export default function ContentList() {
         break; 
       case 'questions':
         router.push({
-          pathname: '/(routes)/content/content-video',
+          pathname: '/(routes)/quizz',
         });
         break; 
       case 'exams':
