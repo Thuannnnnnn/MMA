@@ -5,6 +5,8 @@ import { Course } from '@/constants/Course/CourseDetails';
 
 export const getCourseById = async (courseId: string, token: string): Promise<Course | null> => {
   try {
+    
+    
     const response = await axios.get<{ course: Course }>(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/course/getById/${courseId}`, {
       headers: {
         Authorization: token,
@@ -39,7 +41,15 @@ export const checkCourseOwnership = async (courseId: string, email: string, toke
     return false; // Return false if there's an error
   }
 };
-
+export const getCourseNameById = async (courseId: string, token: string): Promise<string | null> => {
+  try {
+    const course = await getCourseById(courseId, token);
+    return course ? course.courseName : null; // Return courseName or null if the course is not found
+  } catch (error) {
+    console.error('Error fetching course name:', error);
+    return null; // Return null if there's an error
+  }
+};
 
 // export const getCourseById = async (courseId: string): Promise<Course> => {
 //     console.log(`Fetching course with ID: ${courseId}`);
