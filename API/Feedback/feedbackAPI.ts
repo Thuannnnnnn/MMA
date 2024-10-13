@@ -1,5 +1,3 @@
-// File: FeedbackAPI.ts
-
 import axios from 'axios';
 import { Feedback } from '@/constants/Feedback/Feedback';
 
@@ -9,14 +7,13 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 export const createFeedback = async (
   courseId: string,
   userEmail: string,
-  ratingPoint: number,
   feedbackText: string,
   token: string
 ): Promise<Feedback> => {
   try {
     const response = await axios.post(
       `${API_BASE_URL}/api/feedback/createFeedback`,
-      { courseId, userEmail, ratingPoint, feedbackText },
+      { courseId, userEmail, feedbackText },
       {
         headers: {
           Authorization: token,
@@ -108,14 +105,13 @@ export const updateFeedback = async (
   id: string,
   courseId: string,
   userEmail: string,
-  ratingPoint: number,
   feedbackText: string,
   token: string
 ): Promise<Feedback> => {
   try {
     const response = await axios.put(
       `${API_BASE_URL}/api/feedback/create/${id}`,
-      { courseId, userEmail, ratingPoint, feedbackText },
+      { courseId, userEmail, feedbackText },
       {
         headers: {
           Authorization: token,

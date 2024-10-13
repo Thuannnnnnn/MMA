@@ -8,8 +8,8 @@ import {
   ScrollView,
   Dimensions,
   TextInput,
+  Alert
 } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
 import img from "@/assets/Course/BgCourseDetail.png";
 import { Course } from "@/constants/Course/CourseDetails";
 import { Feedback } from "@/constants/Feedback/Feedback"; // Import Feedback interface
@@ -35,20 +35,26 @@ export default function CourseDetailsScreen() {
   const [isOwner, setIsOwner] = useState<boolean>(false); // State for course ownership
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]); // Update type to Feedback[]
   const [newFeedbackText, setNewFeedbackText] = useState<string>(""); // For new feedback text
-  const [rating, setRating] = useState<number>(0);
+  // Add a state to store the logged-in user's email
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1); // State to track the current page
+  const itemsPerPage = 5; // Number of feedbacks per page
 
-  // Tính tổng và trung bình điểm đánh giá
-  const calculateFeedbackStats = () => {
-    if (feedbacks.length === 0) return { total: 0, average: 0 };
-    const total = feedbacks.reduce(
-      (acc, feedback) => acc + feedback.ratingPoint,
-      0
-    );
-    const average = total / feedbacks.length;
-    return { total, average };
-  };
+   // Calculate total number of pages
+   const totalPages = Math.ceil(feedbacks.length / itemsPerPage);
 
-  const { average } = calculateFeedbackStats(); // Lấy dữ liệu tổng và trung bình
+   // Calculate the feedback to be displayed on the current page
+   const startIndex = (currentPage - 1) * itemsPerPage;
+   const endIndex = startIndex + itemsPerPage;
+   const currentFeedbacks = feedbacks.slice(startIndex, endIndex);
+ 
+   // Function to handle page navigation
+   const handlePageChange = (page: number) => {
+     if (page >= 1 && page <= totalPages) {
+       setCurrentPage(page);
+     }
+   };
+
 
   // Function to render HTML text
   const renderHTMLText = (htmlString: string) => {
@@ -69,21 +75,39 @@ export default function CourseDetailsScreen() {
       );
     });
   };
-  const handleDeleteFeedback = async (feedbackId: string) => {
-    try {
-      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-      await deleteFeedback(feedbackId, token);
+ // Function to confirm delete action
+const handleDeleteFeedback = async (feedbackId: string) => {
+  Alert.alert(
+    "Confirm Delete", // Title of the alert
+    "Are you sure you want to delete this feedback?", // Message of the alert
+    [
+      {
+        text: "Cancel",
+        onPress: () => console.log("Delete Cancelled"),
+        style: "cancel",
+      },
+      {
+        text: "OK",
+        onPress: async () => {
+          try {
+            const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+            await deleteFeedback(feedbackId, token);
 
-      // Update feedback list after deletion
-      const updatedFeedbacks = await getFeedbackByCourseId(
-        courseId as string,
-        token
-      );
-      setFeedbacks(updatedFeedbacks);
-    } catch (error) {
-      console.error("Error deleting feedback:", error);
-    }
-  };
+            // Update feedback list after deletion
+            const updatedFeedbacks = await getFeedbackByCourseId(
+              courseId as string,
+              token
+            );
+            setFeedbacks(updatedFeedbacks);
+          } catch (error) {
+            console.error("Error deleting feedback:", error);
+          }
+        },
+      },
+    ],
+    { cancelable: true }
+  );
+};
   // Fetch courseId from AsyncStorage
   useEffect(() => {
     const fetchCourseId = async () => {
@@ -100,6 +124,21 @@ export default function CourseDetailsScreen() {
     };
 
     fetchCourseId();
+  }, []);
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      try {
+        const userString = await AsyncStorage.getItem("user");
+        if (userString) {
+          const user = JSON.parse(userString);
+          setCurrentUserEmail(user.email);
+        }
+      } catch (error) {
+        console.error("Failed to retrieve user email:", error);
+      }
+    };
+
+    fetchUserEmail();
   }, []);
 
   // Fetch course and feedback data
@@ -137,90 +176,37 @@ export default function CourseDetailsScreen() {
     fetchCourse();
   }, [courseId]);
 
-  // Handle feedback submission
   const handleSubmitFeedback = async () => {
-    if (rating === 0 || newFeedbackText.trim() === "") {
-      alert("Please provide both a rating and feedback.");
-      return;
+    if (!newFeedbackText.trim()) {
+      // Nếu newFeedbackText rỗng, hiển thị popup báo lỗi
+      Alert.alert("Error", "Please enter your feedback before submitting.");
+      return; // Dừng hàm ở đây để không gọi API
     }
-
+  
     try {
       const token = `Bearer ${await AsyncStorage.getItem("token")}`;
       const userEmail = JSON.parse(
         (await AsyncStorage.getItem("user")) || "{}"
       ).email;
-
-      await createFeedback(
-        courseId as string,
-        userEmail,
-        rating,
-        newFeedbackText,
-        token
-      );
-
+  
+      await createFeedback(courseId as string, userEmail, newFeedbackText, token);
+  
       // Refresh feedback list after submission
       const updatedFeedbacks = await getFeedbackByCourseId(
         courseId as string,
         token
       );
       setFeedbacks(updatedFeedbacks);
-
-      // Reset feedback input fields
-      setRating(0);
-      setNewFeedbackText("");
+  
+      setNewFeedbackText(""); // Reset lại ô input sau khi gửi feedback thành công
     } catch (error) {
+      Alert.alert("Error", "There was an error submitting your feedback.");
       console.error("Error submitting feedback:", error);
     }
   };
 
-  // Handle star rating selection
-  const handleStarPress = (selectedRating: number) => {
-    setRating(selectedRating);
-  };
 
-  // Function to round to nearest half star
-  const roundToNearestHalf = (num: number) => {
-    return Math.round(num * 2) / 2;
-  };
 
-  // Function to render stars based on average rating
-  const renderStars = (average: number) => {
-    const roundedAverage = roundToNearestHalf(average);
-    const fullStars = Math.floor(roundedAverage);
-    const halfStar = roundedAverage % 1 !== 0;
-    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-
-    return (
-      <View style={styles.starRating}>
-        {/* Render full stars */}
-        {Array(fullStars)
-          .fill(0)
-          .map((_, index) => (
-            <FontAwesome
-              key={`full-${index}`}
-              name="star"
-              size={30}
-              color="#FFD700"
-            />
-          ))}
-
-        {/* Render half star if needed */}
-        {halfStar && <FontAwesome name="star-half" size={30} color="#FFD700" />}
-
-        {/* Render empty stars */}
-        {Array(emptyStars)
-          .fill(0)
-          .map((_, index) => (
-            <FontAwesome
-              key={`empty-${index}`}
-              name="star-o"
-              size={30}
-              color="#FFD700"
-            />
-          ))}
-      </View>
-    );
-  };
 
   if (!course) {
     return (
@@ -342,35 +328,9 @@ export default function CourseDetailsScreen() {
             </View>
           </View>
 
-          <View style={styles.feedbackStats}>
-            <View style={styles.ratingRow}>
-              <Text>Rating: </Text>
-              {renderStars(average)}
-            </View>
-            <Text style={styles.totalReviews}>
-              Total Reviews: {feedbacks.length}
-            </Text>
-          </View>
-
           {/* Add Feedback Section */}
           <View style={styles.addFeedbackSection}>
             <Text style={styles.addFeedbackHeader}>Add Your Feedback</Text>
-
-            {/* 5-Star Rating */}
-            <View style={styles.starRating}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity
-                  key={star}
-                  onPress={() => handleStarPress(star)}
-                >
-                  <FontAwesome
-                    name={star <= rating ? "star" : "star-o"}
-                    size={30}
-                    color="#FFD700"
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
 
             {/* Feedback Text Input */}
             <TextInput
@@ -394,15 +354,22 @@ export default function CourseDetailsScreen() {
             {feedbacks.length > 0 ? (
               <>
                 <View>
-                  {feedbacks.reverse().map((feedback) => (
+                  {[...currentFeedbacks].reverse().map((feedback) => (
                     <View key={feedback._id} style={styles.feedbackItem}>
                       <View style={styles.feedbackHeaderRow}>
                         <Text style={styles.userEmail}>
                           {feedback.userEmail}
                         </Text>
-                        <Text style={styles.rating}>
-                          Rating: {feedback.ratingPoint}/5
-                        </Text>
+                        {currentUserEmail === feedback.userEmail && (
+                        <View style={styles.feedbackButtons}>
+                          <TouchableOpacity
+                            style={styles.deleteButton}
+                            onPress={() => handleDeleteFeedback(feedback._id)}
+                          >
+                            <Text style={styles.deleteButtonText}>Delete</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                       </View>
                       <Text style={styles.feedbackText}>
                         {feedback.feedbackText}
@@ -410,14 +377,8 @@ export default function CourseDetailsScreen() {
                       <Text style={styles.date}>
                         {new Date(feedback.createDate).toLocaleDateString()}
                       </Text>
-                      <View style={styles.feedbackButtons}>
-                        <TouchableOpacity
-                          style={styles.deleteButton}
-                          onPress={() => handleDeleteFeedback(feedback._id)}
-                        >
-                          <Text style={styles.deleteButtonText}>Delete</Text>
-                        </TouchableOpacity>
-                      </View>
+
+                    
                     </View>
                   ))}
                 </View>
@@ -426,8 +387,34 @@ export default function CourseDetailsScreen() {
               <Text>No feedback available for this course.</Text>
             )}
           </View>
+           {/* Navigation Bar */}
+      <View style={styles.pagination}>
+        <TouchableOpacity
+          onPress={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          style={[styles.pageButton, currentPage === 1 && styles.disabledButton]}
+        >
+          <Text style={styles.pageButtonText}>Previous</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.pageInfo}>
+          Page {currentPage} of {totalPages}
+        </Text>
+
+        <TouchableOpacity
+          onPress={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          style={[
+            styles.pageButton,
+            currentPage === totalPages && styles.disabledButton,
+          ]}
+        >
+          <Text style={styles.pageButtonText}>Next</Text>
+        </TouchableOpacity>
+      </View>
         </View>
       </ScrollView>
+     
 
       <View style={styles.footer}>
         <View style={styles.footerChildren}>
@@ -479,31 +466,45 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
   },
-  ratingRow: {
+  pagination: {
     flexDirection: "row",
-    alignItems: "center", // Aligns text and stars vertically
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginVertical: 15,
   },
+  pageButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: "#007BFF",
+    borderRadius: 5,
+  },
+  disabledButton: {
+    backgroundColor: "#cccccc",
+  },
+  pageButtonText: {
+    color: "#fff",
+  },
+  pageInfo: {
+    fontSize: 16,
+  },
+
   feedbackButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
   deleteButton: {
-    backgroundColor: "#F44336",
+    backgroundColor: "#0000",
     padding: 8,
     borderRadius: 5,
   },
   deleteButtonText: {
-    color: "white",
+    color: "gray",
   },
   feedbackStats: {
     marginBottom: 20,
     backgroundColor: "#f9f9f9",
     padding: 10,
     borderRadius: 5,
-  },
-  averageRating: {
-    fontSize: 18,
-    fontWeight: "bold",
   },
   totalReviews: {
     fontSize: 16,
@@ -515,12 +516,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: "#f0f0f0",
     borderRadius: 8,
-  },
-  pagination: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
   },
   paginationText: {
     fontSize: 16,
@@ -553,10 +548,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
   },
-  rating: {
-    color: "#ffcc00",
-    marginBottom: 5,
-  },
   feedbackText: {
     fontSize: 14,
     marginBottom: 10,
@@ -575,11 +566,6 @@ const styles = StyleSheet.create({
   addFeedbackHeader: {
     fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
-  },
-  starRating: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
     marginBottom: 10,
   },
   feedbackInput: {
