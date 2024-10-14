@@ -131,7 +131,7 @@ export default function QuizzScreen() {
         <Text style={styles.headerText}>Quiz</Text>
       </View>
 
-      <ProgressBarAndroid styleAttr="Horizontal" color="#29f1c3" indeterminate={false} progress={progress} />
+      <ProgressBarAndroid styleAttr="Horizontal" color="#2980f1" indeterminate={false} progress={progress} />
 
       <View style={styles.content}>
         {questions[currentQuestionIndex] && (
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     borderWidth: 2,
-    borderColor: '#29f1c3',
+    borderColor: '#2980f1',
   },
   username: {
     fontSize: 18,
@@ -226,9 +226,9 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 16,
     marginBottom: 16,
-    borderColor: 'rgba(41, 241, 195, 0.5)',
+    borderColor: '#2980f1',
     borderWidth: 1,
-    shadowColor: '#29f1c3',
+    shadowColor: '#2980f1',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -244,14 +244,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginVertical: 8,
     borderWidth: 2,
-    borderColor: '#29f1c3',
-    shadowColor: '#29f1c3',
+    borderColor: '#1b75ec',
+    shadowColor: '#1b75ec',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
   selectedOption: {
-    backgroundColor: '#29f1c3', // Màu nền cho lựa chọn đã chọn
+    backgroundColor: '#29f1c3',
   },
   optionText: {
     fontSize: 18,
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   submitButton: {
     padding: 16,
     borderRadius: 8,
-    backgroundColor: '#2ADA93',
+    backgroundColor: '#1b75ec',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
