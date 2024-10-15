@@ -23,7 +23,6 @@ const CourseListScreen = () => {
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [datProcess, setDatProcess] = useState<Process[] | null>(null);
   const [animatedValues, setAnimatedValues] = useState<Animated.Value[]>([]);
 
   // Helper function to create a new Animated.Value for each course
@@ -72,27 +71,31 @@ const CourseListScreen = () => {
         }
         if (token && user) {
           const result: Process[] = await getProcessByEmail(user.email, token);
-          setDatProcess(result);
           if (coursePurchase && result) {
-            coursePurchase.courses.forEach((course, index) => {
-              if (course.courseId) {
-                const tasksForCourse = result
-                  .filter((item) => item.courseId === course.courseId?._id)
-                  .flatMap((item) => item.content);
+            // Kiểm tra xem animatedValues có đủ kích thước không
+            if (animatedValues.length === coursePurchase.courses.length) {
+              coursePurchase.courses.forEach((course, index) => {
+                if (course.courseId) {
+                  const tasksForCourse = result
+                    .filter((item) => item.courseId === course.courseId?._id)
+                    .flatMap((item) => item.content);
 
-                const completedTasks = tasksForCourse.filter(
-                  (task) => task.isComplete == true
-                ).length;
-                const totalTasks = tasksForCourse.length;
-                const progress =
-                  totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-                Animated.timing(animatedValues[index], {
-                  toValue: progress,
-                  duration: 500,
-                  useNativeDriver: false,
-                }).start();
-              }
-            });
+                  const completedTasks = tasksForCourse.filter(
+                    (task) => task.isComplete === true
+                  ).length;
+                  const totalTasks = tasksForCourse.length;
+                  const progress =
+                    totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+                  // Cập nhật thanh tiến trình
+                  Animated.timing(animatedValues[index], {
+                    toValue: progress,
+                    duration: 500,
+                    useNativeDriver: false,
+                  }).start();
+                }
+              });
+            }
           }
         }
       } catch (error) {
@@ -100,8 +103,11 @@ const CourseListScreen = () => {
       }
     };
 
-    fetchDataProcess();
+    if (coursePurchase) {
+      fetchDataProcess();
+    }
   }, [coursePurchase, animatedValues]);
+
 
   if (loading) {
     return (

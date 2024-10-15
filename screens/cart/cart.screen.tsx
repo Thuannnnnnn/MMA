@@ -54,7 +54,6 @@ export default function CartScreen() {
         if(totalPriceNumber>0){
           await AsyncStorage.setItem("cartItems", JSON.stringify(cartItems));
           await AsyncStorage.setItem("totalPrice", totalPrice);
-          console.log("Cart items saved to AsyncStorage.");
           router.push("/(routes)/payment");
         }
         else{
