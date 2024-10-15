@@ -148,7 +148,7 @@ export default function HomeScreen() {
               >
                 {slides.map((slide) => (
                   <View key={slide.key} style={[styles.slide, { backgroundColor: slide.backgroundColor }]}>
-                       <Image source={{ uri: slide.img }} style={styles.image} />
+                       <Image source={slide.img} style={styles.image} />
                   </View>
                 ))}
               </ScrollView>
@@ -211,17 +211,31 @@ const styles = StyleSheet.create({
   },
   sliderContainer: {
     marginBottom: screenHeight * 0.02,
+    borderRadius: screenWidth * 0.02,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   slide: {
     justifyContent: 'center',
     alignItems: 'center',
-    height: screenHeight * 0.25,
+    height: screenHeight * 0.33,
     width: screenWidth * 0.7,
+    borderRadius: screenWidth * 0.02,
+    marginHorizontal: screenWidth * 0.01,
+    elevation: 2,
   },
   image: {
     width: '100%',
     height: '100%',
     resizeMode: 'cover',
+    borderRadius: screenWidth * 0.02,
   },
   courseCard: {
     flexDirection: 'row',
