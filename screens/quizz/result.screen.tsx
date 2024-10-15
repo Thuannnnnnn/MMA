@@ -15,7 +15,7 @@ import { getResults, dropResults } from '@/API/Quizz/quizzResultAPI';
 import { Result } from '@/constants/Quizz/result';
 import { router } from 'expo-router';
 
-const {width , height} = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 const ResultsPage = () => {
   const [results, setResults] = useState<Result[]>([]);
@@ -117,9 +117,6 @@ const ResultsPage = () => {
         </Text>
         <Text style={styles.detailTitle}>Chi tiết kết quả:</Text>
         {item.result.map((answer, index) => {
-          const isCorrect = answer.selectedAnswer === answer.correctAnswer;
-          const isUserIncorrect = answer.selectedAnswer !== answer.correctAnswer;
-  
           return (
             <View key={index} style={styles.detailItem}>
               <Text style={styles.detailQuestion}>Question: {answer.question}</Text>

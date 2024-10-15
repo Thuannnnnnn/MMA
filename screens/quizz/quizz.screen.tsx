@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ProgressBarAndroid, Animated, Image, Alert } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ProgressBarAndroid, Animated, Alert } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { router, useNavigation } from 'expo-router';
 import { fetchQuestions } from '@/API/Quizz/quizzAPI';
