@@ -123,8 +123,9 @@ export default function HomeScreen() {
   );
 
   return (
+    
     <LinearGradient colors={['#ffffff', '#e2e9f9', '#d7e2fb']} style={styles.gradient}>
-      <>
+      <ScrollView>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.container}>
             <View style={styles.header}>
@@ -157,17 +158,19 @@ export default function HomeScreen() {
               <ActivityIndicator size="large" color="#0000ff" />
             ) : (
               <FlatList
+                nestedScrollEnabled={true} 
                 data={isSearching ? searchResults : displayedCourses}
                 renderItem={renderCourse}
                 keyExtractor={(item) => item.courseId}
                 onEndReached={loadMoreCourses}
                 onEndReachedThreshold={0.5}
                 ListFooterComponent={loadingMore && !isSearching ? <ActivityIndicator size="small" color="#0000ff" /> : null}
+               
               />
             )}
           </View>
         </SafeAreaView>
-      </>
+      </ScrollView>
     </LinearGradient>
   );
 }
