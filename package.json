@@ -23,6 +23,7 @@
     "expo-av": "~14.0.7",
     "expo-constants": "^16.0.2",
     "expo-font": "~12.0.9",
+    "expo-image-picker": "~15.0.7",
     "expo-linear-gradient": "~13.0.2",
     "expo-linking": "~6.3.1",
     "expo-router": "~3.5.23",
@@ -32,6 +33,7 @@
     "expo-system-ui": "~3.0.7",
     "expo-video": "^1.2.6",
     "expo-web-browser": "~13.0.3",
+    "lottie-react-native": "^7.0.0",
     "mma": "file:",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -49,14 +51,14 @@
     "react-native-video": "^6.6.1",
     "react-native-web": "~0.19.10",
     "react-native-webview": "13.8.6",
-    "version": "^0.1.2",
-    "expo-image-picker": "~15.0.7"
+    "version": "^0.1.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@eslint/js": "^9.9.1",
     "@types/react": "~18.2.45",
     "@types/react-native": "^0.72.8",
+    "@types/react-native-vector-icons": "^6.4.18",
     "babel-preset-expo": "^11.0.14",
     "eslint": "^9.9.1",
     "eslint-plugin-react": "^7.35.2",

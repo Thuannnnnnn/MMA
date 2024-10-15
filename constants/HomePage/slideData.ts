@@ -1,6 +1,6 @@
 export interface SlideData {
     key: string;
     title: string;
-    text: string;
+    img: string;
     backgroundColor: string;
   }

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import img from '@/assets/Course/BgCourseDetail.png';
+import { Text, View, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Course } from '@/constants/Course/CourseDetails';
 import { getCourseById, checkCourseOwnership } from '@/API/Course/CourseDetailsAPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getAllCartByEmail, addToCart } from '@/API/Cart/cartAPI';
 import { useRouter } from 'expo-router';
+import { ResizeMode, Video } from 'expo-av';
 
 const { width, height } = Dimensions.get('window');
 
@@ -128,65 +128,33 @@ export default function CourseDetailsScreen() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.banner}>
-          <View style={styles.label}>
-            <Text style={styles.labelText}>BESTSELLER</Text>
-          </View>
-          <Text style={styles.courseTitle}>{course.courseName}</Text>
-          <Image source={img} style={styles.courseImage} />
+      <View style={styles.banner}>
+          <Video
+             source={{ uri: course.videoIntro }}
+             style={styles.video}
+             resizeMode={ResizeMode.CONTAIN}
+             isLooping
+             shouldPlay
+          />
         </View>
 
         <View style={styles.childrent}>
           {/* About Course Section */}
           <View style={styles.aboutCourse}>
-            <View style={styles.courseSection}>
-              <Text style={styles.courseTitleChild}>{course.courseName}</Text>
-              <Text style={styles.price}>{course.price}$</Text>
-            </View>
-
+          <Text style={styles.courseTitleChild}>{course.courseName}</Text>
+          <Text style={styles.price}>{course.price}VNĐ</Text>
+           
             <Text style={styles.aboutTitle}>About this course</Text>
             <Text style={styles.aboutDescription}>{renderHTMLText(course.description)}</Text>
           </View>
+        
 
-          {/* Lessons List */}
-          <View style={styles.lessonList}>
-            <View style={styles.lessonItem}>
-              <Text style={styles.lessonIndex}>01</Text>
-              <View style={styles.lessonDetails}>
-                <Text style={styles.lessonTitle}>Welcome to the Course</Text>
-
-              </View>
-              <TouchableOpacity style={styles.playButton}>
-                <Text style={styles.playButtonText}>Play</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.lessonItem}>
-              <Text style={styles.lessonIndex}>02</Text>
-              <View style={styles.lessonDetails}>
-                <Text style={styles.lessonTitle}>Process overview</Text>
-
-              </View>
-              <TouchableOpacity style={styles.playButton}>
-                <Text style={styles.playButtonText}>Play</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.lessonItem}>
-              <Text style={styles.lessonIndex}>03</Text>
-              <View style={styles.lessonDetails}>
-                <Text style={styles.lessonTitle}>Discovery</Text>
-              </View>
-              <TouchableOpacity style={styles.lockButton}>
-                <Text style={styles.playButtonText}>Lock</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          
         </View>
       </ScrollView>
       <View style={styles.footer}>
   <View style={styles.footerChildren}>
-    {!isOwner ? ( // Check if user is not the owner
+    {!isOwner ? ( 
       <TouchableOpacity style={styles.favoriteButton} onPress={() => handleAddToCart(course._id)}>
         <Text style={styles.favoriteIcon}>Add to cart</Text>
       </TouchableOpacity>
@@ -220,24 +188,39 @@ const styles = StyleSheet.create({
     flex: 1,
     width: width,
     height: height,
-    backgroundColor: '#FFE7EE',
+    backgroundColor: '#ffffff',
   },
   scrollContainer: {
     flexGrow: 1,
+    
   },
   childrent: {
     borderTopRightRadius: width * 0.04,
     borderTopLeftRadius: width * 0.04,
     padding: width * 0.05,
-    backgroundColor: '#fff',
+    backgroundColor: '#ffffff',
+    marginHorizontal: 10,
     flex: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderColor: 'black'
   },
   banner: {
     paddingTop: height * 0.01,
     width: width,
     height: height * 0.36,
     paddingHorizontal: width * 0.05,
+    position: 'relative',
   },
+  video: {
+    position: 'absolute',
+    width: width,
+    height: '100%',
+  },
+
   label: {
     backgroundColor: '#FFD700',
     paddingHorizontal: 8,
@@ -261,11 +244,6 @@ const styles = StyleSheet.create({
     fontSize: width * 0.05,
     fontWeight: 'bold',
     marginVertical: 10,
-  },
-  courseSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   courseImage: {
     width: width * 0.3,
