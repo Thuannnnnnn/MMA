@@ -147,8 +147,8 @@ const CourseListScreen = () => {
           <TouchableOpacity
             style={styles.courseCard}
             onPress={() => {
-              if (item?.courseId?._id) {
-                GotoContent(item.courseId._id);
+              if (item?.courseId?.courseId) {
+                GotoContent(item.courseId.courseId);
               }
             }}
           >

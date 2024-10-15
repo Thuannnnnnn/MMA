@@ -76,7 +76,6 @@ export default function ContentList() {
   useEffect(() => {
     const fetchDataProcess = async () => {
       try {
-        if (token) {
           const userString = await AsyncStorage.getItem("user");
           let user;
           if (userString) {
@@ -91,9 +90,7 @@ export default function ContentList() {
             );
             setTotalTasks(result.content.length);
             setDatProcess(result);
-          } else {
-            console.warn("Token is null, unable to fetch content");
-          }
+        
         }
       } catch (error) {
         console.error("Error fetching content:", error);
