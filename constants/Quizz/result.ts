@@ -1,8 +1,14 @@
 export interface Result {
-    _id?: string;
-    result: any[]; 
-    attempts: number;
-    points: number;
-    achieved: string;
-    createdAt?: Date;
-  }
+  _id: string;
+  achieved: string;
+  attempts: number;
+  createdAt: string;
+  points: number;
+  quizId: string;
+  result: Array<{
+    correctAnswer: string;
+    question: string;
+    selectedAnswer: string | null;
+  }>;
+  selectedItemId: string | null; // Đảm bảo kiểu dữ liệu này chính xác
+}

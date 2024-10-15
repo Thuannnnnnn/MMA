@@ -5,6 +5,7 @@ import { router, useNavigation } from 'expo-router';
 import { fetchQuestions } from '@/API/Quizz/quizzAPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storeResult } from '@/API/Quizz/quizzResultAPI';
+import { Result } from '@/constants/Quizz/result';
 
 export default function QuizzScreen() {
   const navigation = useNavigation();
@@ -26,7 +27,7 @@ export default function QuizzScreen() {
         if (fetchedQuestions && fetchedQuestions.length > 0) {
           const questionsWithAnswers = fetchedQuestions[0].questions.map((q) => ({
             ...q,
-            correctAnswer: q.options[q.answer], // Gán đáp án đúng dựa trên chỉ số
+            correctAnswer: q.options[q.answer],
           }));
           setQuestions(questionsWithAnswers);
           setUserSelections(new Array(questionsWithAnswers.length).fill(null));
@@ -85,38 +86,63 @@ export default function QuizzScreen() {
   };
   
   const saveResults = async () => {
-    const score = userSelections.reduce((acc, selection, index) => {
-      if (selection === questions[index].correctAnswer) {
-        return acc + 1;
+      console.log("saveResults called");
+
+      // Tính điểm
+      const score = userSelections.reduce((acc, selection, index) => {
+          if (selection === questions[index].correctAnswer) {
+              return acc + 1;
+          }
+          return acc;
+      }, 0);
+
+      // Tạo đối tượng resultData theo interface Result
+      const resultData: Result = {
+        quizId: questions[0]._id,
+        result: userSelections.map((selection, index) => ({
+          question: questions[index].question,
+          selectedAnswer: selection,
+          correctAnswer: questions[index].correctAnswer,
+        })),
+        attempts: 1,
+        points: score,
+        achieved: `${score}/${questions.length}`,
+        createdAt: new Date().toISOString(),
+        selectedItemId: null,
+        _id: ''
+      };
+
+      try {
+          console.log("resultData", resultData);
+        
+          // Lấy _id từ AsyncStorage
+          const storedItem = await AsyncStorage.getItem('@selectedItem');
+          const parsedItem = storedItem ? JSON.parse(storedItem) : null;
+
+          // Nếu tồn tại, thêm _id vào resultData
+          if (parsedItem && parsedItem._id) {
+              resultData.selectedItemId = parsedItem._id;
+          }
+
+          console.log("resultData after adding selectedItemId", resultData);
+
+          // Lưu kết quả vào AsyncStorage
+          await AsyncStorage.setItem('quizResults', JSON.stringify({ score, total: questions.length }));
+
+          // Lấy token và gửi request lưu kết quả
+          const token = await AsyncStorage.getItem('token');
+          if (token !== null) {
+              console.log("token", token);
+              const response = await storeResult(token, resultData); // Gọi hàm lưu kết quả
+              console.log("msg", response); // In thông điệp phản hồi từ server
+              return response;
+          } else {
+              console.error('Token is null');
+          }
+      } catch (error) {
+          console.error('Error saving results:', error);
       }
-      return acc;
-    }, 0);
-  
-    const resultData = {
-      result: userSelections.map((selection, index) => ({
-        question: questions[index].question,
-        selectedAnswer: selection,
-        correctAnswer: questions[index].correctAnswer,
-      })),
-      attempts: 1,
-      points: score,
-      achieved: `${score}/${questions.length}`,
-      createdAt: new Date(),
-    };
-  
-    try {
-      await AsyncStorage.setItem('quizResults', JSON.stringify({ score, total: questions.length }));
-      const token = await AsyncStorage.getItem('token');
-      if (token !== null) {
-        const response = await storeResult(token, resultData);
-      } else {
-        console.error('Token is null');
-      }
-    } catch (error) {
-      console.error('Error saving results:', error);
-    }
-  };
-  const handleBack = () => {
+  };  const handleBack = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }

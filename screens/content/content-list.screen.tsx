@@ -59,8 +59,9 @@ export default function ContentList() {
         });
         break; 
       case 'questions':
+        console.log('Redirecting to quizzResults');
         router.push({
-          pathname: '/(routes)/quizz',
+          pathname: '/(routes)/quizz/quizzResults',
         });
         break; 
       case 'exams':
@@ -69,6 +70,7 @@ export default function ContentList() {
         });
         break; 
       default:
+        console.log('No matching type. Doing nothing.');
         break;
     }
   };
