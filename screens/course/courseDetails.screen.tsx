@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Text, View, Image, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import img from '@/assets/Course/BgCourseDetail.png';
+import { Text, View, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { Course } from '@/constants/Course/CourseDetails';
 import { getCourseById, checkCourseOwnership } from '@/API/Course/CourseDetailsAPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -148,7 +147,7 @@ export default function CourseDetailsScreen() {
             <Text style={styles.aboutTitle}>About this course</Text>
             <Text style={styles.aboutDescription}>{renderHTMLText(course.description)}</Text>
           </View>
-
+        
 
           
         </View>
