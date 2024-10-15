@@ -6,6 +6,7 @@ export interface Result {
   points: number;
   quizId: string;
   result: Array<{
+    options: any;
     correctAnswer: string;
     question: string;
     selectedAnswer: string | null;

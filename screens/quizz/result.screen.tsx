@@ -6,26 +6,24 @@ import {
   ActivityIndicator, 
   Alert, 
   Button, 
-  Modal, 
   StyleSheet, 
-  TouchableOpacity
+  TouchableOpacity,
+  Dimensions
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getResults, dropResults } from '@/API/Quizz/quizzResultAPI';
 import { Result } from '@/constants/Quizz/result';
-import { ScrollView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
+
+const {width , height} = Dimensions.get('window');
 
 const ResultsPage = () => {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedResult, setSelectedResult] = useState<Result | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
+  // Fetch kết quả từ API
   const fetchResults = async () => {
-    console.log('Fetching results...');
     setLoading(true);
     let currentSelectedItemId: string | undefined; 
     try {
@@ -37,28 +35,15 @@ const ResultsPage = () => {
       const storedItem = await AsyncStorage.getItem('@selectedItem');
       if (storedItem) {
         const parsedItem = JSON.parse(storedItem);
-        console.log(`Parsed item:`, parsedItem);
         currentSelectedItemId = parsedItem?._id;
-        
-        if (currentSelectedItemId) {
-          setSelectedItemId(currentSelectedItemId);
-        } else {
-          console.warn('Selected Item ID không tồn tại trong parsedItem.');
-        }
-      } else {
-        console.warn('Stored item không tồn tại trong AsyncStorage.');
       }
   
       const fetchedResults = await getResults(token);
-      console.log(`Fetched results:`, fetchedResults);
-  
-      const filteredResults = fetchedResults.filter(result => {
-        console.log(`Comparing: ${result.selectedItemId} with ${currentSelectedItemId}`);
-        return result.selectedItemId === currentSelectedItemId; 
-      });
+      const filteredResults = fetchedResults.filter(result => 
+        result.selectedItemId === currentSelectedItemId
+      );
   
       setResults(filteredResults);
-      console.log(`Filtered results:`, filteredResults);
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -67,79 +52,97 @@ const ResultsPage = () => {
       }
     } finally {
       setLoading(false);
-      console.log('Fetching results completed.');
     }
   };
-  
+
   useEffect(() => {
     fetchResults();
   }, []);
 
   const handleTryAgain = async (resultId: string) => {
-    try {
-      const token = await AsyncStorage.getItem('token');
-      if (!token) {
-        throw new Error('Token không tồn tại.');
-      }
-      await dropResults(token, resultId);
-      setResults((prevResults) => prevResults.filter((item) => item._id !== resultId));
-      Alert.alert('Thành công', 'Kết quả đã được xóa.');
-    } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Lỗi', error.message);
-      } else {
-        Alert.alert('Lỗi', 'Đã xảy ra lỗi không xác định');
-      }
-    }
-  };
-
-  const handleShowDetails = (item: Result) => {
-    setSelectedResult(item);
-    setModalVisible(true);
-  };
-
-  const closeDetailsModal = () => {
-    setModalVisible(false);
-    setSelectedResult(null);
-  };
-
-  const renderItem = ({ item }: { item: Result }) => {
-    console.log('Rendering item', item);
-    const totalQuestions = item.result.length;
-    const correctAnswers = item.result.filter(answer => answer.selectedAnswer === answer.correctAnswer).length;
-    
-    const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0; 
-    const isPassed = percentage > 80;
-    console.log('Percentage', percentage);
-    console.log('Is passed', isPassed);
-  
-    return (
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Correct: {correctAnswers} / {totalQuestions}</Text>
-        <Text style={styles.cardTitle}>Points: {percentage.toFixed(2)}%</Text>
-        <Text style={[styles.resultText, isPassed ? styles.pass : styles.fail]}>
-          {isPassed ? 'Pass' : 'Not Pass'}
-        </Text>
-        <Button title="Xem chi tiết" onPress={() => handleShowDetails(item)} color="#FF9800" />
-      </View>
+    Alert.alert(
+      'Confirmation',
+      'Are you sure you want to retry this result?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Retry',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('token');
+              if (!token) {
+                throw new Error('Token not found.');
+              }
+              await dropResults(token, resultId);
+              setResults(prevResults => prevResults.filter(item => item._id !== resultId));
+              router.push('/(routes)/quizz')
+            } catch (error) {
+              if (error instanceof Error) {
+                Alert.alert('Error', error.message);
+              } else {
+                Alert.alert('Error', 'An unknown error occurred');
+              }
+            }
+          },
+        },
+      ],
+      { cancelable: true }
     );
   };
 
-  
 
-
-  const renderDetailItem = (answer: any) => {
-    const isCorrect = answer.selectedAnswer === answer.correctAnswer;
+  const CircleCheckbox = ({ selected, onSelect }: { selected: boolean; onSelect: () => void }) => {
     return (
-      <ScrollView style={styles.detailContainer}>
-        <View key={answer.question} style={[styles.detailItem, isCorrect ? styles.correct : styles.incorrect]}>
-          <Text style={styles.detailQuestion}>Câu hỏi: {answer.question}</Text>
-          <Text style={styles.detailText}>Your choice: </Text>
-          <Text style={{ ...styles.detailText, color: isCorrect ? 'green' : 'red' }}>{answer.selectedAnswer}</Text>
-          <Text style={styles.detailText}>Correct answer</Text>
-          <Text style={styles.detailText1}> {answer.correctAnswer}</Text>
-        </View>
-      </ScrollView>
+      <TouchableOpacity onPress={onSelect} style={styles.checkboxContainer}>
+        <View style={[styles.circle, selected && styles.selectedCircle]} />
+      </TouchableOpacity>
+    );
+  };
+
+  const renderItem = ({ item }: { item: Result }) => {
+    const totalQuestions = item.result.length;
+    const correctAnswers = item.result.filter(answer => answer.selectedAnswer === answer.correctAnswer).length;
+    const percentage = totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : 0; 
+    const isPassed = percentage > 80;
+
+    return (
+      <View style={styles.resultContainer}>
+        <Text style={styles.resultTitle}>Correct answers: {correctAnswers} / {totalQuestions}</Text>
+        <Text style={styles.resultText}>Score: {percentage.toFixed(2)}%</Text>
+        <Text style={[styles.resultText, isPassed ? styles.pass : styles.fail]}>
+          {isPassed ? 'Pass' : 'Not Pass'}
+        </Text>
+        <Text style={styles.detailTitle}>Chi tiết kết quả:</Text>
+        {item.result.map((answer, index) => {
+          const isCorrect = answer.selectedAnswer === answer.correctAnswer;
+          const isUserIncorrect = answer.selectedAnswer !== answer.correctAnswer;
+  
+          return (
+            <View key={index} style={styles.detailItem}>
+              <Text style={styles.detailQuestion}>Question: {answer.question}</Text>
+              <View style={styles.optionsContainer}>
+                {answer.options.map((option: string, optionIndex : string) => {
+                  const isOptionSelected = answer.selectedAnswer === option;
+                  const isOptionCorrect = option === answer.correctAnswer;
+  
+                  return (
+                    <View key={optionIndex} style={[styles.optionItem, isOptionCorrect ? styles.correctOption : isOptionSelected && !isOptionCorrect ? styles.incorrectOption : null]}>
+                      <CircleCheckbox 
+                        selected={isOptionSelected} 
+                        onSelect={() => {}} 
+                      />
+                      <Text>{option}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })}
+      </View>
     );
   };
 
@@ -154,6 +157,19 @@ const ResultsPage = () => {
       </View>
     );
   }
+  if (results.length === 0) {
+    return (
+      <View style={styles.container2}>
+      <View style={styles.noResultContainer}>
+        <Text style={styles.resultTitle}>Your correct answers: 0</Text>
+        <Text style={styles.resultText}>Your score: 0%</Text>
+        <TouchableOpacity style={styles.startButton}>
+          <Button title="Start" onPress={() => router.push('/(routes)/quizz')} color="#1E90FF" />
+        </TouchableOpacity>
+      </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -163,116 +179,88 @@ const ResultsPage = () => {
         keyExtractor={(item) => item._id || Math.random().toString()}
         contentContainerStyle={styles.list}
       />
-      {selectedResult && (
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={closeDetailsModal}
-        >
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Chi tiết kết quả</Text>
-            {selectedResult.result.map(renderDetailItem)}
-            <Button title="Đóng" onPress={closeDetailsModal} color="#4CAF50" />
-            <Button title="Thử lại" onPress={() => handleTryAgain(selectedResult._id ?? '')} color="#D32F2F" />
-          </View>
-        </Modal>
-      )}
-      <TouchableOpacity style={{ width: 200, height: 100 }}>
-        <Button title="Đóng" onPress={() => router.push('/(routes)/quizz')} color="#4CAF50" />
+      <TouchableOpacity style={styles.tryAgainButton}>
+        <Button title="Try Again" onPress={() => handleTryAgain(results[0]._id)} color="#D32F2F" />
       </TouchableOpacity>
     </View>
   );
+
 };
 
 // Định nghĩa các styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
+  },
+  container2:{
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center', 
+    backgroundColor: '#FFFFFF',
   },
   list: {
     paddingBottom: 20,
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    padding: 16,
-    marginVertical: 8,
+  resultContainer: {
+    padding: 10,
   },
-  cardTitle: {
+  resultTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-  },
-  detailContainer: {
-    backgroundColor: '#fff',
-    paddingLeft: 12,
-    paddingRight: 12,
-    borderRadius: 10,
-    marginVertical: 8,
+    marginBottom: 8,
+    textAlign: 'center',
   },
   resultText: {
     fontSize: 16,
+    marginVertical: 2,
+    textAlign: 'center',
+  },
+  detailQuestion:{
+    fontWeight: 'bold', 
+  },
+  detailTitle: {
     fontWeight: 'bold',
-    marginVertical: 8,
-  },
-  pass: {
-    color: 'green',
-  },
-  fail: {
-    color: 'red',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    marginTop: 10,
+    marginBottom: 4,
   },
   detailItem: {
     marginBottom: 10,
     padding: 10,
     borderRadius: 5,
-    width: '100%',
   },
-  correct: {
+
+  optionsContainer: {
+    marginTop: 10,
+  },
+  optionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 5,
+    flexWrap: 'wrap', 
+  },
+  correctOption: {
     backgroundColor: '#dff0d8',
+    flexGrow: 1,
+    flexShrink: 1,
   },
-  incorrect: {
+  incorrectOption: {
     backgroundColor: '#f2dede',
-  },
-  detailQuestion: {
-    fontWeight: 'bold',
+    flexGrow: 1,
+    flexShrink: 1,
   },
   detailText: {
-    marginVertical: 2,
-    fontWeight: 'bold',
+    fontSize: 14,
+    marginTop: 5,
   },
   detailText1: {
-    marginVertical: 2,
-    color: 'gray',
+    color: 'red',
+  },
+  tick: {
+    marginLeft: 5,
+  },
+  closeButton: {
+    marginTop: 20,
   },
   errorContainer: {
     flex: 1,
@@ -281,8 +269,55 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: 'red',
-    fontSize: 18,
+  },
+  pass: {
+    color: 'green',
+    fontWeight: 'bold',
+    fontSize: 20,
+  },
+  fail: {
+    color: 'red',
+    fontWeight: 'bold',
+    fontSize: 20,
+  },
+  checkboxContainer: {
+    marginRight: 10,
+  },
+  circle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#060606',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  selectedCircle: {
+    backgroundColor: '#60a5f9',
+  },
+  noResultContainer: {
+    width: 200,
+    height: 200,
+    borderRadius: 100, 
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e0e0e0', 
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  startButton: {
+    marginTop: 20,
+    width: 100,
+  },
+  tryAgainButton: {
+    marginTop: 20,
+    alignSelf: 'center',
+    width: width
   },
 });
+
 
 export default ResultsPage;

@@ -4,6 +4,9 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import TabsLayout from "./(tabs)/_layout";
 import { ClerkProvider } from "@clerk/clerk-expo";
+import { Text, TouchableOpacity, View } from "react-native";
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
 
 export default function RootLayout() {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -40,8 +43,25 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/cart/index" />
                         <Stack.Screen name="(routes)/quizz/index" />
                         <Stack.Screen name="(routes)/quizz/quizzSuccess" />
-                        <Stack.Screen name="(routes)/quizz/quizzResults" />
+                        <Stack.Screen 
+                name="(routes)/quizz/quizzResults" 
+                options={({ navigation }) => ({
+                  headerShown: true, 
+                  headerTitle: () => (
+                    <View style={{ flex: 1, marginLeft: 30 }}>
+                      <Text style={{ fontSize: 20, fontWeight: 'bold' }}>Quizz Results</Text>
+                    </View>
+                  ),
+                  headerBackVisible: false,
+                  headerLeft: () => (
+                    <TouchableOpacity onPress={() => navigation.navigate("(routes)/content/content-list")}style={{ marginLeft: 10 }}>
+                       <Icon name="arrow-back" size={28} color="black" />
+                    </TouchableOpacity>
+                  ),
+                })}
+              />
                         <Stack.Screen name="(routes)/courseDetails/index" options={{ headerShown: true, title: "Course Details", headerBackTitle: "Back" }} />
+
                     </Stack>
                     </ClerkProvider>
                 )

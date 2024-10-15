@@ -40,8 +40,8 @@ export default function QuizzScreen() {
       } finally {
         setLoading(false);
       }
-    };
 
+    };
     loadQuestions();
   }, []);
 
@@ -101,6 +101,7 @@ export default function QuizzScreen() {
         quizId: questions[0]._id,
         result: userSelections.map((selection, index) => ({
           question: questions[index].question,
+          options: questions[index].options,
           selectedAnswer: selection,
           correctAnswer: questions[index].correctAnswer,
         })),
@@ -142,7 +143,8 @@ export default function QuizzScreen() {
       } catch (error) {
           console.error('Error saving results:', error);
       }
-  };  const handleBack = () => {
+  }; 
+   const handleBack = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }

@@ -8,17 +8,19 @@ import { Course } from '@/constants/HomePage/course';
 import { SlideData } from '@/constants/HomePage/slideData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-// search Course
+
 import { fetchSearchCourses } from '@/API/SearchCourse/searchCourseAPI';
+
+import imgJava from '@/assets/java.jpg';
+import imgC from '@/assets/C.jpg';
+import imgNodejs from '@/assets/Nodejs.jpg';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const slides: SlideData[] = [
-  { key: '1', title: 'Slide 1', text: 'Welcome to Slide 1', backgroundColor: '#f7e9e9' },
-  { key: '2', title: 'Slide 2', text: 'Welcome to Slide 2', backgroundColor: '#e2f9e2' },
-  { key: '3', title: 'Slide 3', text: 'Welcome to Slide 3', backgroundColor: '#e2e9f9' },
-  { key: '4', title: 'Slide 4', text: 'Welcome to Slide 4', backgroundColor: '#3a62bf' },
-  { key: '5', title: 'Slide 5', text: 'Welcome to Slide 5', backgroundColor: '#d63075' },
+  { key: '1', title: 'Slide 1', img: imgJava, backgroundColor: '#f7e9e9' },
+  { key: '2', title: 'Slide 2', img: imgC, backgroundColor: '#e2f9e2' },
+  { key: '3', title: 'Slide 3', img: imgNodejs, backgroundColor: '#e2e9f9' },
 ];
 
 export default function HomeScreen() {
@@ -146,7 +148,7 @@ export default function HomeScreen() {
               >
                 {slides.map((slide) => (
                   <View key={slide.key} style={[styles.slide, { backgroundColor: slide.backgroundColor }]}>
-                    <Text style={styles.slideText}>{slide.text}</Text>
+                       <Image source={{ uri: slide.img }} style={styles.image} />
                   </View>
                 ))}
               </ScrollView>
@@ -215,13 +217,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: screenHeight * 0.25,
     width: screenWidth * 0.7,
-    borderRadius: screenWidth * 0.02,
-    padding: screenWidth * 0.05,
-    marginRight: screenWidth * 0.02,
   },
-  slideText: {
-    fontSize: screenWidth * 0.05,
-    fontWeight: 'bold',
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   courseCard: {
     flexDirection: 'row',
