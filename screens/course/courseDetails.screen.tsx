@@ -97,7 +97,8 @@ export default function CourseDetailsScreen() {
                 courseId as string,
                 token
               );
-              setFeedbacks(updatedFeedbacks);
+              // Sắp xếp lại feedback từ mới nhất đến cũ nhất
+            setFeedbacks(updatedFeedbacks.sort((a, b) => new Date(b.createDate).getTime() - new Date(a.createDate).getTime()));
             } catch (error) {
               console.error("Error deleting feedback:", error);
             }
