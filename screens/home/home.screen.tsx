@@ -8,17 +8,19 @@ import { Course } from '@/constants/HomePage/course';
 import { SlideData } from '@/constants/HomePage/slideData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-// search Course
+
 import { fetchSearchCourses } from '@/API/SearchCourse/searchCourseAPI';
+
+import imgJava from '@/assets/java.jpg';
+import imgC from '@/assets/C.jpg';
+import imgNodejs from '@/assets/Nodejs.jpg';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const slides: SlideData[] = [
-  { key: '1', title: 'Slide 1', text: 'Welcome to Slide 1', backgroundColor: '#f7e9e9' },
-  { key: '2', title: 'Slide 2', text: 'Welcome to Slide 2', backgroundColor: '#e2f9e2' },
-  { key: '3', title: 'Slide 3', text: 'Welcome to Slide 3', backgroundColor: '#e2e9f9' },
-  { key: '4', title: 'Slide 4', text: 'Welcome to Slide 4', backgroundColor: '#3a62bf' },
-  { key: '5', title: 'Slide 5', text: 'Welcome to Slide 5', backgroundColor: '#d63075' },
+  { key: '1', title: 'Slide 1', img: imgJava, backgroundColor: '#f7e9e9' },
+  { key: '2', title: 'Slide 2', img: imgC, backgroundColor: '#e2f9e2' },
+  { key: '3', title: 'Slide 3', img: imgNodejs, backgroundColor: '#e2e9f9' },
 ];
 
 export default function HomeScreen() {
@@ -121,8 +123,9 @@ export default function HomeScreen() {
   );
 
   return (
+    
     <LinearGradient colors={['#ffffff', '#e2e9f9', '#d7e2fb']} style={styles.gradient}>
-      <>
+      <ScrollView>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.container}>
             <View style={styles.header}>
@@ -146,7 +149,7 @@ export default function HomeScreen() {
               >
                 {slides.map((slide) => (
                   <View key={slide.key} style={[styles.slide, { backgroundColor: slide.backgroundColor }]}>
-                    <Text style={styles.slideText}>{slide.text}</Text>
+                       <Image source={slide.img} style={styles.image} />
                   </View>
                 ))}
               </ScrollView>
@@ -155,17 +158,19 @@ export default function HomeScreen() {
               <ActivityIndicator size="large" color="#0000ff" />
             ) : (
               <FlatList
+                nestedScrollEnabled={true} 
                 data={isSearching ? searchResults : displayedCourses}
                 renderItem={renderCourse}
                 keyExtractor={(item) => item.courseId}
                 onEndReached={loadMoreCourses}
                 onEndReachedThreshold={0.5}
                 ListFooterComponent={loadingMore && !isSearching ? <ActivityIndicator size="small" color="#0000ff" /> : null}
+               
               />
             )}
           </View>
         </SafeAreaView>
-      </>
+      </ScrollView>
     </LinearGradient>
   );
 }
@@ -209,19 +214,31 @@ const styles = StyleSheet.create({
   },
   sliderContainer: {
     marginBottom: screenHeight * 0.02,
+    borderRadius: screenWidth * 0.02,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   slide: {
     justifyContent: 'center',
     alignItems: 'center',
-    height: screenHeight * 0.25,
+    height: screenHeight * 0.33,
     width: screenWidth * 0.7,
     borderRadius: screenWidth * 0.02,
-    padding: screenWidth * 0.05,
-    marginRight: screenWidth * 0.02,
+    marginHorizontal: screenWidth * 0.01,
+    elevation: 2,
   },
-  slideText: {
-    fontSize: screenWidth * 0.05,
-    fontWeight: 'bold',
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: screenWidth * 0.02,
   },
   courseCard: {
     flexDirection: 'row',
