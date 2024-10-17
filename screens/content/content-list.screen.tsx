@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   StyleSheet,
   SafeAreaView,
@@ -10,7 +10,6 @@ import {
   StatusBar,
 } from "react-native";
 import { Entypo, AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-// import { ProgressBar } from 'react-native-paper';
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ScreenOrientation from "expo-screen-orientation";
@@ -21,6 +20,7 @@ import {
   updateProcessContent,
 } from "@/API/process/procesAPI";
 import { Process } from "@/constants/process/process";
+import { useFocusEffect } from "@react-navigation/native";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -32,50 +32,32 @@ export default function ContentList() {
   const [datProcess, setDatProcess] = useState<Process>();
   const [course, setCourse] = useState<Course>();
   const [token, setToken] = useState<any>();
-  useEffect(() => {
-    if (datProcess) {
-      const completedTasks = datProcess.content.filter(
-        (item) => item.isComplete == true
-      ).length;
-      const calculatedProgress = (completedTasks / totalTasks) * 100;
-      setProgress(calculatedProgress);
-    }
-  });
-  const animatedWidth = new Animated.Value(0);
-  useEffect(() => {
-    Animated.timing(animatedWidth, {
-      toValue: progress,
-      duration: 10,
-      useNativeDriver: false,
-    }).start();
-  }, [progress]);
-
-  useEffect(() => {
-    StatusBar.setBarStyle("light-content");
-    StatusBar.setBackgroundColor("#6a51ae");
-  }, []);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-        setToken(token);
-        const courseId = await AsyncStorage.getItem("courseIdGotoContent");
-        if (token && courseId) {
-          const result: Course = await getContentById(courseId, token);
-          setData(result.contents);
-          setCourse(result);
+  
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        try {
+          const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+          setToken(token);
+          const courseId = await AsyncStorage.getItem("courseIdGotoContent");
+          if (token && courseId) {
+            const result: Course = await getContentById(courseId, token);
+            setData(result.contents);
+            setCourse(result);
+          }
+        } catch (error) {
+          console.error("Error fetching content:", error);
         }
-      } catch (error) {
-        console.error("Error fetching content:", error);
-      }
-    };
+      };
 
-    fetchData();
-  }, [token]);
+      fetchData();
+    }, [token])
+  );
 
-  useEffect(() => {
-    const fetchDataProcess = async () => {
-      try {
+  useFocusEffect(
+    useCallback(() => {
+      const fetchDataProcess = async () => {
+        try {
           const userString = await AsyncStorage.getItem("user");
           let user;
           if (userString) {
@@ -90,24 +72,48 @@ export default function ContentList() {
             );
             setTotalTasks(result.content.length);
             setDatProcess(result);
-        
+          }
+        } catch (error) {
+          console.error("Error fetching process:", error);
         }
-      } catch (error) {
-        console.error("Error fetching content:", error);
+      };
+
+      fetchDataProcess();
+    }, [token, course])
+  );
+
+  const animatedWidth = new Animated.Value(0);
+  useFocusEffect(
+    useCallback(() => {
+      if (datProcess) {
+        const completedTasks = datProcess.content.filter(
+          (item) => item.isComplete === true
+        ).length;
+        const calculatedProgress = (completedTasks / totalTasks) * 100;
+        setProgress(calculatedProgress);
       }
-    };
 
-    fetchDataProcess();
-  }, [token, course]);
+      Animated.timing(animatedWidth, {
+        toValue: progress,
+        duration: 10,
+        useNativeDriver: false,
+      }).start();
+    }, [progress, datProcess, totalTasks])
+  );
 
-  useEffect(() => {
-    const lockOrientation = async () => {
-      await ScreenOrientation.lockAsync(
-        ScreenOrientation.OrientationLock.PORTRAIT
-      );
-    };
-    lockOrientation();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle("light-content");
+      StatusBar.setBackgroundColor("#6a51ae");
+      const lockOrientation = async () => {
+        await ScreenOrientation.lockAsync(
+          ScreenOrientation.OrientationLock.PORTRAIT
+        );
+      };
+      lockOrientation();
+    }, [])
+  );
+
   const MakeIsComplete = async (id: string) => {
     const token = `Bearer ${await AsyncStorage.getItem("token")}`;
     const userString = await AsyncStorage.getItem("user");
@@ -122,6 +128,7 @@ export default function ContentList() {
       await updateProcessContent(processId, id, true, token);
     }
   };
+
   const saveDataToAsyncStorage = async (key: string, value: any) => {
     try {
       const jsonValue = JSON.stringify(value);
@@ -136,7 +143,7 @@ export default function ContentList() {
     try {
       await AsyncStorage.setItem("@selectedItem", JSON.stringify(item));
     } catch (e) {
-      console.error("Error saving ite", e);
+      console.error("Error saving item", e);
     }
 
     switch (item.contentType) {
@@ -196,7 +203,9 @@ export default function ContentList() {
         case "exams":
           return <AntDesign name="edit" size={30} color="black" />;
         default:
-          return <MaterialCommunityIcons name="book" size={30} color="black" />;
+          return (
+            <MaterialCommunityIcons name="book" size={30} color="black" />
+          );
       }
     };
 
@@ -239,6 +248,7 @@ export default function ContentList() {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -284,18 +294,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginLeft: 10,
     width: 60,
-    height: 60,
-    backgroundColor: "#CAF4FF",
-    borderRadius: 30,
   },
   iconContainerPlay: {
     justifyContent: "center",
     alignItems: "center",
-    margin: 10,
-  },
-  progressBar: {
-    marginTop: 10,
-    height: 10,
-    borderRadius: 5,
+    marginRight: 10,
   },
 });
