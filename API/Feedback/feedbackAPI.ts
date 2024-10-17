@@ -148,6 +148,59 @@ export const deleteFeedback = async (id: string, token: string): Promise<any> =>
   }
 };
 
+// Reply to feedback
+export const replyToFeedback = async (
+  feedbackId: string,
+  replyText: string,
+  repliedBy: string,
+  token: string
+): Promise<Feedback> => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/api/feedback/reply/${feedbackId}`,
+      { replyText, repliedBy },
+      {
+        headers: {
+          Authorization: token,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Axios error:', error.response?.data || error.message);
+    } else {
+      console.error('Error:', error);
+    }
+    throw new Error('Failed to reply to feedback');
+  }
+};
+
+// Delete a feedback reply by feedbackId and replyId
+export const deleteFeedbackReply = async (
+  feedbackId: string,
+  replyId: string,
+  token: string
+): Promise<any> => {
+  try {
+    const response = await axios.delete(
+      `${API_BASE_URL}/api/feedback/deleteReply/${feedbackId}/${replyId}`,
+      {
+        headers: {
+          Authorization: token,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Axios error:', error.response?.data || error.message);
+    } else {
+      console.error('Error:', error);
+    }
+    throw new Error('Failed to delete feedback reply');
+  }
+};
 
 
 

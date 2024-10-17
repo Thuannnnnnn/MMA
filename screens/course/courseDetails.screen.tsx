@@ -15,6 +15,8 @@ import {
   getFeedbackByCourseId,
   createFeedback,
   deleteFeedback,
+  replyToFeedback,
+  deleteFeedbackReply,
 } from "@/API/Feedback/feedbackAPI";
 
 import {
@@ -36,26 +38,11 @@ export default function CourseDetailsScreen() {
 
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]); // Update type to Feedback[]
   const [newFeedbackText, setNewFeedbackText] = useState<string>(""); // For new feedback text
+  const [newReplyText, setNewReplyText] = useState<string>(""); // For new reply text
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+
   // Add a state to store the logged-in user's email
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1); // State to track the current page
-  const itemsPerPage = 5; // Number of feedbacks per page
-
-  // Calculate total number of pages
-  const totalPages = Math.ceil(feedbacks.length / itemsPerPage);
-
-  // Calculate the feedback to be displayed on the current page
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentFeedbacks = feedbacks.slice(startIndex, endIndex);
-
-  // Function to handle page navigation
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
   const renderHTMLText = (htmlString: string) => {
     const parts = htmlString.split(
       /(<strong>|<\/strong>|<p>|<\/p>|<i>|<\/i>)/g
@@ -73,6 +60,41 @@ export default function CourseDetailsScreen() {
         </Text>
       );
     });
+  };
+
+  const handleReplyToFeedback = async (feedbackId: string) => {
+    if (!newReplyText.trim()) {
+      Alert.alert("Error", "Please enter your reply before submitting.");
+      return;
+    }
+
+    try {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const userEmail = JSON.parse(
+        (await AsyncStorage.getItem("user")) || "{}"
+      ).email;
+
+      await replyToFeedback(feedbackId, newReplyText, userEmail, token);
+
+      // Fetch updated feedbacks and sort them by createDate (newest first)
+      const updatedFeedbacks = await getFeedbackByCourseId(
+        courseId as string, // Ensure that you have `courseId` available in the scope
+        token
+      );
+
+      const sortedFeedbacks = updatedFeedbacks.sort(
+        (a, b) =>
+          new Date(b.createDate).getTime() - new Date(a.createDate).getTime()
+      );
+
+      setFeedbacks(sortedFeedbacks); // Update state with sorted feedbacks
+
+      setNewReplyText(""); // Clear input after submission
+      setReplyingTo(null); // Reset the reply state if needed
+    } catch (error) {
+      Alert.alert("Error", "There was an error submitting your reply.");
+      console.error("Error submitting reply:", error);
+    }
   };
 
   const handleDeleteFeedback = async (feedbackId: string) => {
@@ -98,9 +120,56 @@ export default function CourseDetailsScreen() {
                 token
               );
               // Sắp xếp lại feedback từ mới nhất đến cũ nhất
-            setFeedbacks(updatedFeedbacks.sort((a, b) => new Date(b.createDate).getTime() - new Date(a.createDate).getTime()));
+              setFeedbacks(
+                updatedFeedbacks.sort(
+                  (a, b) =>
+                    new Date(b.createDate).getTime() -
+                    new Date(a.createDate).getTime()
+                )
+              );
             } catch (error) {
               console.error("Error deleting feedback:", error);
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handleDeleteReply = async (feedbackId: string, replyId: string) => {
+    Alert.alert(
+      "Confirm Delete",
+      "Are you sure you want to delete this reply?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => console.log("Delete Cancelled"),
+          style: "cancel",
+        },
+        {
+          text: "OK",
+          onPress: async () => {
+            try {
+              const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+              await deleteFeedbackReply(feedbackId, replyId, token); // Assuming you have this API in your backend
+
+              // Fetch updated feedbacks
+              const updatedFeedbacks = await getFeedbackByCourseId(
+                courseId as string,
+                token
+              );
+
+              // Sort feedbacks by createDate (newest first)
+              setFeedbacks(
+                updatedFeedbacks.sort(
+                  (a, b) =>
+                    new Date(b.createDate).getTime() -
+                    new Date(a.createDate).getTime()
+                )
+              );
+            } catch (error) {
+              console.error("Error deleting reply:", error);
             }
           },
         },
@@ -322,7 +391,7 @@ export default function CourseDetailsScreen() {
             {feedbacks.length > 0 ? (
               <>
                 <View>
-                  {[...currentFeedbacks].map((feedback) => (
+                  {feedbacks.map((feedback) => (
                     <View key={feedback._id} style={styles.feedbackItem}>
                       <View style={styles.feedbackHeaderRow}>
                         <Text style={styles.userEmail}>
@@ -331,7 +400,6 @@ export default function CourseDetailsScreen() {
                         {currentUserEmail === feedback.userEmail && (
                           <View style={styles.feedbackButtons}>
                             <TouchableOpacity
-                              style={styles.deleteButton}
                               onPress={() => handleDeleteFeedback(feedback._id)}
                             >
                               <Text style={styles.deleteButtonText}>
@@ -347,6 +415,85 @@ export default function CourseDetailsScreen() {
                       <Text style={styles.date}>
                         {new Date(feedback.createDate).toLocaleDateString()}
                       </Text>
+
+                      {feedback.replies && feedback.replies.length > 0 && (
+                        <View style={styles.repliesSection}>
+                          {/* Display the number of replies */}
+                          {/* <Text style={styles.replyCount}>
+                            {`${feedback.replies.length} replies`}
+                          </Text> */}
+
+                          {/* Toggle button to show/hide replies */}
+                          <TouchableOpacity
+                            onPress={() =>
+                              setReplyingTo(
+                                replyingTo === feedback._id
+                                  ? null
+                                  : feedback._id
+                              )
+                            } // Toggle visibility of replies
+                          >
+                            <Text style={styles.replyToggleButton}>
+                              {replyingTo === feedback._id
+                                ? "Hide replies"
+                                : "Show replies"}
+                            </Text>
+                          </TouchableOpacity>
+
+                          {/* Show replies only if the 'replyingTo' matches the feedback's ID */}
+                          {replyingTo === feedback._id &&
+                            feedback.replies.map((reply, index) => (
+                              <View key={index} style={styles.replyItem}>
+                                {/* Row for replied text and delete button */}
+                                <View style={styles.replyRow}>
+                                  <Text style={styles.replyUser}>
+                                    {reply.repliedBy} replied:
+                                  </Text>
+                                  {currentUserEmail === reply.repliedBy && (
+                                    <TouchableOpacity
+                                      onPress={() =>
+                                        handleDeleteReply(
+                                          feedback._id,
+                                          reply.replyId
+                                        )
+                                      }
+                                    >
+                                      <Text style={styles.deleteButtonText}>
+                                        Delete
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )}
+                                </View>
+                                <Text>{reply.replyText}</Text>
+                              </View>
+                            ))}
+                        </View>
+                      )}
+
+                      {/* Form nhập reply */}
+                      {replyingTo === feedback._id ? (
+                        <View>
+                          <TextInput
+                            style={styles.replyInput}
+                            placeholder="Write your reply..."
+                            value={newReplyText}
+                            onChangeText={setNewReplyText}
+                          />
+                          <TouchableOpacity
+                            onPress={() => handleReplyToFeedback(feedback._id)}
+                          >
+                            <Text style={styles.replyButtonText}>
+                              Submit Reply
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <TouchableOpacity
+                          onPress={() => setReplyingTo(feedback._id)}
+                        >
+                          <Text style={styles.replyButtonText}>Reply</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   ))}
                 </View>
@@ -354,34 +501,6 @@ export default function CourseDetailsScreen() {
             ) : (
               <Text>No feedback available for this course.</Text>
             )}
-          </View>
-          {/* Navigation Bar */}
-          <View style={styles.pagination}>
-            <TouchableOpacity
-              onPress={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              style={[
-                styles.pageButton,
-                currentPage === 1 && styles.disabledButton,
-              ]}
-            >
-              <Text style={styles.pageButtonText}>Previous</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.pageInfo}>
-              Page {currentPage} of {totalPages}
-            </Text>
-
-            <TouchableOpacity
-              onPress={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              style={[
-                styles.pageButton,
-                currentPage === totalPages && styles.disabledButton,
-              ]}
-            >
-              <Text style={styles.pageButtonText}>Next</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
@@ -594,114 +713,163 @@ const styles = StyleSheet.create({
   regularText: {
     fontWeight: "normal",
   },
+
+  disabled: {
+    color: "#ccc", // Gray color for disabled buttons
+  },
   addFeedbackSection: {
     marginTop: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: "#fff",
-    borderRadius: 8,
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 10,
+    elevation: 2, // Add some shadow effect for iOS
   },
   addFeedbackHeader: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
+    color: "#333",
     marginBottom: 10,
   },
   feedbackInput: {
-    borderColor: "#ccc",
+    borderColor: "#ddd",
     borderWidth: 1,
     borderRadius: 8,
-    padding: 10,
-    height: 100,
-    marginBottom: 10,
+    padding: 15,
+    height: 120,
+    marginBottom: 15,
+    backgroundColor: "#fff",
     textAlignVertical: "top",
   },
   submitButton: {
-    backgroundColor: "#3D5CFF",
+    backgroundColor: "#28a745",
     borderRadius: 8,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: "center",
   },
   submitButtonText: {
     color: "#fff",
     fontSize: 16,
+    fontWeight: "bold",
   },
   feedbackSection: {
     marginTop: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-  },
-  paginationText: {
-    fontSize: 16,
-    color: "#3D5CFF",
-  },
-  disabled: {
-    color: "#ccc", // Gray color for disabled buttons
-  },
-  feedbackHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between", // This will space them out
-    alignItems: "center", // Align vertically centered
-    marginBottom: 5, // Add some space below this row
+    padding: 20,
+    backgroundColor: "#f0f2f5",
+    borderRadius: 10,
+    elevation: 1,
   },
   feedbackHeader: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
+    color: "#007bff",
+    marginBottom: 15,
   },
+  // Feedback item container
   feedbackItem: {
     marginBottom: 20,
-    padding: 10,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 5,
-    // You can add other styles like borderColor, shadow etc. if needed
+    padding: 15,
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#e9ecef",
   },
 
-  userEmail: {
-    fontWeight: "bold",
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  feedbackText: {
-    fontSize: 14,
-    marginBottom: 10,
-  },
-  date: {
-    fontSize: 12,
-    color: "#888",
-  },
-  feedbackButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  deleteButton: {
-    backgroundColor: "#0000",
-    padding: 8,
-    borderRadius: 5,
-  },
-  deleteButtonText: {
-    color: "gray",
-  },
-  pagination: {
+  // Header row containing user email and date
+  feedbackHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginVertical: 15,
   },
-  pageButton: {
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    backgroundColor: "#007BFF",
-    borderRadius: 5,
-  },
-  disabledButton: {
-    backgroundColor: "#cccccc",
-  },
-  pageButtonText: {
-    color: "#fff",
-  },
-  pageInfo: {
+
+  // User email text
+  userEmail: {
     fontSize: 16,
+    fontWeight: "bold", // Make feedback strong
+    color: "#555",
+  },
+
+  // Feedback text itself
+  feedbackText: {
+    fontSize: 14,
+    marginTop: 10,
+    marginBottom: 10,
+    color: "#666",
+  },
+
+  // Date styling
+  date: {
+    fontSize: 12,
+    color: "#999",
+  },
+
+  // Container for buttons (Reply, Delete)
+  feedbackButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 5,
+  },
+
+  // Delete button text (small, not a full button)
+  deleteButtonText: {
+    color: "#dc3545",
+    fontSize: 14,
+    marginLeft: 15, // Small margin to separate from reply
+  },
+
+  // Reply button styled similarly to Delete but with blue color
+  replyButtonText: {
+    color: "#007bff",
+    fontSize: 14,
+  },
+
+  // Reply section for nested replies
+  repliesSection: {
+    marginTop: 15,
+    paddingLeft: 15,
+  },
+
+  // Individual reply item
+  replyItem: {
+    padding: 10,
+    backgroundColor: "#f1f3f5",
+    marginTop: 10,
+    borderRadius: 8,
+  },
+
+  // Username in reply
+  replyUser: {
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+
+  // Reply input box for adding new replies
+  replyInput: {
+    borderColor: "#ddd",
+    borderWidth: 1,
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
+    backgroundColor: "#fff",
+  },
+
+  // Toggle replies button (small and blue)
+  replyToggleButton: {
+    color: "#007bff",
+    marginTop: 5,
+  },
+  replyRow: {
+    flexDirection: "row",       // Align items horizontally
+    justifyContent: "space-between", // Spread items apart
+    alignItems: "center",       // Center them vertically
+  },
+  
+
+  // Reply count text
+  replyCount: {
+    fontSize: 14,
+    color: "#888",
+    marginTop: 10,
+    fontWeight: "bold", // Make reply count stand out
   },
 });
