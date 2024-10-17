@@ -9,25 +9,32 @@ import { SlideData } from '@/constants/HomePage/slideData';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 
+import { fetchSearchCourses } from '@/API/SearchCourse/searchCourseAPI';
+
+import imgJava from '@/assets/java.jpg';
+import imgC from '@/assets/C.jpg';
+import imgNodejs from '@/assets/Nodejs.jpg';
+
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const slides: SlideData[] = [
-  { key: '1', title: 'Slide 1', text: 'Welcome to Slide 1', backgroundColor: '#f7e9e9' },
-  { key: '2', title: 'Slide 2', text: 'Welcome to Slide 2', backgroundColor: '#e2f9e2' },
-  { key: '3', title: 'Slide 3', text: 'Welcome to Slide 3', backgroundColor: '#e2e9f9' },
-  { key: '4', title: 'Slide 4', text: 'Welcome to Slide 4', backgroundColor: '#3a62bf' },
-  { key: '5', title: 'Slide 5', text: 'Welcome to Slide 5', backgroundColor: '#d63075' },
+  { key: '1', title: 'Slide 1', img: imgJava, backgroundColor: '#f7e9e9' },
+  { key: '2', title: 'Slide 2', img: imgC, backgroundColor: '#e2f9e2' },
+  { key: '3', title: 'Slide 3', img: imgNodejs, backgroundColor: '#e2e9f9' },
 ];
 
 export default function HomeScreen() {
   const [query, setQuery] = useState<string>('');
   const [courses, setCourses] = useState<Course[]>([]);
+  const [searchResults, setSearchResults] = useState<Course[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [displayedCourses, setDisplayedCourses] = useState<Course[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
 
+  // Load danh sách khóa học ban đầu
   useEffect(() => {
     const loadCourses = async () => {
       try {
@@ -36,7 +43,7 @@ export default function HomeScreen() {
         setCourses(fetchedCourses);
         setDisplayedCourses(fetchedCourses.slice(0, 4));
       } catch (error) {
-        console.error(error)
+        console.error(error);
         Alert.alert('Error', 'Please try again later.');
       } finally {
         setLoading(false);
@@ -44,6 +51,27 @@ export default function HomeScreen() {
     };
     loadCourses();
   }, []);
+
+  // Xử lý tìm kiếm
+  useEffect(() => {
+    const loadSearchCourses = async () => {
+      if (query.length > 0) {
+        setIsSearching(true);
+        try {
+          const token = `Bearer ${await AsyncStorage.getItem('token')}`;
+          const fetchedSearchCourses = await fetchSearchCourses(query, token);
+          setSearchResults(fetchedSearchCourses as unknown as Course[]);
+        } catch (error) {
+          console.log('Search error:', error);
+        }
+      } else {
+        setIsSearching(false);
+        setDisplayedCourses(courses.slice(0, 4));
+      }
+    };
+    loadSearchCourses();
+  }, [query, courses]);
+
 
   useEffect(() => {
     const slideInterval = setInterval(() => {
@@ -63,7 +91,7 @@ export default function HomeScreen() {
   }, [currentSlideIndex]);
 
   const loadMoreCourses = () => {
-    if (displayedCourses.length < courses.length) {
+    if (displayedCourses.length < courses.length && !isSearching) {
       setLoadingMore(true);
       const nextCourses = courses.slice(displayedCourses.length, displayedCourses.length + 4);
       setTimeout(() => {
@@ -72,16 +100,21 @@ export default function HomeScreen() {
       }, 1000);
     }
   };
-  const goToDetail = async (courseId: string) =>{
-     AsyncStorage.setItem('courseId_detail', courseId);
-     router.push({
-      pathname: "/(routes)/courseDetails",
+
+  const goToDetail = async (courseId: string) => {
+    AsyncStorage.setItem('courseId_detail', courseId);
+    router.push({
+      pathname: '/(routes)/courseDetails',
     });
-  }
+  };
 
   const renderCourse = ({ item }: { item: Course }) => (
     <TouchableOpacity onPress={() => goToDetail(item.courseId)} style={styles.courseCard}>
-      <Image source={{ uri: item.posterLink }} style={styles.courseImage} />
+      {item.posterLink ? (
+        <Image source={{ uri: item.posterLink }} style={styles.courseImage} />
+      ) : (
+        <View style={styles.placeholderImage} /> // Hoặc một thành phần placeholder khác
+      )}
       <View style={styles.courseDetails}>
         <Text style={styles.courseTitle}>{item.courseName}</Text>
         <Text style={styles.coursePrice}>Price: {item.price}</Text>
@@ -90,53 +123,58 @@ export default function HomeScreen() {
   );
 
   return (
+    
     <LinearGradient colors={['#ffffff', '#e2e9f9', '#d7e2fb']} style={styles.gradient}>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Home Page</Text>
-            <Image style={styles.avatar} source={AvatarPng} />
+      <ScrollView>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.container}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Home Page</Text>
+              <Image style={styles.avatar} source={AvatarPng} />
+            </View>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Find Course"
+                value={query}
+                onChangeText={setQuery}
+              />
+            </View>
+            <View style={styles.sliderContainer}>
+              <ScrollView
+                ref={scrollViewRef}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                pagingEnabled
+              >
+                {slides.map((slide) => (
+                  <View key={slide.key} style={[styles.slide, { backgroundColor: slide.backgroundColor }]}>
+                       <Image source={slide.img} style={styles.image} />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+            {loading ? (
+              <ActivityIndicator size="large" color="#0000ff" />
+            ) : (
+              <FlatList
+                nestedScrollEnabled={true} 
+                data={isSearching ? searchResults : displayedCourses}
+                renderItem={renderCourse}
+                keyExtractor={(item) => item.courseId}
+                onEndReached={loadMoreCourses}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={loadingMore && !isSearching ? <ActivityIndicator size="small" color="#0000ff" /> : null}
+               
+              />
+            )}
           </View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Find Course"
-              value={query}
-              onChangeText={setQuery}
-            />
-          </View>
-          <View style={styles.sliderContainer}>
-            <ScrollView
-              ref={scrollViewRef}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              pagingEnabled
-            >
-              {slides.map(slide => (
-                <View key={slide.key} style={[styles.slide, { backgroundColor: slide.backgroundColor }]}>
-                  <Text style={styles.slideText}>{slide.text}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-          {loading ? (
-            <ActivityIndicator size="large" color="#0000ff" />
-          ) : (
-            <FlatList
-              data={displayedCourses}
-              renderItem={renderCourse}
-              keyExtractor={(item) => item.courseId}
-              onEndReached={loadMoreCourses}
-              onEndReachedThreshold={0.5} 
-              ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color="#0000ff" /> : null}
-            />
-          )}
-          
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </ScrollView>
     </LinearGradient>
   );
 }
+
 
 const styles = StyleSheet.create({
   gradient: {
@@ -176,19 +214,31 @@ const styles = StyleSheet.create({
   },
   sliderContainer: {
     marginBottom: screenHeight * 0.02,
+    borderRadius: screenWidth * 0.02,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   slide: {
     justifyContent: 'center',
     alignItems: 'center',
-    height: screenHeight * 0.25,
+    height: screenHeight * 0.33,
     width: screenWidth * 0.7,
     borderRadius: screenWidth * 0.02,
-    padding: screenWidth * 0.05,
-    marginRight: screenWidth * 0.02,
+    marginHorizontal: screenWidth * 0.01,
+    elevation: 2,
   },
-  slideText: {
-    fontSize: screenWidth * 0.05,
-    fontWeight: 'bold',
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+    borderRadius: screenWidth * 0.02,
   },
   courseCard: {
     flexDirection: 'row',
@@ -213,5 +263,10 @@ const styles = StyleSheet.create({
   coursePrice: {
     fontSize: screenWidth * 0.04,
     color: '#000',
+  },
+  placeholderImage: {
+    width: screenWidth * 0.25,
+    height: screenHeight * 0.12,
+    backgroundColor: '#e0e0e0',
   },
 });

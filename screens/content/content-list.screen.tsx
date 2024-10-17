@@ -158,10 +158,11 @@ export default function ContentList() {
         router.push({
           pathname: "/(routes)/content/content-docs",
         });
-        break;
-      case "questions":
+        break; 
+      case 'questions':
+        console.log('Redirecting to quizzResults');
         router.push({
-          pathname: "/(routes)/content/content-video",
+          pathname: '/(routes)/quizz/quizzResults',
         });
         break;
       case "exams":
@@ -170,6 +171,7 @@ export default function ContentList() {
         });
         break;
       default:
+        console.log('No matching type. Doing nothing.');
         break;
     }
   };

@@ -82,8 +82,8 @@ export default function LoginScreen() {
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [buttonSpinner, setButtonSpinner ] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    email: '',
-    password: '',
+    email: 'harrybother33@gmail.com',
+    password: '12345@',
   });
   const [required] = useState('');
   const [error,setError] = useState({
@@ -170,9 +170,10 @@ export default function LoginScreen() {
             <TextInput
               style={[style.input, { paddingLeft: 35 }]}
               keyboardType="email-address"
-              value={userInfo.email}
+              value={userInfo.email || 'harrybother33@gmail.com'}
               placeholder="Please enter your Email"
               onChangeText={(value) => setUserInfo({ ...userInfo, email: value })}
+              
             />
      
             <Fontisto style={{ position: 'absolute', left: 26, top: 17.8 }} name="email" size={20} color={'#A1A1A1'} />
@@ -195,6 +196,7 @@ export default function LoginScreen() {
                 handlePasswordValidation(value);
                 setUserInfo({ ...userInfo, password: value });
               }}
+              defaultValue='12345@'
             />
 
             <TouchableOpacity
