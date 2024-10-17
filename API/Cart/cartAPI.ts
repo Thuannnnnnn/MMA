@@ -13,7 +13,6 @@ export const getAllCartByEmail = async (Email: string, token: string): Promise<C
       },
     });
     const Cart = response.data.Cart;
-    console.log(Cart);
     return Cart;
   } catch (error) {
     if (axios.isAxiosError(error)) {

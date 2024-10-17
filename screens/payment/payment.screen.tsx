@@ -9,6 +9,7 @@ import { paymentUrl } from '@/constants/Payment/payment';
 import queryString from 'query-string';
 import { CartItem } from '@/constants/Cart/cartList';
 import { deleteCourseOrder } from "@/API/Cart/cartAPI";
+import { createProcessForUser } from '@/API/process/procesAPI';
 
 export default function Payment() {
   const [url, setUrl] = useState<string | null>(null);
@@ -96,8 +97,11 @@ export default function Payment() {
           const user = JSON.parse(userString);
           const userEmail = user.email;
           const amountString = await AsyncStorage.getItem("totalPrice");
+
           const amount = amountString ? parseFloat(amountString) : 0;
           creatOrder(userEmail, amount, courses, token);
+          console.log(courses)
+          createProcessForUser(courses[0].courseId, userEmail, token)
           await AsyncStorage.removeItem('courseId');
           await AsyncStorage.removeItem('totalPrice');
           router.push("/(routes)/payment/paymentSuccess");
