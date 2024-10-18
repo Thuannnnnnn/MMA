@@ -15,8 +15,6 @@ import { getResults, dropResults } from '@/API/Quizz/quizzResultAPI';
 import { Result } from '@/constants/Quizz/result';
 import { router } from 'expo-router';
 
-const { width } = Dimensions.get('window');
-
 const ResultsPage = () => {
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);

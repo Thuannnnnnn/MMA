@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, FlatList, Alert, Dimensions, TouchableOpacity, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, Alert, Dimensions, TouchableOpacity, ImageSourcePropType } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AvatarPng from '@/assets/homePage/avatar.png';
@@ -122,7 +122,7 @@ export default function HomeScreen() {
 
   return (
     <LinearGradient colors={['#ffffff', '#e2e9f9', '#d7e2fb']} style={styles.gradient}>
-      <ScrollView>
+       <ScrollView onScrollEndDrag={loadMoreCourses} scrollEventThrottle={16}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.container}>
             <View style={styles.header}>
