@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, FlatList, Alert, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, FlatList, Alert, Dimensions, TouchableOpacity, ImageSourcePropType } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AvatarPng from '@/assets/homePage/avatar.png';
@@ -18,11 +18,10 @@ import imgNodejs from '@/assets/Nodejs.jpg';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const slides: SlideData[] = [
-  { key: '1', title: 'Slide 1', img: imgJava, backgroundColor: '#f7e9e9' },
-  { key: '2', title: 'Slide 2', img: imgC, backgroundColor: '#e2f9e2' },
-  { key: '3', title: 'Slide 3', img: imgNodejs, backgroundColor: '#e2e9f9' },
+  { key: '1', title: 'Slide 1', img: imgJava as ImageSourcePropType, backgroundColor: '#f7e9e9' },
+  { key: '2', title: 'Slide 2', img: imgC as ImageSourcePropType, backgroundColor: '#e2f9e2' },
+  { key: '3', title: 'Slide 3', img: imgNodejs as ImageSourcePropType, backgroundColor: '#e2e9f9' },
 ];
-
 export default function HomeScreen() {
   const [query, setQuery] = useState<string>('');
   const [courses, setCourses] = useState<Course[]>([]);
@@ -34,7 +33,6 @@ export default function HomeScreen() {
   const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
   const [isSearching, setIsSearching] = useState<boolean>(false);
 
-  // Load danh sách khóa học ban đầu
   useEffect(() => {
     const loadCourses = async () => {
       try {
@@ -52,7 +50,6 @@ export default function HomeScreen() {
     loadCourses();
   }, []);
 
-  // Xử lý tìm kiếm
   useEffect(() => {
     const loadSearchCourses = async () => {
       if (query.length > 0) {
@@ -71,7 +68,6 @@ export default function HomeScreen() {
     };
     loadSearchCourses();
   }, [query, courses]);
-
 
   useEffect(() => {
     const slideInterval = setInterval(() => {
@@ -108,22 +104,23 @@ export default function HomeScreen() {
     });
   };
 
-  const renderCourse = ({ item }: { item: Course }) => (
-    <TouchableOpacity onPress={() => goToDetail(item.courseId)} style={styles.courseCard}>
-      {item.posterLink ? (
-        <Image source={{ uri: item.posterLink }} style={styles.courseImage} />
-      ) : (
-        <View style={styles.placeholderImage} /> // Hoặc một thành phần placeholder khác
-      )}
-      <View style={styles.courseDetails}>
-        <Text style={styles.courseTitle}>{item.courseName}</Text>
-        <Text style={styles.coursePrice}>Price: {item.price}</Text>
-      </View>
-    </TouchableOpacity>
+  const renderCourses = (items: Course[]) => (
+    items.map((item) => (
+      <TouchableOpacity key={item.courseId} onPress={() => goToDetail(item.courseId)} style={styles.courseCard}>
+        {item.posterLink ? (
+          <Image source={{ uri: item.posterLink }} style={styles.courseImage} />
+        ) : (
+          <View style={styles.placeholderImage} />
+        )}
+        <View style={styles.courseDetails}>
+          <Text style={styles.courseTitle}>{item.courseName}</Text>
+          <Text style={styles.coursePrice}>Price: {item.price}</Text>
+        </View>
+      </TouchableOpacity>
+    ))
   );
 
   return (
-    
     <LinearGradient colors={['#ffffff', '#e2e9f9', '#d7e2fb']} style={styles.gradient}>
       <ScrollView>
         <SafeAreaView style={styles.safeArea}>
@@ -149,7 +146,7 @@ export default function HomeScreen() {
               >
                 {slides.map((slide) => (
                   <View key={slide.key} style={[styles.slide, { backgroundColor: slide.backgroundColor }]}>
-                       <Image source={slide.img} style={styles.image} />
+                    <Image source={slide.img} style={styles.image} />
                   </View>
                 ))}
               </ScrollView>
@@ -157,16 +154,10 @@ export default function HomeScreen() {
             {loading ? (
               <ActivityIndicator size="large" color="#0000ff" />
             ) : (
-              <FlatList
-                nestedScrollEnabled={true} 
-                data={isSearching ? searchResults : displayedCourses}
-                renderItem={renderCourse}
-                keyExtractor={(item) => item.courseId}
-                onEndReached={loadMoreCourses}
-                onEndReachedThreshold={0.5}
-                ListFooterComponent={loadingMore && !isSearching ? <ActivityIndicator size="small" color="#0000ff" /> : null}
-               
-              />
+              <ScrollView>
+                {renderCourses(isSearching ? searchResults : displayedCourses)}
+                {loadingMore && !isSearching && <ActivityIndicator size="small" color="#0000ff" />}
+              </ScrollView>
             )}
           </View>
         </SafeAreaView>
@@ -174,6 +165,7 @@ export default function HomeScreen() {
     </LinearGradient>
   );
 }
+
 
 
 const styles = StyleSheet.create({
