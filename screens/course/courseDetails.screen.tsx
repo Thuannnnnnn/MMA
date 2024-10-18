@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -27,6 +27,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAllCartByEmail, addToCart } from "@/API/Cart/cartAPI";
 import { useRouter } from "expo-router";
 import { ResizeMode, Video } from "expo-av";
+import { useFocusEffect } from "@react-navigation/native";
 
 const { width, height } = Dimensions.get("window");
 
@@ -36,12 +37,21 @@ export default function CourseDetailsScreen() {
   const [course, setCourse] = useState<Course | null>(null);
   const [isOwner, setIsOwner] = useState<boolean>(false);
 
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]); // Update type to Feedback[]
-  const [newFeedbackText, setNewFeedbackText] = useState<string>(""); // For new feedback text
-  const [newReplyText, setNewReplyText] = useState<string>(""); // For new reply text
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [newFeedbackText, setNewFeedbackText] = useState<string>("");
+  const [newReplyText, setNewReplyText] = useState<string>("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [shouldPlay, setShouldPlay] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setShouldPlay(true);
 
-  // Add a state to store the logged-in user's email
+      return () => {
+        setShouldPlay(false);
+      };
+    }, [])
+  );
+
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const renderHTMLText = (htmlString: string) => {
     const parts = htmlString.split(
@@ -76,9 +86,8 @@ export default function CourseDetailsScreen() {
 
       await replyToFeedback(feedbackId, newReplyText, userEmail, token);
 
-      // Fetch updated feedbacks and sort them by createDate (newest first)
       const updatedFeedbacks = await getFeedbackByCourseId(
-        courseId as string, // Ensure that you have `courseId` available in the scope
+        courseId as string,
         token
       );
 
@@ -87,10 +96,10 @@ export default function CourseDetailsScreen() {
           new Date(b.createDate).getTime() - new Date(a.createDate).getTime()
       );
 
-      setFeedbacks(sortedFeedbacks); // Update state with sorted feedbacks
+      setFeedbacks(sortedFeedbacks);
 
-      setNewReplyText(""); // Clear input after submission
-      setReplyingTo(null); // Reset the reply state if needed
+      setNewReplyText("");
+      setReplyingTo(null);
     } catch (error) {
       Alert.alert("Error", "There was an error submitting your reply.");
       console.error("Error submitting reply:", error);
@@ -99,8 +108,8 @@ export default function CourseDetailsScreen() {
 
   const handleDeleteFeedback = async (feedbackId: string) => {
     Alert.alert(
-      "Confirm Delete", // Title of the alert
-      "Are you sure you want to delete this feedback?", // Message of the alert
+      "Confirm Delete",
+      "Are you sure you want to delete this feedback?",
       [
         {
           text: "Cancel",
@@ -152,15 +161,13 @@ export default function CourseDetailsScreen() {
           onPress: async () => {
             try {
               const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-              await deleteFeedbackReply(feedbackId, replyId, token); // Assuming you have this API in your backend
+              await deleteFeedbackReply(feedbackId, replyId, token);
 
-              // Fetch updated feedbacks
               const updatedFeedbacks = await getFeedbackByCourseId(
                 courseId as string,
                 token
               );
 
-              // Sort feedbacks by createDate (newest first)
               setFeedbacks(
                 updatedFeedbacks.sort(
                   (a, b) =>
@@ -183,7 +190,7 @@ export default function CourseDetailsScreen() {
       try {
         const storedCourseId = await AsyncStorage.getItem("courseId_detail");
         if (storedCourseId) {
-          setCourseId(storedCourseId); // Set the courseId state
+          setCourseId(storedCourseId);
         } else {
           console.error("No course ID found in AsyncStorage");
         }
@@ -219,14 +226,13 @@ export default function CourseDetailsScreen() {
           const fetchedCourse = await getCourseById(courseId, token);
           setCourse(fetchedCourse);
 
-          // Fetch feedbacks for the course and sort them by createDate (newest first)
           const fetchedFeedbacks = await getFeedbackByCourseId(courseId, token);
           const sortedFeedbacks = fetchedFeedbacks.sort(
             (a, b) =>
               new Date(b.createDate).getTime() -
               new Date(a.createDate).getTime()
           );
-          setFeedbacks(sortedFeedbacks); // Set sorted feedbacks state
+          setFeedbacks(sortedFeedbacks);
 
           const userString = await AsyncStorage.getItem("user");
           if (userString) {
@@ -269,7 +275,6 @@ export default function CourseDetailsScreen() {
         token
       );
 
-      // Fetch updated feedbacks and sort them by createDate (newest first)
       const updatedFeedbacks = await getFeedbackByCourseId(
         courseId as string,
         token
@@ -278,9 +283,9 @@ export default function CourseDetailsScreen() {
         (a, b) =>
           new Date(b.createDate).getTime() - new Date(a.createDate).getTime()
       );
-      setFeedbacks(sortedFeedbacks); // Update state with sorted feedbacks
+      setFeedbacks(sortedFeedbacks);
 
-      setNewFeedbackText(""); // Clear input after submission
+      setNewFeedbackText("");
     } catch (error) {
       Alert.alert("Error", "There was an error submitting your feedback.");
       console.error("Error submitting feedback:", error);
@@ -349,12 +354,11 @@ export default function CourseDetailsScreen() {
             style={styles.video}
             resizeMode={ResizeMode.CONTAIN}
             isLooping
-            shouldPlay
+            shouldPlay={shouldPlay}
           />
         </View>
 
         <View style={styles.childrent}>
-          {/* About Course Section */}
           <View style={styles.aboutCourse}>
             <Text style={styles.courseTitleChild}>{course.courseName}</Text>
             <Text style={styles.price}>{course.price}VNĐ</Text>
