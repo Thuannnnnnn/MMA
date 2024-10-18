@@ -20,31 +20,40 @@ export default function QuizzScreen() {
 
   useEffect(() => {
     const loadQuestions = async () => {
-      try {
-        const token = `Bearer ${await AsyncStorage.getItem('token')}`;
-        const fetchedQuestions = await fetchQuestions(token);
-    
-        if (fetchedQuestions && fetchedQuestions.length > 0) {
-          const questionsWithAnswers = fetchedQuestions[0].questions.map((q) => ({
-            ...q,
-            correctAnswer: q.options[q.answer],
-          }));
-          setQuestions(questionsWithAnswers);
-          setUserSelections(new Array(questionsWithAnswers.length).fill(null));
-        } else {
-          setError('No questions found');
-        }
-      } catch (err) {
-        console.error('Error fetching questions:', err);
-        setError('Failed to fetch questions');
-      } finally {
-        setLoading(false);
-      }
+  try {
+    const token = `Bearer ${await AsyncStorage.getItem('token')}`;
+    const storedItem = await AsyncStorage.getItem('@selectedItem');
+    const parsedItem = storedItem ? JSON.parse(storedItem) : null;
 
-    };
+    if (parsedItem && parsedItem.contentRef._id && typeof parsedItem.contentRef._id === 'string') {
+      const contentRef = parsedItem.contentRef._id;
+      const fetchedQuestions = await fetchQuestions(token, contentRef);
+
+      if (fetchedQuestions && fetchedQuestions.length > 0) {
+        const questionsWithAnswers = fetchedQuestions.map((question) => ({
+          ...question,
+          correctAnswer: question.options[question.answer],
+        }));
+        setQuestions(questionsWithAnswers);
+        setUserSelections(new Array(questionsWithAnswers.length).fill(null));
+      } else {
+        setError('No questions found for this quiz');
+      }
+    } else {
+      setError('ContentRef not found or invalid');
+    }
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    setError('Failed to fetch questions');
+  } finally {
+    setLoading(false);
+  }
+};
+
     loadQuestions();
   }, []);
-
+  
+  
   if (loading) {
     return <Text style={styles.loadingText}>Loading...</Text>;
   }
@@ -86,24 +95,23 @@ export default function QuizzScreen() {
   };
   
   const saveResults = async () => {
-      console.log("saveResults called");
+    console.log("saveResults called");
 
-      // Tính điểm
-      const score = userSelections.reduce((acc, selection, index) => {
-          if (selection === questions[index].correctAnswer) {
-              return acc + 1;
-          }
-          return acc;
-      }, 0);
+    // Tính điểm
+    const score = userSelections.reduce((acc, selection, index) => {
+        if (selection === questions[index].correctAnswer) {
+            return acc + 1;
+        }
+        return acc;
+    }, 0);
 
-      // Tạo đối tượng resultData theo interface Result
-      const resultData: Result = {
+    const resultData: Result = {
         quizId: questions[0]._id,
         result: userSelections.map((selection, index) => ({
-          question: questions[index].question,
-          options: questions[index].options,
-          selectedAnswer: selection,
-          correctAnswer: questions[index].correctAnswer,
+            question: questions[index].question,
+            options: questions[index].options,
+            selectedAnswer: selection,
+            correctAnswer: questions[index].correctAnswer,
         })),
         attempts: 1,
         points: score,
@@ -111,40 +119,36 @@ export default function QuizzScreen() {
         createdAt: new Date().toISOString(),
         selectedItemId: null,
         _id: ''
-      };
+    };
 
-      try {
-          console.log("resultData", resultData);
+    try {
+        console.log("resultData", resultData);
         
-          // Lấy _id từ AsyncStorage
-          const storedItem = await AsyncStorage.getItem('@selectedItem');
-          const parsedItem = storedItem ? JSON.parse(storedItem) : null;
+        const storedItem = await AsyncStorage.getItem('@selectedItem');
+        const parsedItem = storedItem ? JSON.parse(storedItem) : null;
 
-          // Nếu tồn tại, thêm _id vào resultData
-          if (parsedItem && parsedItem._id) {
-              resultData.selectedItemId = parsedItem._id;
-          }
+        if (parsedItem && parsedItem.contentRef && parsedItem.contentRef._id) {
+            resultData.selectedItemId = parsedItem.contentRef._id;
+        }
 
-          console.log("resultData after adding selectedItemId", resultData);
+        console.log("resultData after adding selectedItemId", resultData);
 
-          // Lưu kết quả vào AsyncStorage
-          await AsyncStorage.setItem('quizResults', JSON.stringify({ score, total: questions.length }));
+        await AsyncStorage.setItem('quizResults', JSON.stringify({ score, total: questions.length }));
 
-          // Lấy token và gửi request lưu kết quả
-          const token = await AsyncStorage.getItem('token');
-          if (token !== null) {
-              console.log("token", token);
-              const response = await storeResult(token, resultData); // Gọi hàm lưu kết quả
-              console.log("msg", response); // In thông điệp phản hồi từ server
-              return response;
-          } else {
-              console.error('Token is null');
-          }
-      } catch (error) {
-          console.error('Error saving results:', error);
-      }
-  }; 
-   const handleBack = () => {
+        const token = await AsyncStorage.getItem('token');
+        if (token) {
+            const response = await storeResult(token, resultData);
+            console.log("msg", response);
+            return response;
+        } else {
+            console.error('Token is null');
+        }
+    } catch (error) {
+        console.error('Error saving results:', error);
+    }
+};
+
+  const handleBack = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
@@ -207,6 +211,7 @@ export default function QuizzScreen() {
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -231,23 +236,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-  },
-  profile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 2,
-    borderColor: '#2980f1',
-  },
-  username: {
-    fontSize: 18,
-    color: '#333',
-    marginLeft: 10,
   },
   questionCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
@@ -278,61 +266,62 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
-  selectedOption: {
-    backgroundColor: '#29f1c3',
-  },
   optionText: {
     fontSize: 18,
     color: '#333',
-    fontWeight: '500',
   },
-  footer: {
-    padding: 16,
-  },
-  submitButton: {
-    padding: 16,
-    borderRadius: 8,
+  selectedOption: {
     backgroundColor: '#1b75ec',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-  },
-  submitButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-  },
-  loadingText: {
-    color: '#333',
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  errorText: {
-    color: '#ff3d3d',
-    textAlign: 'center',
-    marginTop: 20,
   },
   navigationButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 16,
   },
   backButton: {
-    backgroundColor: '#ccc',
-    padding: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
-  },
-  nextButton: {
-    backgroundColor: '#2954f1',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: '#1b75ec',
   },
   backButtonText: {
-    color: '#333',
+    color: '#fff',
+    fontSize: 16,
+  },
+  nextButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    backgroundColor: '#1b75ec',
   },
   nextButtonText: {
     color: '#fff',
+    fontSize: 16,
+  },
+  footer: {
+    padding: 16,
+    alignItems: 'center',
+  },
+  submitButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    backgroundColor: '#2980f1',
+    borderRadius: 10,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  loadingText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 18,
+  },
+  errorText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 18,
+    color: 'red',
   },
 });
