@@ -244,15 +244,14 @@ export default function CourseDetailsScreen() {
           const token = `Bearer ${await AsyncStorage.getItem("token")}`;
           const fetchedCourse = await getCourseById(courseId, token);
           setCourse(fetchedCourse);
-
+          
           const fetchedFeedbacks = await getFeedbackByCourseId(courseId, token);
           const sortedFeedbacks = fetchedFeedbacks.sort(
             (a, b) =>
               new Date(b.createDate).getTime() -
-              new Date(a.createDate).getTime()
+            new Date(a.createDate).getTime()
           );
           setFeedbacks(sortedFeedbacks);
-
           const userString = await AsyncStorage.getItem("user");
           if (userString) {
             const user = JSON.parse(userString);
@@ -583,12 +582,12 @@ const fetchRatingsByUserEmail = async () => {
 
           {/* Add Feedback Section */}
           <View style={styles.addFeedbackSection}>
-            <Text style={styles.addFeedbackHeader}>Add Your Feedback</Text>
+            <Text style={styles.addFeedbackHeader}>Add Your Q&A</Text>
 
             {/* Feedback Text Input */}
             <TextInput
               style={styles.feedbackInput}
-              placeholder="Write your feedback..."
+              placeholder="Write your Q&A..."
               value={newFeedbackText}
               onChangeText={setNewFeedbackText}
             />
@@ -598,12 +597,12 @@ const fetchRatingsByUserEmail = async () => {
               style={styles.submitButton}
               onPress={handleSubmitFeedback}
             >
-              <Text style={styles.submitButtonText}>Submit Feedback</Text>
+              <Text style={styles.submitButtonText}>Submit Q&A</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.feedbackSection}>
-            <Text style={styles.feedbackHeader}>Feedback</Text>
+            <Text style={styles.feedbackHeader}>Q&A</Text>
             {feedbacks.length > 0 ? (
               <>
                 <View>
@@ -715,7 +714,7 @@ const fetchRatingsByUserEmail = async () => {
                 </View>
               </>
             ) : (
-              <Text>No feedback available for this course.</Text>
+              <Text>No Q&A available for this course.</Text>
             )}
           </View>
         </View>
