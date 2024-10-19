@@ -6,6 +6,7 @@ import { fetchQuestions } from '@/API/Quizz/quizzAPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { storeResult } from '@/API/Quizz/quizzResultAPI';
 import { Result } from '@/constants/Quizz/result';
+import { updateProcessContent } from '@/API/process/procesAPI';
 
 export default function QuizzScreen() {
   const navigation = useNavigation();
@@ -96,7 +97,13 @@ export default function QuizzScreen() {
   
   const saveResults = async () => {
     console.log("saveResults called");
-
+    const userString = await AsyncStorage.getItem("user");
+    let user;
+    if (userString) {
+      user = JSON.parse(userString);
+    }
+    const courseId = await AsyncStorage.getItem("course_id");
+    const progressId = user.email + '_' + courseId;
     // Tính điểm
     const score = userSelections.reduce((acc, selection, index) => {
         if (selection === questions[index].correctAnswer) {
@@ -138,6 +145,11 @@ export default function QuizzScreen() {
         const token = await AsyncStorage.getItem('token');
         if (token) {
             const response = await storeResult(token, resultData);
+            if(response.status == 200) {
+              if(score/questions.length >= 0.8) {
+                await updateProcessContent(progressId,resultData.quizId,true,token);
+              }
+            }
             console.log("msg", response);
             return response;
         } else {

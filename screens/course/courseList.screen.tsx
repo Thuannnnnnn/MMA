@@ -133,7 +133,8 @@ const CourseListScreen = () => {
     );
   }
 
-  const GotoContent = async (courseId: string) => {
+  const GotoContent = async (courseId: string, course_id: string) => {
+    await AsyncStorage.setItem("course_id", course_id);
     await AsyncStorage.setItem("courseIdGotoContent", courseId);
     router.push("/(routes)/content/content-list");
   };
@@ -148,7 +149,7 @@ const CourseListScreen = () => {
             style={styles.courseCard}
             onPress={() => {
               if (item?.courseId?.courseId) {
-                GotoContent(item.courseId.courseId);
+                GotoContent(item.courseId.courseId, item.courseId._id);
               }
             }}
           >

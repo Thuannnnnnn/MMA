@@ -225,7 +225,6 @@ export default function CourseDetailsScreen() {
           const token = `Bearer ${await AsyncStorage.getItem("token")}`;
           const fetchedCourse = await getCourseById(courseId, token);
           setCourse(fetchedCourse);
-
           const fetchedFeedbacks = await getFeedbackByCourseId(courseId, token);
           const sortedFeedbacks = fetchedFeedbacks.sort(
             (a, b) =>
@@ -332,7 +331,8 @@ export default function CourseDetailsScreen() {
     router.push("/(routes)/payment");
   };
 
-  const GotoContent = async (courseId: string) => {
+  const GotoContent = async (courseId: string, course_id: string) => {
+    await AsyncStorage.setItem("course_id", course_id);
     await AsyncStorage.setItem("courseIdGotoContent", courseId);
     router.push("/(routes)/content/content-list");
   };
@@ -537,7 +537,7 @@ export default function CourseDetailsScreen() {
           <View style={styles.footerGotoCourse}>
             <TouchableOpacity
               style={styles.goToCourse}
-              onPress={() => GotoContent(course.courseId)}
+              onPress={() => GotoContent(course.courseId, course._id)}
             >
               <Text style={styles.buyButtonText}>Go to Course</Text>
             </TouchableOpacity>

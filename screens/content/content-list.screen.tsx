@@ -160,7 +160,6 @@ export default function ContentList() {
         });
         break; 
       case 'questions':
-        console.log('Redirecting to quizzResults');
         router.push({
           pathname: '/(routes)/quizz/quizzResults',
         });
