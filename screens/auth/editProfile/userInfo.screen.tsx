@@ -54,7 +54,7 @@ const UserInfoScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/(routes)/editProfile')} style={styles.backButton}> 
+        <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} style={styles.backButton}> 
           <AntDesign name="arrowleft" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>User Information</Text>

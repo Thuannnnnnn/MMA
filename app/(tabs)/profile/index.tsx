@@ -1,12 +1,10 @@
-import { View, Text } from 'react-native'
+
 import React from 'react'
-import { Redirect } from 'expo-router'
+
+import EditProfileScreen from '@/screens/auth/editProfile/profile.screen'
 
 export default function profile() {
   return(
-    <View>
-      <Redirect href={"/(routes)/editProfile"} />
-      <Text>Profile</Text>
-    </View>
+    <EditProfileScreen/>
   )
 }

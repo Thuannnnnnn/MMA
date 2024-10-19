@@ -138,12 +138,6 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/')}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-      </View>
       <View style={styles.profileHeader}>
         <TouchableOpacity onPress={pickImage}>
           <Image
@@ -178,16 +172,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 20,
     paddingTop: 100,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 10,
   },
   profileHeader: {
     alignItems: 'center',
