@@ -29,6 +29,9 @@ import { useRouter } from "expo-router";
 import { ResizeMode, Video } from "expo-av";
 import { useFocusEffect } from "@react-navigation/native";
 
+import { getAverageRatingForCourse, createRating, getRatingsCountByType, hasUserProvidedFeedbackAndRating, getRatingByUserEmail   } from '@/API/Rating/ratingAPI';
+import { AirbnbRating } from 'react-native-ratings';
+
 const { width, height } = Dimensions.get("window");
 
 export default function CourseDetailsScreen() {
@@ -51,6 +54,22 @@ export default function CourseDetailsScreen() {
       };
     }, [])
   );
+
+  const [hasRated, setHasRated] = useState<boolean>(false);
+  const [averageRating, setAverageRating] = useState<string | null>(null);
+  const [starCount, setStarCount] = useState<number>(0);
+  const [feedback, setFeedback] = useState<string>("");
+  const [isRatingSubmitted, setIsRatingSubmitted] = useState<boolean>(false);
+  const [ratingsCount, setRatingsCount] = useState<number[]>([0, 0, 0, 0, 0]);
+  const [totalRatings, setTotalRatings] = useState<number>(0);
+  const [token, setToken] = useState<string | null>(null);
+
+  const checkIfUserRated = async () => {
+    if (currentUserEmail && courseId && token) {
+      const result = await hasUserProvidedFeedbackAndRating(currentUserEmail, courseId, token);
+      setHasRated(result || false); // Cập nhật trạng thái hasRated
+    }
+  };
 
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const renderHTMLText = (htmlString: string) => {
@@ -337,6 +356,130 @@ export default function CourseDetailsScreen() {
     router.push("/(routes)/content/content-list");
   };
 
+  useEffect(() => {
+    const fetchTokenAndCourseId = async () => {
+      try {
+        const values = await AsyncStorage.multiGet(["token", "courseId_detail"]);
+        const fetchedToken = values[0][1];
+        const fetchedCourseId = values[1][1];
+
+        setToken(fetchedToken);
+        setCourseId(fetchedCourseId);
+      } catch (error) {
+        console.error("Error fetching token and course ID:", error);
+      }
+    };
+
+    fetchTokenAndCourseId();
+  }, []);
+
+  useEffect(() => {
+    const fetchCourseAndRelatedData = async (token: string, courseId: string) => {
+      try {
+        const authToken = `Bearer ${token}`;
+        // Gọi tất cả các API liên quan trong cùng một lầ
+        const [fetchedCourse, avgRating, ratingsResponse] = await Promise.all([
+          getCourseById(courseId, authToken),
+          getAverageRatingForCourse(courseId, authToken),
+          getRatingsCountByType(courseId, authToken),
+        ]);
+
+        setCourse(fetchedCourse); // Cập nhật thông tin khóa học
+
+        setAverageRating(avgRating ? avgRating.toString() : "0");
+
+        
+        const ratingCounts = [
+          ratingsResponse[5] || 0,
+          ratingsResponse[4] || 0,
+          ratingsResponse[3] || 0,
+          ratingsResponse[2] || 0,
+          ratingsResponse[1] || 0,
+        ];
+        setRatingsCount(ratingCounts);
+        
+      const total = ratingCounts.reduce((acc, count) => acc + count, 0);
+      setTotalRatings(total);
+      } catch (error) {
+        console.error("Failed to fetch course or rating:", error);
+      }
+    };
+
+    if (token && courseId) {
+      fetchCourseAndRelatedData(token, courseId);
+    }
+  }, [token, courseId]);
+
+  
+  useEffect(() => {
+    const fetchAverageRating = async (token: string, courseId: string) => {
+      try {
+        const authToken = `Bearer ${token}`;
+        const avgRating = await getAverageRatingForCourse(courseId, authToken);
+        if (avgRating !== null) {
+          setAverageRating(avgRating.toString()); // Cập nhật state cho averageRating
+        }
+      } catch (error) {
+        console.error("Error fetching average rating:", error);
+      }
+    };
+  
+    
+    if (token && courseId) {
+      fetchAverageRating(token, courseId);
+    }
+  }, [token, courseId]);
+
+  
+  const handleSubmitRating = async () => {
+    try {
+      if (starCount === 0) {
+        Alert.alert("Error", "Please select a star rating before submitting.");
+        return;
+      }
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
+      
+      if (course) {
+        await createRating(userEmail, starCount, course._id as string, feedback ,token);
+      } else {
+        Alert.alert("Error", "Course information is not available.");
+      }
+      setIsRatingSubmitted(true);
+      Alert.alert("Success", "You have successfully submitted your rating!");
+    } catch (error) {
+      Alert.alert("Error", "Your rating could not be submitted.");
+      console.error("Error submitting rating:", error);
+    }
+};
+
+
+const shouldShowRatingForm = isOwner && !hasRated;
+
+const fetchRatingsByUserEmail = async () => {
+  try {
+    const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+    const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
+
+    if (!userEmail) {
+      Alert.alert("Error", "No user information found.");
+      return;
+    }
+
+    const ratings = await getRatingByUserEmail(userEmail, token);
+
+    if (ratings && ratings.length > 0) {
+      
+      console.log("Ratings fetched successfully:", ratings);
+    } else {
+      Alert.alert("Notice", "There are no reviews from this user.");
+    }
+  } catch (error) {
+    Alert.alert("Error", "Unable to get review information.");
+    console.error("Error fetching ratings:", error);
+  }
+};
+
   if (!course) {
     return (
       <View style={styles.container}>
@@ -368,6 +511,75 @@ export default function CourseDetailsScreen() {
               {renderHTMLText(course.description)}
             </Text>
           </View>
+
+          <View style={styles.averageRatingContainer}>
+  {averageRating === null || averageRating === "0" ? (
+    
+    <Text style={styles.noRatingText}>There are no rating for this course yet!</Text>
+  ) : (
+    
+    <>
+      <Text style={styles.averageRatingText}>{averageRating}</Text>
+      <AirbnbRating
+        isDisabled
+        defaultRating={parseFloat(averageRating)}
+        showRating={false}
+        size={20}
+        starContainerStyle={styles.starsContainer}
+      />
+    </>
+  )}
+</View>
+
+      {/* Rating Bars */}
+      <View style={styles.ratingBarsContainer}>
+        {[5, 4, 3, 2, 1].map((rating, index) => (
+          <View key={rating} style={styles.ratingRow}>
+            <Text style={styles.ratingNumber}>{rating}</Text>
+            <View style={styles.barBackground}>
+              <View
+                style={[
+                  styles.barFill,
+                  {
+                    width: totalRatings === 0 ? '0%' : `${(ratingsCount[index] / totalRatings) * 100}%`,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        ))}
+      </View>
+
+ {/* Chỉ hiển thị form đánh giá khi người dùng đã mua khóa học và chưa đánh giá */}
+ {shouldShowRatingForm && (
+          <View style={styles.ratingFormContainer}>
+            <Text style={styles.ratingPrompt}>Please rate the course</Text>
+            
+            {/* Component để người dùng chọn số ngôi sao */}
+            <AirbnbRating
+              defaultRating={starCount} 
+              onFinishRating={setStarCount}
+              size={30}
+            />
+
+            {/* Ô nhập phản hồi */}
+            <TextInput
+              style={styles.feedbackInput}
+              placeholder="Nhập phản hồi của bạn..."
+              value={feedback}
+              onChangeText={setFeedback}
+              multiline
+            />
+
+            {/* Nút submit để gửi dữ liệu */}
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmitRating}
+            >
+              <Text style={styles.submitButtonText}>Submit</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
           {/* Add Feedback Section */}
           <View style={styles.addFeedbackSection}>
@@ -876,4 +1088,128 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontWeight: "bold", // Make reply count stand out
   },
+  
+  ratingPrompt: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 10,
+  },
+  submitRatingButton: {
+    marginTop: 10,
+    paddingVertical: 12,
+    backgroundColor: "#28a745",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+
+  ratingSection: {
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 10,
+    elevation: 2,
+  },
+  
+  averageAndBarsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  totalRatingsText: {
+    fontSize: 16,
+    color: "#999",
+    marginTop: 5,
+  },
+
+  ratingBars: {
+    flex: 1,
+  },
+
+  ratingBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+
+  ratingCountText: {
+    width: 40,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#555',
+  },
+
+  ratingFillContainer: {
+    flex: 1,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    height: 20,
+    marginHorizontal: 10,
+  },
+
+  ratingFill: {
+    backgroundColor: '#FFD700',
+    height: '100%',
+    borderRadius: 5,
+  },
+
+  ratingNumberText: {
+    width: 50,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#555',
+  },
+
+  averageRatingContainer: {
+    alignItems: "center",
+    marginRight: 20,
+  },
+  averageRatingText: {
+    fontSize: 48,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  starsContainer: {
+    marginTop: 5,
+  },
+  ratingBarsContainer: {
+    flex: 1,
+  },
+  ratingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  ratingNumber: {
+    width: 20,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  barBackground: {
+    flex: 1,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 5,
+    height: 20,
+    marginLeft: 10,
+  },
+  barFill: {
+    backgroundColor: "#FFD700",
+    height: "100%",
+    borderRadius: 5,
+  },
+  ratingFormContainer: {
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 10,
+    elevation: 2, // Đổ bóng nhẹ
+  },
+  noRatingText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#999", // Màu xám nhạt để nổi bật
+    textAlign: "center",
+    marginTop: 10,
+  },
+  
 });
