@@ -110,3 +110,25 @@ export const getRatingsCountByType = async (courseId: string, token: string) => 
     throw new Error('Failed to fetch ratings count');
   }
 };
+
+// Update an existing rating
+export const updateRating = async (
+  ratingId: string,
+  ratingPoint: number,
+  comment: string,
+  token: string
+): Promise<Rating | null> => {
+  try {
+    const response = await axios.put<Rating>(
+      `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/rating/${ratingId}`,
+      { ratingPoint, comment },
+      {
+        headers: { Authorization: token },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    handleAxiosError(error, 'Failed to update rating');
+    return null;
+  }
+};
