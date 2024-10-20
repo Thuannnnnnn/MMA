@@ -29,8 +29,9 @@ import { useRouter } from "expo-router";
 import { ResizeMode, Video } from "expo-av";
 import { useFocusEffect } from "@react-navigation/native";
 
-import { getAverageRatingForCourse, createRating, getRatingsCountByType, hasUserProvidedFeedbackAndRating, getRatingByUserEmail   } from '@/API/Rating/ratingAPI';
+import { getAverageRatingForCourse, createRating, getRatingsCountByType, hasUserProvidedFeedbackAndRating, getRatingByUserEmail, updateRating    } from '@/API/Rating/ratingAPI';
 import { AirbnbRating } from 'react-native-ratings';
+import { Rating } from "@/constants/Rating/Rating";
 
 const { width, height } = Dimensions.get("window");
 
@@ -60,16 +61,12 @@ export default function CourseDetailsScreen() {
   const [starCount, setStarCount] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>("");
   const [isRatingSubmitted, setIsRatingSubmitted] = useState<boolean>(false);
+  const [previousRating, setPreviousRating] = useState<Rating | null>(null);
   const [ratingsCount, setRatingsCount] = useState<number[]>([0, 0, 0, 0, 0]);
   const [totalRatings, setTotalRatings] = useState<number>(0);
   const [token, setToken] = useState<string | null>(null);
 
-  const checkIfUserRated = async () => {
-    if (currentUserEmail && courseId && token) {
-      const result = await hasUserProvidedFeedbackAndRating(currentUserEmail, courseId, token);
-      setHasRated(result || false); // Cập nhật trạng thái hasRated
-    }
-  };
+ 
 
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const renderHTMLText = (htmlString: string) => {
@@ -440,7 +437,11 @@ export default function CourseDetailsScreen() {
       const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
       
       if (course) {
-        await createRating(userEmail, starCount, course._id as string, feedback ,token);
+        if (courseId) {
+          await createRating(userEmail, starCount, courseId, feedback, token);
+        } else {
+          Alert.alert("Error", "Course ID is not available.");
+        }
       } else {
         Alert.alert("Error", "Course information is not available.");
       }
@@ -452,30 +453,78 @@ export default function CourseDetailsScreen() {
     }
 };
 
+useEffect(() => {
+  const checkIfUserRated = async () => {
+    if (currentUserEmail && courseId && token) {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const result = await hasUserProvidedFeedbackAndRating(currentUserEmail, courseId, token);
+      setHasRated(result || false); // Cập nhật trạng thái hasRated
+    }
+  };
+
+  if (token && courseId && currentUserEmail) {
+    checkIfUserRated();
+  }
+}, [token, courseId, currentUserEmail]);
+
 
 const shouldShowRatingForm = isOwner && !hasRated;
+const shouldShowUpdateRatingForm = isOwner && hasRated;
 
-const fetchRatingsByUserEmail = async () => {
+useEffect(() => {
+  const fetchPreviousRating = async () => {
+    try {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
+
+      if (!userEmail || !courseId) {
+        return;
+      }
+
+     
+      const ratings = await getRatingByUserEmail(userEmail, token);
+
+      
+      const userRating = ratings?.find(rating => rating.courseId === courseId);
+
+      if (userRating) {
+        setPreviousRating(userRating);
+        setStarCount(userRating.ratingPoint);
+        setFeedback(userRating.feedback);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Unable to load your previous rating.");
+      console.error("Error fetching previous rating:", error);
+    }
+  };
+
+  if (token && courseId) {
+    fetchPreviousRating();
+  }
+}, [token, courseId]);
+
+
+const handleUpdateRating = async () => {
   try {
-    const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-    const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
-
-    if (!userEmail) {
-      Alert.alert("Error", "No user information found.");
+    if (starCount === 0) {
+      Alert.alert("Error", "Please select a star rating before updating.");
       return;
     }
 
-    const ratings = await getRatingByUserEmail(userEmail, token);
+    const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+    const ratingId = previousRating?._id;
 
-    if (ratings && ratings.length > 0) {
-      
-      console.log("Ratings fetched successfully:", ratings);
+    if (ratingId) {
+      await updateRating(ratingId, starCount, feedback, token);
+
+      setIsRatingSubmitted(true);
+      Alert.alert("Success", "Your rating has been successfully updated!");
     } else {
-      Alert.alert("Notice", "There are no reviews from this user.");
+      Alert.alert("Error", "Unable to find the rating ID for update.");
     }
   } catch (error) {
-    Alert.alert("Error", "Unable to get review information.");
-    console.error("Error fetching ratings:", error);
+    Alert.alert("Error", "Your rating could not be updated.");
+    console.error("Error updating rating:", error);
   }
 };
 
@@ -549,28 +598,28 @@ const fetchRatingsByUserEmail = async () => {
         ))}
       </View>
 
- {/* Chỉ hiển thị form đánh giá khi người dùng đã mua khóa học và chưa đánh giá */}
+
  {shouldShowRatingForm && (
           <View style={styles.ratingFormContainer}>
             <Text style={styles.ratingPrompt}>Please rate the course</Text>
             
-            {/* Component để người dùng chọn số ngôi sao */}
+            
             <AirbnbRating
               defaultRating={starCount} 
               onFinishRating={setStarCount}
               size={30}
             />
 
-            {/* Ô nhập phản hồi */}
+            
             <TextInput
               style={styles.feedbackInput}
-              placeholder="Nhập phản hồi của bạn..."
+              placeholder="Enter your rating..."
               value={feedback}
               onChangeText={setFeedback}
               multiline
             />
 
-            {/* Nút submit để gửi dữ liệu */}
+            
             <TouchableOpacity
               style={styles.submitButton}
               onPress={handleSubmitRating}
@@ -579,6 +628,28 @@ const fetchRatingsByUserEmail = async () => {
             </TouchableOpacity>
           </View>
         )}
+
+        
+      {shouldShowUpdateRatingForm && previousRating && (
+        <View style={styles.ratingFormContainer}>
+          <Text style={styles.ratingPrompt}>Update your rating for the course</Text>
+          <AirbnbRating
+            defaultRating={starCount}
+            onFinishRating={setStarCount}
+            size={30}
+          />
+          <TextInput
+            style={styles.feedbackInput}
+            placeholder="Update your rating..."
+            value={feedback}
+            onChangeText={setFeedback}
+            multiline
+          />
+          <TouchableOpacity style={styles.submitButton} onPress={handleUpdateRating}>
+            <Text style={styles.submitButtonText}>Update</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
           {/* Add Feedback Section */}
           <View style={styles.addFeedbackSection}>
