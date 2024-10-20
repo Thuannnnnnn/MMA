@@ -29,6 +29,10 @@ import { useRouter } from "expo-router";
 import { ResizeMode, Video } from "expo-av";
 import { useFocusEffect } from "@react-navigation/native";
 
+import { getAverageRatingForCourse, createRating, getRatingsCountByType, hasUserProvidedFeedbackAndRating, getRatingByUserEmail, updateRating    } from '@/API/Rating/ratingAPI';
+import { AirbnbRating } from 'react-native-ratings';
+import { Rating } from "@/constants/Rating/Rating";
+
 const { width, height } = Dimensions.get("window");
 
 export default function CourseDetailsScreen() {
@@ -52,7 +56,34 @@ export default function CourseDetailsScreen() {
     }, [])
   );
 
+  const [hasRated, setHasRated] = useState<boolean>(false);
+  const [averageRating, setAverageRating] = useState<string | null>(null);
+  const [starCount, setStarCount] = useState<number>(0);
+  const [feedback, setFeedback] = useState<string>("");
+  const [isRatingSubmitted, setIsRatingSubmitted] = useState<boolean>(false);
+  const [previousRating, setPreviousRating] = useState<Rating | null>(null);
+  const [ratingsCount, setRatingsCount] = useState<number[]>([0, 0, 0, 0, 0]);
+  const [totalRatings, setTotalRatings] = useState<number>(0);
+  const [token, setToken] = useState<string | null>(null);
+
+ 
+
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
+  useEffect(() => {
+    const checkIfUserRated = async () => {
+      if (currentUserEmail && courseId && token) {
+        const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+        const result = await hasUserProvidedFeedbackAndRating(currentUserEmail, courseId, token);
+        setHasRated(result || false); // Cập nhật trạng thái hasRated
+      }
+    };
+  
+    if (token && courseId && currentUserEmail) {
+      checkIfUserRated();
+    }
+  }, [token, courseId, currentUserEmail]);
+  
+  
   const renderHTMLText = (htmlString: string) => {
     const parts = htmlString.split(
       /(<strong>|<\/strong>|<p>|<\/p>|<i>|<\/i>)/g
@@ -229,10 +260,9 @@ export default function CourseDetailsScreen() {
           const sortedFeedbacks = fetchedFeedbacks.sort(
             (a, b) =>
               new Date(b.createDate).getTime() -
-              new Date(a.createDate).getTime()
+            new Date(a.createDate).getTime()
           );
           setFeedbacks(sortedFeedbacks);
-
           const userString = await AsyncStorage.getItem("user");
           if (userString) {
             const user = JSON.parse(userString);
@@ -337,6 +367,182 @@ export default function CourseDetailsScreen() {
     router.push("/(routes)/content/content-list");
   };
 
+  useEffect(() => {
+    const fetchTokenAndCourseId = async () => {
+      try {
+        const values = await AsyncStorage.multiGet(["token", "courseId_detail"]);
+        const fetchedToken = values[0][1];
+        const fetchedCourseId = values[1][1];
+
+        setToken(fetchedToken);
+        setCourseId(fetchedCourseId);
+      } catch (error) {
+        console.error("Error fetching token and course ID:", error);
+      }
+    };
+
+    fetchTokenAndCourseId();
+  }, []);
+
+  useEffect(() => {
+    const fetchCourseAndRelatedData = async (token: string, courseId: string) => {
+      try {
+        const authToken = `Bearer ${token}`;
+        // Gọi tất cả các API liên quan trong cùng một lầ
+        const [fetchedCourse, avgRating, ratingsResponse] = await Promise.all([
+          getCourseById(courseId, authToken),
+          getAverageRatingForCourse(courseId, authToken),
+          getRatingsCountByType(courseId, authToken),
+        ]);
+
+        setCourse(fetchedCourse); // Cập nhật thông tin khóa học
+
+        setAverageRating(avgRating ? avgRating.toString() : "0");
+
+        
+        const ratingCounts = [
+          ratingsResponse[5] || 0,
+          ratingsResponse[4] || 0,
+          ratingsResponse[3] || 0,
+          ratingsResponse[2] || 0,
+          ratingsResponse[1] || 0,
+        ];
+        setRatingsCount(ratingCounts);
+        
+      const total = ratingCounts.reduce((acc, count) => acc + count, 0);
+      setTotalRatings(total);
+      } catch (error) {
+        console.error("Failed to fetch course or rating:", error);
+      }
+    };
+
+    if (token && courseId) {
+      fetchCourseAndRelatedData(token, courseId);
+    }
+  }, [token, courseId]);
+
+  
+  useEffect(() => {
+    const fetchAverageRating = async (token: string, courseId: string) => {
+      try {
+        const authToken = `Bearer ${token}`;
+        const avgRating = await getAverageRatingForCourse(courseId, authToken);
+        if (avgRating !== null) {
+          setAverageRating(avgRating.toString()); // Cập nhật state cho averageRating
+        }
+      } catch (error) {
+        console.error("Error fetching average rating:", error);
+      }
+    };
+  
+    
+    if (token && courseId) {
+      fetchAverageRating(token, courseId);
+    }
+  }, [token, courseId]);
+
+  
+  const handleSubmitRating = async () => {
+    try {
+      if (starCount === 0) {
+        Alert.alert("Error", "Please select a star rating before submitting.");
+        return;
+      }
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
+      
+      if (course) {
+        if (courseId) {
+          await createRating(userEmail, starCount, courseId, feedback, token);
+        } else {
+          Alert.alert("Error", "Course ID is not available.");
+        }
+      } else {
+        Alert.alert("Error", "Course information is not available.");
+      }
+      setIsRatingSubmitted(true);
+      Alert.alert("Success", "You have successfully submitted your rating!");
+    } catch (error) {
+      Alert.alert("Error", "Your rating could not be submitted.");
+      console.error("Error submitting rating:", error);
+    }
+};
+
+useEffect(() => {
+  const checkIfUserRated = async () => {
+    if (currentUserEmail && courseId && token) {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const result = await hasUserProvidedFeedbackAndRating(currentUserEmail, courseId, token);
+      setHasRated(result || false); // Cập nhật trạng thái hasRated
+    }
+  };
+
+  if (token && courseId && currentUserEmail) {
+    checkIfUserRated();
+  }
+}, [token, courseId, currentUserEmail]);
+
+
+const shouldShowRatingForm = isOwner && !hasRated;
+const shouldShowUpdateRatingForm = isOwner && hasRated;
+
+useEffect(() => {
+  const fetchPreviousRating = async () => {
+    try {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
+
+      if (!userEmail || !courseId) {
+        return;
+      }
+
+     
+      const ratings = await getRatingByUserEmail(userEmail, token);
+
+      
+      const userRating = ratings?.find(rating => rating.courseId === courseId);
+
+      if (userRating) {
+        setPreviousRating(userRating);
+        setStarCount(userRating.ratingPoint);
+        setFeedback(userRating.feedback);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Unable to load your previous rating.");
+      console.error("Error fetching previous rating:", error);
+    }
+  };
+
+  if (token && courseId) {
+    fetchPreviousRating();
+  }
+}, [token, courseId]);
+
+
+const handleUpdateRating = async () => {
+  try {
+    if (starCount === 0) {
+      Alert.alert("Error", "Please select a star rating before updating.");
+      return;
+    }
+
+    const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+    const ratingId = previousRating?._id;
+
+    if (ratingId) {
+      await updateRating(ratingId, starCount, feedback, token);
+
+      setIsRatingSubmitted(true);
+      Alert.alert("Success", "Your rating has been successfully updated!");
+    } else {
+      Alert.alert("Error", "Unable to find the rating ID for update.");
+    }
+  } catch (error) {
+    Alert.alert("Error", "Your rating could not be updated.");
+    console.error("Error updating rating:", error);
+  }
+};
+
   if (!course) {
     return (
       <View style={styles.container}>
@@ -369,14 +575,120 @@ export default function CourseDetailsScreen() {
             </Text>
           </View>
 
+          <View style={styles.averageRatingContainer}>
+  {averageRating === null || averageRating === "0" ? (
+    
+    <Text style={styles.noRatingText}>There are no rating for this course yet!</Text>
+  ) : (
+    
+    <>
+      <Text style={styles.averageRatingText}>{averageRating}</Text>
+      <AirbnbRating
+        isDisabled
+        defaultRating={parseFloat(averageRating)}
+        showRating={false}
+        size={20}
+        starContainerStyle={styles.starsContainer}
+      />
+    </>
+  )}
+</View>
+
+      {/* Rating Bars */}
+      <View style={styles.ratingBarsContainer}>
+        {[5, 4, 3, 2, 1].map((rating, index) => (
+          <View key={rating} style={styles.ratingRow}>
+            <Text style={styles.ratingNumber}>{rating}</Text>
+            <View style={styles.barBackground}>
+              <View
+                style={[
+                  styles.barFill,
+                  {
+                    width: totalRatings === 0 ? '0%' : `${(ratingsCount[index] / totalRatings) * 100}%`,
+                  },
+                ]}
+              />
+            </View>
+          </View>
+        ))}
+      </View>
+
+
+ {shouldShowRatingForm && (
+          <View style={styles.ratingFormContainer}>
+            <Text style={styles.ratingPrompt}>Please rate the course</Text>
+            
+            
+            <AirbnbRating
+              defaultRating={starCount} 
+              onFinishRating={setStarCount}
+              size={30}
+            />
+
+            
+            <TextInput
+              style={styles.feedbackInput}
+              placeholder="Enter your rating..."
+              value={feedback}
+              onChangeText={setFeedback}
+              multiline
+            />
+
+            
+<TouchableOpacity
+  style={[
+    styles.submitButton, 
+    isRatingSubmitted && styles.disabledButton
+  ]}
+  onPress={isRatingSubmitted ? undefined : handleSubmitRating}
+  disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã gửi đánh giá
+>
+  <Text style={styles.submitButtonText}>
+    {isRatingSubmitted ? "Has Submit" : "Submit"}
+  </Text>
+</TouchableOpacity>
+          </View>
+        )}
+
+        
+      {shouldShowUpdateRatingForm && previousRating && (
+        <View style={styles.ratingFormContainer}>
+          <Text style={styles.ratingPrompt}>Update your rating for the course</Text>
+          <AirbnbRating
+            defaultRating={starCount}
+            onFinishRating={setStarCount}
+            size={30}
+          />
+          <TextInput
+            style={styles.feedbackInput}
+            placeholder="Update your rating..."
+            value={feedback}
+            onChangeText={setFeedback}
+            multiline
+          />
+          <TouchableOpacity
+  style={[
+    styles.submitButton, 
+    isRatingSubmitted && styles.disabledButton
+  ]}
+  onPress={isRatingSubmitted ? undefined : handleUpdateRating}
+  disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã cập nhật đánh giá
+>
+  <Text style={styles.submitButtonText}>
+    {isRatingSubmitted ? "Has Updated" : "Update"}
+  </Text>
+</TouchableOpacity>
+        </View>
+      )}
+
           {/* Add Feedback Section */}
           <View style={styles.addFeedbackSection}>
-            <Text style={styles.addFeedbackHeader}>Add Your Feedback</Text>
+            <Text style={styles.addFeedbackHeader}>Add Your Q&A</Text>
 
             {/* Feedback Text Input */}
             <TextInput
               style={styles.feedbackInput}
-              placeholder="Write your feedback..."
+              placeholder="Write your Q&A..."
               value={newFeedbackText}
               onChangeText={setNewFeedbackText}
             />
@@ -386,12 +698,12 @@ export default function CourseDetailsScreen() {
               style={styles.submitButton}
               onPress={handleSubmitFeedback}
             >
-              <Text style={styles.submitButtonText}>Submit Feedback</Text>
+              <Text style={styles.submitButtonText}>Submit Q&A</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.feedbackSection}>
-            <Text style={styles.feedbackHeader}>Feedback</Text>
+            <Text style={styles.feedbackHeader}>Q&A</Text>
             {feedbacks.length > 0 ? (
               <>
                 <View>
@@ -503,7 +815,7 @@ export default function CourseDetailsScreen() {
                 </View>
               </>
             ) : (
-              <Text>No feedback available for this course.</Text>
+              <Text>No Q&A available for this course.</Text>
             )}
           </View>
         </View>
@@ -876,4 +1188,131 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontWeight: "bold", // Make reply count stand out
   },
+  
+  ratingPrompt: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 10,
+  },
+  submitRatingButton: {
+    marginTop: 10,
+    paddingVertical: 12,
+    backgroundColor: "#28a745",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+
+  ratingSection: {
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 10,
+    elevation: 2,
+  },
+  
+  averageAndBarsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  totalRatingsText: {
+    fontSize: 16,
+    color: "#999",
+    marginTop: 5,
+  },
+
+  ratingBars: {
+    flex: 1,
+  },
+
+  ratingBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+
+  ratingCountText: {
+    width: 40,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#555',
+  },
+
+  ratingFillContainer: {
+    flex: 1,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 5,
+    height: 20,
+    marginHorizontal: 10,
+  },
+
+  ratingFill: {
+    backgroundColor: '#FFD700',
+    height: '100%',
+    borderRadius: 5,
+  },
+
+  ratingNumberText: {
+    width: 50,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#555',
+  },
+
+  averageRatingContainer: {
+    alignItems: "center",
+    marginRight: 20,
+  },
+  averageRatingText: {
+    fontSize: 48,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  starsContainer: {
+    marginTop: 5,
+  },
+  ratingBarsContainer: {
+    flex: 1,
+  },
+  ratingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+  ratingNumber: {
+    width: 20,
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  barBackground: {
+    flex: 1,
+    backgroundColor: "#e0e0e0",
+    borderRadius: 5,
+    height: 20,
+    marginLeft: 10,
+  },
+  barFill: {
+    backgroundColor: "#FFD700",
+    height: "100%",
+    borderRadius: 5,
+  },
+  ratingFormContainer: {
+    marginTop: 20,
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 10,
+    elevation: 2, // Đổ bóng nhẹ
+  },
+  noRatingText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#999", // Màu xám nhạt để nổi bật
+    textAlign: "center",
+    marginTop: 10,
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
+  },
+  
 });
