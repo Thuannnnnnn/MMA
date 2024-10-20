@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { Process } from "@/constants/process/process";
 import { getProcessByEmail } from "@/API/process/procesAPI";
-
+import { useFocusEffect } from "@react-navigation/native";
 const CourseListScreen = () => {
   const [coursePurchase, setCoursePurchase] = useState<CoursePurchase | null>(
     null
@@ -30,84 +30,89 @@ const CourseListScreen = () => {
     return Array.from({ length: coursesLength }, () => new Animated.Value(0));
   };
 
-  useEffect(() => {
-    const fetchCourseList = async () => {
-      try {
-        const userString = await AsyncStorage.getItem("user");
-        if (userString) {
-          const user = JSON.parse(userString);
-          const userEmail = user.email;
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCourseList = async () => {
+        try {
+          const userString = await AsyncStorage.getItem("user");
+          if (userString) {
+            const user = JSON.parse(userString);
+            const userEmail = user.email;
+            const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+            if (userEmail && token) {
+              const courses = await getCourseListByEmail(userEmail, token);
+              if (courses && courses.courses) {
+                setCoursePurchase(courses);
+
+                // Initialize animated values for each course
+                setAnimatedValues(
+                  initializeAnimatedValues(courses.courses.length)
+                );
+              }
+            }
+          }
+        } catch (err) {
+          setError(`Failed to fetch course list: ${err}`);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchCourseList();
+    }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchDataProcess = async () => {
+        try {
           const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-          if (userEmail && token) {
-            const courses = await getCourseListByEmail(userEmail, token);
-            if (courses && courses.courses) {
-              setCoursePurchase(courses);
+          const userString = await AsyncStorage.getItem("user");
+          let user;
+          if (userString) {
+            user = JSON.parse(userString);
+          }
+          if (token && user) {
+            const result: Process[] = await getProcessByEmail(
+              user.email,
+              token
+            );
+            if (coursePurchase && result) {
+              // Kiểm tra xem animatedValues có đủ kích thước không
+              if (animatedValues.length === coursePurchase.courses.length) {
+                coursePurchase.courses.forEach((course, index) => {
+                  if (course.courseId) {
+                    const tasksForCourse = result
+                      .filter((item) => item.courseId === course.courseId?._id)
+                      .flatMap((item) => item.content);
+                    const completedTasks = tasksForCourse.filter(
+                      (task) => task.isComplete === true
+                    ).length;
+                    const totalTasks = tasksForCourse.length;
+                    const progress =
+                      totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
 
-              // Initialize animated values for each course
-              setAnimatedValues(
-                initializeAnimatedValues(courses.courses.length)
-              );
+                    // Cập nhật thanh tiến trình
+                    Animated.timing(animatedValues[index], {
+                      toValue: progress,
+                      duration: 500,
+                      useNativeDriver: false,
+                    }).start();
+                  }
+                });
+              }
             }
           }
+        } catch (error) {
+          console.error("Error fetching process data:", error);
         }
-      } catch (err) {
-        setError(`Failed to fetch course list: ${err}`);
-      } finally {
-        setLoading(false);
+      };
+
+      if (coursePurchase) {
+        fetchDataProcess();
       }
-    };
-
-    fetchCourseList();
-  }, []);
-
-  useEffect(() => {
-    const fetchDataProcess = async () => {
-      try {
-        const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-        const userString = await AsyncStorage.getItem("user");
-        let user;
-        if (userString) {
-          user = JSON.parse(userString);
-        }
-        if (token && user) {
-          const result: Process[] = await getProcessByEmail(user.email, token);
-          if (coursePurchase && result) {
-            // Kiểm tra xem animatedValues có đủ kích thước không
-            if (animatedValues.length === coursePurchase.courses.length) {
-              coursePurchase.courses.forEach((course, index) => {
-                if (course.courseId) {
-                  const tasksForCourse = result
-                    .filter((item) => item.courseId === course.courseId?._id)
-                    .flatMap((item) => item.content);
-
-                  const completedTasks = tasksForCourse.filter(
-                    (task) => task.isComplete === true
-                  ).length;
-                  const totalTasks = tasksForCourse.length;
-                  const progress =
-                    totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-
-                  // Cập nhật thanh tiến trình
-                  Animated.timing(animatedValues[index], {
-                    toValue: progress,
-                    duration: 500,
-                    useNativeDriver: false,
-                  }).start();
-                }
-              });
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching process data:", error);
-      }
-    };
-
-    if (coursePurchase) {
-      fetchDataProcess();
-    }
-  }, [coursePurchase, animatedValues]);
-
+    }, [coursePurchase, animatedValues])
+  );
 
   if (loading) {
     return (
@@ -133,7 +138,8 @@ const CourseListScreen = () => {
     );
   }
 
-  const GotoContent = async (courseId: string) => {
+  const GotoContent = async (courseId: string, course_id: string) => {
+    await AsyncStorage.setItem("course_id", course_id);
     await AsyncStorage.setItem("courseIdGotoContent", courseId);
     router.push("/(routes)/content/content-list");
   };
@@ -148,7 +154,7 @@ const CourseListScreen = () => {
             style={styles.courseCard}
             onPress={() => {
               if (item?.courseId?.courseId) {
-                GotoContent(item.courseId.courseId);
+                GotoContent(item.courseId.courseId, item.courseId._id);
               }
             }}
           >
@@ -219,7 +225,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
     alignItems: "center",
-    
   },
   progressContainerMain: {
     justifyContent: "center",
@@ -236,7 +241,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   progress: {
-
     height: "100%",
     backgroundColor: "#76c7c0", // Màu xanh nhẹ cho thanh tiến trình
     borderRadius: 5, // Thêm border radius cho thanh tiến trình
