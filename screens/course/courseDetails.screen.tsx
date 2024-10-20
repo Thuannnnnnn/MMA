@@ -468,6 +468,20 @@ export default function CourseDetailsScreen() {
     }
 };
 
+useEffect(() => {
+  const checkIfUserRated = async () => {
+    if (currentUserEmail && courseId && token) {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const result = await hasUserProvidedFeedbackAndRating(currentUserEmail, courseId, token);
+      setHasRated(result || false); // Cập nhật trạng thái hasRated
+    }
+  };
+
+  if (token && courseId && currentUserEmail) {
+    checkIfUserRated();
+  }
+}, [token, courseId, currentUserEmail]);
+
 
 const shouldShowRatingForm = isOwner && !hasRated;
 const shouldShowUpdateRatingForm = isOwner && hasRated;
