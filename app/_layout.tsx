@@ -7,7 +7,15 @@ import { ClerkProvider } from "@clerk/clerk-expo";
 import { Text, TouchableOpacity, View } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-
+if (__DEV__) {
+  const originalWarn = console.warn;
+  console.warn = (message) => {
+    if (message.includes('Clerk has been loaded with development keys')) {
+      return;
+    }
+    originalWarn(message);
+  };
+}
 export default function RootLayout() {
   const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
   if (!publishableKey) {
