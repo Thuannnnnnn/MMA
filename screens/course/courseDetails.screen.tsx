@@ -635,12 +635,18 @@ const handleUpdateRating = async () => {
             />
 
             
-            <TouchableOpacity
-              style={styles.submitButton}
-              onPress={handleSubmitRating}
-            >
-              <Text style={styles.submitButtonText}>Submit</Text>
-            </TouchableOpacity>
+<TouchableOpacity
+  style={[
+    styles.submitButton, 
+    isRatingSubmitted && styles.disabledButton
+  ]}
+  onPress={isRatingSubmitted ? undefined : handleSubmitRating}
+  disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã gửi đánh giá
+>
+  <Text style={styles.submitButtonText}>
+    {isRatingSubmitted ? "Has Submit" : "Submit"}
+  </Text>
+</TouchableOpacity>
           </View>
         )}
 
@@ -660,9 +666,18 @@ const handleUpdateRating = async () => {
             onChangeText={setFeedback}
             multiline
           />
-          <TouchableOpacity style={styles.submitButton} onPress={handleUpdateRating}>
-            <Text style={styles.submitButtonText}>Update</Text>
-          </TouchableOpacity>
+          <TouchableOpacity
+  style={[
+    styles.submitButton, 
+    isRatingSubmitted && styles.disabledButton
+  ]}
+  onPress={isRatingSubmitted ? undefined : handleUpdateRating}
+  disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã cập nhật đánh giá
+>
+  <Text style={styles.submitButtonText}>
+    {isRatingSubmitted ? "Has Updated" : "Update"}
+  </Text>
+</TouchableOpacity>
         </View>
       )}
 
@@ -1295,6 +1310,9 @@ const styles = StyleSheet.create({
     color: "#999", // Màu xám nhạt để nổi bật
     textAlign: "center",
     marginTop: 10,
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
   },
   
 });
