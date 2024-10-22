@@ -29,7 +29,7 @@ export const createRating = async (
 export const getAverageRatingForCourse = async (
   courseId: string,
   token: string
-): Promise<number | null> => {
+): Promise<number> => {
   try {
     const response = await axios.get<{ averageRating: number }>(
       `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/rating/course/${courseId}/average`,
@@ -37,12 +37,13 @@ export const getAverageRatingForCourse = async (
         headers: { Authorization: token },
       }
     );
-    return response.data.averageRating;
+    return response.data.averageRating || 0;
   } catch (error) {
-    handleAxiosError(error, 'Failed to fetch average rating for course');
-    return null;
+    
+    return 0;
   }
 };
+
 
 
 
@@ -60,7 +61,7 @@ export const hasUserProvidedFeedbackAndRating = async (
   userEmail: string,
   courseId: string,
   token: string
-): Promise<boolean | null> => {
+): Promise<boolean> => {
   try {
     const response = await axios.get<{ hasProvidedFeedbackAndRating: boolean }>(
       `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/rating/has-provided/${userEmail}/${courseId}`,
@@ -68,17 +69,17 @@ export const hasUserProvidedFeedbackAndRating = async (
         headers: { Authorization: token },
       }
     );
-    return response.data.hasProvidedFeedbackAndRating;
+    return response.data.hasProvidedFeedbackAndRating || false;
   } catch (error) {
-    handleAxiosError(error, 'Failed to check if user has provided feedback and rating');
-    return null;
+    
+    return false;
   }
 };
 
 export const getRatingByUserEmail = async (
   userEmail: string,
   token: string
-): Promise<Rating[] | null> => {
+): Promise<Rating[]> => {
   try {
     const response = await axios.get<Rating[]>(
       `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/rating/userRating/${userEmail}`,
@@ -86,28 +87,25 @@ export const getRatingByUserEmail = async (
         headers: { Authorization: token },
       }
     );
-    return response.data;
+    return response.data || [];
   } catch (error) {
-    handleAxiosError(error, 'Failed to fetch ratings by user email');
-    return null;
+    
+    return [];
   }
 };
 
 export const getRatingsCountByType = async (courseId: string, token: string) => {
   try {
-    const response = await axios.get(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/rating/course/${courseId}/ratings-count`,
-    {
-      headers: { Authorization: token },
-    }
-  );
-    return response.data;
+    const response = await axios.get(
+      `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/rating/course/${courseId}/ratings-count`,
+      {
+        headers: { Authorization: token },
+      }
+    );
+    return response.data || [0, 0, 0, 0, 0];
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('Axios error:', error.response?.data || error.message);
-    } else {
-      console.error('Error:', error);
-    }
-    throw new Error('Failed to fetch ratings count');
+    
+    return [0, 0, 0, 0, 0];
   }
 };
 
@@ -115,20 +113,20 @@ export const getRatingsCountByType = async (courseId: string, token: string) => 
 export const updateRating = async (
   ratingId: string,
   ratingPoint: number,
-  comment: string,
+  feedback: string,
   token: string
 ): Promise<Rating | null> => {
   try {
     const response = await axios.put<Rating>(
       `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/rating/${ratingId}`,
-      { ratingPoint, comment },
+      { ratingPoint, feedback },
       {
         headers: { Authorization: token },
       }
     );
     return response.data;
   } catch (error) {
-    handleAxiosError(error, 'Failed to update rating');
+    
     return null;
   }
 };

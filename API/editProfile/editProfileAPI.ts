@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { UserInfo } from '@/constants/Profile/userInfo';
-import { UserAvatar } from '@/constants/Profile/userAvatar';
 import { UserPassword } from '@/constants/Profile/userPassword';
 
 
@@ -56,33 +55,12 @@ export const getUserInfo = async (userId: string, token: string): Promise<UserIn
   }
 };
 
-export const getUserAvatar = async (userId: string, token: string): Promise<UserAvatar> => {
-  try {
-    const response = await axios.get(
-      `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/profile/user-avatar/${userId}`,
-      { headers: { Authorization: token } }
-    );
-    const avatarMessage = response.data.message;
-    if (avatarMessage === 'avatar is null') {
-      return { avatarUrl: null };
-    }
-    const avatarUrl = response.data.avatarUrl;
-    return { avatarUrl };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('Axios error:', error.response?.data || error.message);
-    } else {
-      console.error('Error:', error);
-    }
-    return { avatarUrl: null };
-  }
-};
-
 
 export const uploadUserAvatar = async (userId: string, file: File, token: string): Promise<any> => {
   try {
     const formData = new FormData();
-    formData.append('file', file);
+    const blob = new Blob([file], { type: file.type });
+    formData.append('avatar', blob, file.name);
 
     const response = await axios.post(
       `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/profile/upload-avatar/${userId}`,
@@ -102,35 +80,7 @@ export const uploadUserAvatar = async (userId: string, file: File, token: string
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to upload user avatar');
-  }
-};
-
-
-export const updateUserAvatar = async (userId: string, file: File, token: string): Promise<any> => {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await axios.put(
-      `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/profile/update-avatar/${userId}`,
-      formData,
-      {
-        headers: {
-          Authorization: token,
-          
-        },
-      }
-    );
-
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('Axios error:', error.response?.data || error.message);
-    } else {
-      console.error('Error:', error);
-    }
-    throw new Error('Failed to update avatar');
+    throw new Error('Failed to upload avatar');
   }
 };
 
