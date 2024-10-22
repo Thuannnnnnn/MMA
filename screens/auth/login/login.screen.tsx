@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Entypo,
   FontAwesome,
@@ -20,11 +20,11 @@ import { ScrollView } from "react-native-gesture-handler";
 import { router } from "expo-router";
 import SignInPng from "@/assets/sign-in/sign_in.png";
 import * as WebBrowser from "expo-web-browser";
-import { useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
+import { useOAuth, useUser } from "@clerk/clerk-expo";
 import * as Linking from "expo-linking";
 import axios, { AxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import {handleLoginBase} from "@/API/Auth/Login"
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
     return () => {
@@ -39,7 +39,6 @@ export default function LoginScreen() {
   useWarmUpBrowser();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
   const { user } = useUser();
-  const { isSignedIn } = useAuth();
 
   const saveUserData = async (data: any) => {
     await AsyncStorage.setItem("token", data.token);
@@ -111,29 +110,26 @@ export default function LoginScreen() {
   const handleSignIn = async () => {
     try {
       setButtonSpinner(true);
-
       try {
-        const response = await axios.post(
-          `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/base`,
-          {
-            email: userInfo.email,
-            password: userInfo.password,
-          }
-        );
-        await AsyncStorage.setItem("token", response.data.token);
-        const userData = JSON.stringify(response.data.user);
-        await AsyncStorage.setItem("user", userData);
-        router.push("/(tabs)/");
+        const response = await handleLoginBase(userInfo.email, userInfo.password);
+  
+        if (response) {
+          await AsyncStorage.setItem("token", response.token);
+          const userData = JSON.stringify(response.user);
+          await AsyncStorage.setItem("user", userData);
+          router.push("/(tabs)/");
+        } else {
+          throw new Error("Invalid response from login");
+        }
       } catch (error) {
         console.error("Login failed:", error);
-
+  
         if (error instanceof AxiosError) {
           setError({
             ...error.response?.data,
             password: "Login failed. Please try again.",
           });
         } else {
-          console.log("Error has no response");
           setError({
             password: "An unexpected error occurred. Please try again.",
           });
