@@ -51,6 +51,7 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/cart/index" />
                         <Stack.Screen name="(routes)/quizz/index" />
                         <Stack.Screen name="(routes)/quizz/quizzSuccess" />
+                        <Stack.Screen name="(routes)/orderHistory" />
                         <Stack.Screen 
                 name="(routes)/quizz/quizzResults" 
                 options={({ navigation }) => ({

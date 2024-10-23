@@ -6,7 +6,7 @@ import styles from '@/styles/onboarding/onboard'
 
 export default function OnBoardingScreen() { 
     const router = useRouter();
-    const [countdown, setCountdown] = useState(5);
+    const [countdown, setCountdown] = useState(1);
 
     useEffect(() => {
         let timer: ReturnType<typeof setTimeout>;

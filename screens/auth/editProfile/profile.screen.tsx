@@ -1,18 +1,29 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import { getUserInfo, getUserAvatar, uploadUserAvatar, updateUserAvatar } from '@/API/editProfile/editProfileAPI';
 import { UserInfo } from '@/constants/Profile/userInfo';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons'; 
 import defaultAvatar from '@/assets/default-avatar.png';
-
+import * as ScreenOrientation from 'expo-screen-orientation';
 const ProfileScreen = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+  useFocusEffect(
+    useCallback(() => {
+      StatusBar.setBarStyle("light-content");
+      StatusBar.setBackgroundColor("#6a51ae");
+      const lockOrientation = async () => {
+        await ScreenOrientation.lockAsync(
+          ScreenOrientation.OrientationLock.PORTRAIT
+        );
+      };
+      lockOrientation();
+    }, [])
+  );
   const fetchUserData = useCallback(async () => {
     try {
       const token = `Bearer ${await AsyncStorage.getItem('token')}`;
@@ -153,8 +164,8 @@ const ProfileScreen = () => {
         <Ionicons name="chevron-forward" size={24} color="#000" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem}>
-        <Text style={styles.menuText}>Settings and Privacy</Text>
+      <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(routes)/orderHistory")}>
+        <Text style={styles.menuText}>Order History</Text>
         <Ionicons name="chevron-forward" size={24} color="#000" />
       </TouchableOpacity>
 
