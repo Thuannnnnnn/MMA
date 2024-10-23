@@ -60,7 +60,6 @@ export default function CourseDetailsScreen() {
   const [averageRating, setAverageRating] = useState<string | null>(null);
   const [starCount, setStarCount] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>("");
-  const [isRatingSubmitted, setIsRatingSubmitted] = useState<boolean>(false);
   const [previousRating, setPreviousRating] = useState<Rating | null>(null);
   const [ratingsCount, setRatingsCount] = useState<number[]>([0, 0, 0, 0, 0]);
   const [totalRatings, setTotalRatings] = useState<number>(0);
@@ -450,23 +449,17 @@ export default function CourseDetailsScreen() {
       }
       const token = `Bearer ${await AsyncStorage.getItem("token")}`;
       const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
-      
-      if (course) {
-        if (courseId) {
-          await createRating(userEmail, starCount, courseId, feedback, token);
-        } else {
-          Alert.alert("Error", "Course ID is not available.");
-        }
-      } else {
-        Alert.alert("Error", "Course information is not available.");
-      }
-      setIsRatingSubmitted(true);
+  
+      await createRating(userEmail, starCount, courseId as string, feedback, token);
       Alert.alert("Success", "You have successfully submitted your rating!");
+  
+      // Reload data để chuyển form từ submit sang update
+      await reloadCourseData();
     } catch (error) {
       Alert.alert("Error", "Your rating could not be submitted.");
       console.error("Error submitting rating:", error);
     }
-};
+  };
 
 useEffect(() => {
   const checkIfUserRated = async () => {
@@ -525,21 +518,58 @@ const handleUpdateRating = async () => {
       Alert.alert("Error", "Please select a star rating before updating.");
       return;
     }
-
     const token = `Bearer ${await AsyncStorage.getItem("token")}`;
     const ratingId = previousRating?._id;
 
-    if (ratingId) {
-      await updateRating(ratingId, starCount, feedback, token);
+    await updateRating(ratingId as string, starCount, feedback, token);
+    Alert.alert("Success", "Your rating has been successfully updated!");
 
-      setIsRatingSubmitted(true);
-      Alert.alert("Success", "Your rating has been successfully updated!");
-    } else {
-      Alert.alert("Error", "Unable to find the rating ID for update.");
-    }
+    // Reload data để cập nhật form với dữ liệu mới nhất
+    await reloadCourseData();
   } catch (error) {
     Alert.alert("Error", "Your rating could not be updated.");
     console.error("Error updating rating:", error);
+  }
+};
+
+const reloadCourseData = async () => {
+  try {
+    const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+    if (!courseId || !currentUserEmail) return;
+
+    const fetchedCourse = await getCourseById(courseId, token);
+    setCourse(fetchedCourse);
+
+    const avgRating = await getAverageRatingForCourse(courseId, token);
+    setAverageRating(avgRating ? avgRating.toString() : "0");
+
+    const ratingsResponse = await getRatingsCountByType(courseId, token);
+    const ratingCounts = [
+      ratingsResponse[5] || 0,
+      ratingsResponse[4] || 0,
+      ratingsResponse[3] || 0,
+      ratingsResponse[2] || 0,
+      ratingsResponse[1] || 0,
+    ];
+    setRatingsCount(ratingCounts);
+    setTotalRatings(ratingCounts.reduce((acc, count) => acc + count, 0));
+
+    // Kiểm tra xem người dùng đã đánh giá chưa và cập nhật trạng thái
+    const hasRated = await hasUserProvidedFeedbackAndRating(currentUserEmail, courseId, token);
+    setHasRated(hasRated || false);
+
+    // Nếu người dùng đã đánh giá, lấy thông tin đánh giá
+    if (hasRated) {
+      const userRatings = await getRatingByUserEmail(currentUserEmail, token);
+      const userRating = userRatings?.find(rating => rating.courseId === courseId);
+      if (userRating) {
+        setPreviousRating(userRating);
+        setStarCount(userRating.ratingPoint);
+        setFeedback(userRating.feedback);
+      }
+    }
+  } catch (error) {
+    console.error("Failed to reload course data:", error);
   }
 };
 
@@ -614,71 +644,47 @@ const handleUpdateRating = async () => {
       </View>
 
 
- {shouldShowRatingForm && (
-          <View style={styles.ratingFormContainer}>
-            <Text style={styles.ratingPrompt}>Please rate the course</Text>
-            
-            
-            <AirbnbRating
-              defaultRating={starCount} 
-              onFinishRating={setStarCount}
-              size={30}
-            />
+ {/* Hiển thị form dựa trên điều kiện */}
+{shouldShowRatingForm && (
+  <View style={styles.ratingFormContainer}>
+    <Text style={styles.ratingPrompt}>Please rate the course</Text>
+    <AirbnbRating
+      defaultRating={starCount}
+      onFinishRating={setStarCount}
+      size={30}
+    />
+    <TextInput
+      style={styles.feedbackInput}
+      placeholder="Enter your rating..."
+      value={feedback}
+      onChangeText={setFeedback}
+      multiline
+    />
+    <TouchableOpacity style={styles.submitButton} onPress={handleSubmitRating}>
+      <Text style={styles.submitButtonText}>Submit</Text>
+    </TouchableOpacity>
+  </View>
+)}
 
-            
-            <TextInput
-              style={styles.feedbackInput}
-              placeholder="Enter your rating..."
-              value={feedback}
-              onChangeText={setFeedback}
-              multiline
-            />
-
-            
-<TouchableOpacity
-  style={[
-    styles.submitButton, 
-    isRatingSubmitted && styles.disabledButton
-  ]}
-  onPress={isRatingSubmitted ? undefined : handleSubmitRating}
-  disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã gửi đánh giá
->
-  <Text style={styles.submitButtonText}>
-    {isRatingSubmitted ? "Has Submit" : "Submit"}
-  </Text>
-</TouchableOpacity>
-          </View>
-        )}
-
-        
-      {shouldShowUpdateRatingForm && previousRating && (
-        <View style={styles.ratingFormContainer}>
-          <Text style={styles.ratingPrompt}>Update your rating for the course</Text>
-          <AirbnbRating
-            defaultRating={starCount}
-            onFinishRating={setStarCount}
-            size={30}
-          />
-          <TextInput
-            style={styles.feedbackInput}
-            placeholder="Update your rating..."
-            value={feedback}
-            onChangeText={setFeedback}
-            multiline
-          />
-          <TouchableOpacity
-  style={[
-    styles.submitButton, 
-    isRatingSubmitted && styles.disabledButton
-  ]}
-  onPress={isRatingSubmitted ? undefined : handleUpdateRating}
-  disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã cập nhật đánh giá
->
-  <Text style={styles.submitButtonText}>
-    {isRatingSubmitted ? "Has Updated" : "Update"}
-  </Text>
-</TouchableOpacity>
-        </View>
+{shouldShowUpdateRatingForm && previousRating && (
+  <View style={styles.ratingFormContainer}>
+    <Text style={styles.ratingPrompt}>Update your rating for the course</Text>
+    <AirbnbRating
+      defaultRating={starCount}
+      onFinishRating={setStarCount}
+      size={30}
+    />
+    <TextInput
+      style={styles.feedbackInput}
+      placeholder="Update your rating..."
+      value={feedback}
+      onChangeText={setFeedback}
+      multiline
+    />
+    <TouchableOpacity style={styles.submitButton} onPress={handleUpdateRating}>
+      <Text style={styles.submitButtonText}>Update</Text>
+    </TouchableOpacity>
+  </View>
       )}
 
           {/* Add Feedback Section */}

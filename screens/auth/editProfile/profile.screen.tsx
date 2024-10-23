@@ -1,135 +1,111 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert, StatusBar } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { getUserInfo, getUserAvatar, uploadUserAvatar, updateUserAvatar } from '@/API/editProfile/editProfileAPI';
+import {
+  getUserInfo,
+  uploadUserAvatar,
+} from '@/API/editProfile/editProfileAPI';
 import { UserInfo } from '@/constants/Profile/userInfo';
-import { router, useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons'; 
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import defaultAvatar from '@/assets/default-avatar.png';
 import * as ScreenOrientation from 'expo-screen-orientation';
 const ProfileScreen = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  useFocusEffect(
-    useCallback(() => {
-      StatusBar.setBarStyle("light-content");
-      StatusBar.setBackgroundColor("#6a51ae");
-      const lockOrientation = async () => {
-        await ScreenOrientation.lockAsync(
-          ScreenOrientation.OrientationLock.PORTRAIT
-        );
-      };
-      lockOrientation();
-    }, [])
-  );
-  const fetchUserData = useCallback(async () => {
+
+  // Function to fetch user data and avatar
+  const fetchUserDataAndAvatar = useCallback(async () => {
     try {
       const token = `Bearer ${await AsyncStorage.getItem('token')}`;
       const cachedUserInfo = await AsyncStorage.getItem('userInfoCache');
 
-      if (cachedUserInfo) {
-        setUserInfo(JSON.parse(cachedUserInfo));
-      }
+      // If cached data exists, set it to state
+      if (cachedUserInfo) setUserInfo(JSON.parse(cachedUserInfo));
 
       const userDataString = await AsyncStorage.getItem('user');
-      if (!userDataString) {
-        throw new Error('User data not found in AsyncStorage');
-      }
+      if (!userDataString) throw new Error('User data not found');
 
       const userData = JSON.parse(userDataString);
-      const _id = userData._id;
-      if (!_id) {
-        throw new Error('User ID not found in user data');
-      }
+      const { _id, avatarUrl } = userData;
+      if (!_id) throw new Error('User ID not found');
 
+      // Call API to get user info
       const profileData = await getUserInfo(_id, token);
+      console.log('Using profile data from API:', profileData);
+
+      // Update user info
       setUserInfo(profileData);
+
+      // Update AsyncStorage with new data
       await AsyncStorage.setItem('userInfoCache', JSON.stringify(profileData));
+      await AsyncStorage.setItem('user', JSON.stringify(profileData));
+
+      // Update avatar
+      if (avatarUrl) {
+        console.log('Using avatar URL from user data:', avatarUrl);
+        setUserAvatar(avatarUrl);
+        await AsyncStorage.setItem('userAvatarCache', avatarUrl);
+      } else {
+        console.warn('Avatar URL not found in user data, using default avatar');
+        setUserAvatar(null);
+      }
     } catch (error) {
-      console.error('Failed to fetch user data:', error);
+      console.error('Failed to fetch user data or avatar:', error);
       Alert.alert('Failed to load user data');
+      setUserAvatar(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const fetchUserAvatar = useCallback(async () => {
-    try {
+  /// Function to pick an image from the library
+const pickImage = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [1, 1],
+    quality: 1,
+  });
+
+  if (!result.canceled) {
+    const selectedImage = result.assets[0];
+    if (selectedImage.uri.endsWith('.png') || selectedImage.uri.endsWith('.jpg')) {
       const token = `Bearer ${await AsyncStorage.getItem('token')}`;
       const userDataString = await AsyncStorage.getItem('user');
-      if (!userDataString) {
-        throw new Error('User data not found in AsyncStorage');
-      }
+      if (!userDataString) throw new Error('User data not found');
 
       const userData = JSON.parse(userDataString);
-      const _id = userData._id;
-      if (!_id) {
-        throw new Error('User ID not found in user data');
+      const { _id } = userData;
+      if (token && _id) {
+        const fetchResponse = await fetch(selectedImage.uri);
+        const blob = await fetchResponse.blob();
+        const file = new File([blob], `avatar.${selectedImage.uri.split('.').pop()}`, { type: selectedImage.type });
+        await uploadUserAvatar(_id, file, token);
+      } else {
+        console.error('Token or User ID not found');
       }
-
-      const avatarData = await getUserAvatar(_id, token);
-      if (avatarData?.avatarUrl) {
-        setUserAvatar(avatarData.avatarUrl);
-        await AsyncStorage.setItem('userAvatarCache', avatarData.avatarUrl);
-      }
-    } catch (error) {
-      console.error('Failed to fetch user avatar:', error);
+    } else {
+      Alert.alert('Please select a .png or .jpg image');
     }
-  }, []);
+  }
+};
 
+  
+  // Fetch user data when the screen loads
   useEffect(() => {
-    fetchUserData();
-    fetchUserAvatar();
-  }, [fetchUserData, fetchUserAvatar]);
-
-  const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (permissionResult.granted === false) {
-      Alert.alert('Permission to access gallery is required!');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      const selectedImageUri = result.assets[0].uri;
-      const response = await fetch(selectedImageUri);
-      const blob = await response.blob();
-      const selectedImageFile = new File([blob], 'avatar.png', { type: 'image/png' });
-
-      try {
-        const token = `Bearer ${await AsyncStorage.getItem('token')}`;
-        const userDataString = await AsyncStorage.getItem('user');
-        if (!userDataString) {
-          throw new Error('User data not found in AsyncStorage');
-        }
-
-        const userData = JSON.parse(userDataString);
-        const _id = userData._id;
-
-        if (userAvatar) {
-          await updateUserAvatar(_id, selectedImageFile, token);
-          Alert.alert('Avatar updated successfully!');
-        } else {
-          await uploadUserAvatar(_id, selectedImageFile, token);
-          Alert.alert('Avatar uploaded successfully!');
-        }
-
-        setUserAvatar(selectedImageUri);
-      } catch (error) {
-        console.error('Failed to upload/update avatar:', error);
-        Alert.alert('Failed to upload/update avatar');
-      }
-    }
-  };
+    fetchUserDataAndAvatar();
+  }, [fetchUserDataAndAvatar]);
 
   if (loading) {
     return (
@@ -159,7 +135,10 @@ const ProfileScreen = () => {
         <Text style={styles.userName}>{userInfo.name}</Text>
       </View>
 
-      <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(routes)/editProfile/userInfo")}>
+      <TouchableOpacity
+        style={styles.menuItem}
+        onPress={() => router.push('/(routes)/editProfile/userInfo')}
+      >
         <Text style={styles.menuText}>Edit Account</Text>
         <Ionicons name="chevron-forward" size={24} color="#000" />
       </TouchableOpacity>
