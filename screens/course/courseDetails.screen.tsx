@@ -9,15 +9,15 @@ import {
   Dimensions,
   TextInput,
 } from "react-native";
-import { Feedback } from "@/constants/Feedback/Feedback";
+import { QandA } from "@/constants/QandA/QandA";
 import { Course } from "@/constants/Course/CourseDetails";
 import {
-  getFeedbackByCourseId,
-  createFeedback,
-  deleteFeedback,
-  replyToFeedback,
-  deleteFeedbackReply,
-} from "@/API/Feedback/feedbackAPI";
+  getQandAByCourseId,
+  createQandA,
+  deleteQandA,
+  replyToQandA,
+  deleteQandAReply,
+} from "@/API/QandA/QandA";
 
 import {
   getCourseById,
@@ -41,7 +41,7 @@ export default function CourseDetailsScreen() {
   const [course, setCourse] = useState<Course | null>(null);
   const [isOwner, setIsOwner] = useState<boolean>(false);
 
-  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [feedbacks, setFeedbacks] = useState<QandA[]>([]);
   const [newFeedbackText, setNewFeedbackText] = useState<string>("");
   const [newReplyText, setNewReplyText] = useState<string>("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -103,7 +103,7 @@ export default function CourseDetailsScreen() {
     });
   };
 
-  const handleReplyToFeedback = async (feedbackId: string) => {
+  const handlereplyToQandA = async (feedbackId: string) => {
     if (!newReplyText.trim()) {
       Alert.alert("Error", "Please enter your reply before submitting.");
       return;
@@ -115,9 +115,9 @@ export default function CourseDetailsScreen() {
         (await AsyncStorage.getItem("user")) || "{}"
       ).email;
 
-      await replyToFeedback(feedbackId, newReplyText, userEmail, token);
+      await replyToQandA(feedbackId, newReplyText, userEmail, token);
 
-      const updatedFeedbacks = await getFeedbackByCourseId(
+      const updatedFeedbacks = await getQandAByCourseId(
         courseId as string,
         token
       );
@@ -137,7 +137,7 @@ export default function CourseDetailsScreen() {
     }
   };
 
-  const handleDeleteFeedback = async (feedbackId: string) => {
+  const handledeleteQandA = async (feedbackId: string) => {
     Alert.alert(
       "Confirm Delete",
       "Are you sure you want to delete this feedback?",
@@ -152,10 +152,10 @@ export default function CourseDetailsScreen() {
           onPress: async () => {
             try {
               const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-              await deleteFeedback(feedbackId, token);
+              await deleteQandA(feedbackId, token);
 
               // Update feedback list after deletion
-              const updatedFeedbacks = await getFeedbackByCourseId(
+              const updatedFeedbacks = await getQandAByCourseId(
                 courseId as string,
                 token
               );
@@ -192,9 +192,9 @@ export default function CourseDetailsScreen() {
           onPress: async () => {
             try {
               const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-              await deleteFeedbackReply(feedbackId, replyId, token);
+              await deleteQandAReply(feedbackId, replyId, token);
 
-              const updatedFeedbacks = await getFeedbackByCourseId(
+              const updatedFeedbacks = await getQandAByCourseId(
                 courseId as string,
                 token
               );
@@ -256,7 +256,7 @@ export default function CourseDetailsScreen() {
           const token = `Bearer ${await AsyncStorage.getItem("token")}`;
           const fetchedCourse = await getCourseById(courseId, token);
           setCourse(fetchedCourse);
-          const fetchedFeedbacks = await getFeedbackByCourseId(courseId, token);
+          const fetchedFeedbacks = await getQandAByCourseId(courseId, token);
           const sortedFeedbacks = fetchedFeedbacks.sort(
             (a, b) =>
               new Date(b.createDate).getTime() -
@@ -297,14 +297,14 @@ export default function CourseDetailsScreen() {
         (await AsyncStorage.getItem("user")) || "{}"
       ).email;
 
-      await createFeedback(
+      await createQandA(
         courseId as string,
         userEmail,
         newFeedbackText,
         token
       );
 
-      const updatedFeedbacks = await getFeedbackByCourseId(
+      const updatedFeedbacks = await getQandAByCourseId(
         courseId as string,
         token
       );
@@ -707,16 +707,16 @@ const handleUpdateRating = async () => {
             {feedbacks.length > 0 ? (
               <>
                 <View>
-                  {feedbacks.map((feedback) => (
-                    <View key={feedback._id} style={styles.feedbackItem}>
+                  {feedbacks.map((QandA) => (
+                    <View key={QandA._id} style={styles.feedbackItem}>
                       <View style={styles.feedbackHeaderRow}>
                         <Text style={styles.userEmail}>
-                          {feedback.userEmail}
+                          {QandA.userEmail}
                         </Text>
-                        {currentUserEmail === feedback.userEmail && (
+                        {currentUserEmail === QandA.userEmail && (
                           <View style={styles.feedbackButtons}>
                             <TouchableOpacity
-                              onPress={() => handleDeleteFeedback(feedback._id)}
+                              onPress={() => handledeleteQandA(QandA._id)}
                             >
                               <Text style={styles.deleteButtonText}>
                                 Delete
@@ -726,13 +726,13 @@ const handleUpdateRating = async () => {
                         )}
                       </View>
                       <Text style={styles.feedbackText}>
-                        {feedback.feedbackText}
+                        {QandA.QandAText}
                       </Text>
                       <Text style={styles.date}>
-                        {new Date(feedback.createDate).toLocaleDateString()}
+                        {new Date(QandA.createDate).toLocaleDateString()}
                       </Text>
 
-                      {feedback.replies && feedback.replies.length > 0 && (
+                      {QandA.replies && QandA.replies.length > 0 && (
                         <View style={styles.repliesSection}>
                           {/* Display the number of replies */}
                           {/* <Text style={styles.replyCount}>
@@ -743,22 +743,22 @@ const handleUpdateRating = async () => {
                           <TouchableOpacity
                             onPress={() =>
                               setReplyingTo(
-                                replyingTo === feedback._id
+                                replyingTo === QandA._id
                                   ? null
-                                  : feedback._id
+                                  : QandA._id
                               )
                             } // Toggle visibility of replies
                           >
                             <Text style={styles.replyToggleButton}>
-                              {replyingTo === feedback._id
+                              {replyingTo === QandA._id
                                 ? "Hide replies"
                                 : "Show replies"}
                             </Text>
                           </TouchableOpacity>
 
                           {/* Show replies only if the 'replyingTo' matches the feedback's ID */}
-                          {replyingTo === feedback._id &&
-                            feedback.replies.map((reply, index) => (
+                          {replyingTo === QandA._id &&
+                            QandA.replies.map((reply, index) => (
                               <View key={index} style={styles.replyItem}>
                                 {/* Row for replied text and delete button */}
                                 <View style={styles.replyRow}>
@@ -769,7 +769,7 @@ const handleUpdateRating = async () => {
                                     <TouchableOpacity
                                       onPress={() =>
                                         handleDeleteReply(
-                                          feedback._id,
+                                          QandA._id,
                                           reply.replyId
                                         )
                                       }
@@ -787,7 +787,7 @@ const handleUpdateRating = async () => {
                       )}
 
                       {/* Form nhập reply */}
-                      {replyingTo === feedback._id ? (
+                      {replyingTo === QandA._id ? (
                         <View>
                           <TextInput
                             style={styles.replyInput}
@@ -796,7 +796,7 @@ const handleUpdateRating = async () => {
                             onChangeText={setNewReplyText}
                           />
                           <TouchableOpacity
-                            onPress={() => handleReplyToFeedback(feedback._id)}
+                            onPress={() => handlereplyToQandA(QandA._id)}
                           >
                             <Text style={styles.replyButtonText}>
                               Submit Reply
@@ -805,7 +805,7 @@ const handleUpdateRating = async () => {
                         </View>
                       ) : (
                         <TouchableOpacity
-                          onPress={() => setReplyingTo(feedback._id)}
+                          onPress={() => setReplyingTo(QandA._id)}
                         >
                           <Text style={styles.replyButtonText}>Reply</Text>
                         </TouchableOpacity>

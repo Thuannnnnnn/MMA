@@ -1,19 +1,19 @@
 import axios from 'axios';
-import { Feedback } from '@/constants/Feedback/Feedback';
+import { QandA } from '@/constants/QandA/QandA';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
-// Create feedback
-export const createFeedback = async (
+// Create QandA
+export const createQandA = async (
   courseId: string,
   userEmail: string,
-  feedbackText: string,
+  QandAText: string,
   token: string
-): Promise<Feedback> => {
+): Promise<QandA> => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/api/feedback/createFeedback`,
-      { courseId, userEmail, feedbackText },
+      `${API_BASE_URL}/api/QandA/createQandA`,
+      { courseId, userEmail, QandAText },
       {
         headers: {
           Authorization: token,
@@ -27,18 +27,18 @@ export const createFeedback = async (
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to create feedback');
+    throw new Error('Failed to create QandA');
   }
 };
 
-// Get feedback by user email
-export const getFeedbackByUserEmail = async (
+// Get QandA by user email
+export const getQandAByUserEmail = async (
   email: string,
   token: string
-): Promise<Feedback[]> => {
+): Promise<QandA[]> => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/api/feedback/getFeedbackByUserEmail/${email}`,
+      `${API_BASE_URL}/api/QandA/getQandAByUserEmail/${email}`,
       {
         headers: {
           Authorization: token,
@@ -52,14 +52,14 @@ export const getFeedbackByUserEmail = async (
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to get feedback by user email');
+    throw new Error('Failed to get QandA by user email');
   }
 };
 
-// Get all feedback
-export const getAllFeedback = async (token: string): Promise<Feedback[]> => {
+// Get all QandA
+export const getAllQandA = async (token: string): Promise<QandA[]> => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/api/feedback/getAllFeedback`, {
+    const response = await axios.get(`${API_BASE_URL}/api/QandA/getAllQandA`, {
       headers: {
         Authorization: token,
       },
@@ -71,18 +71,18 @@ export const getAllFeedback = async (token: string): Promise<Feedback[]> => {
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to get all feedback');
+    throw new Error('Failed to get all QandA');
   }
 };
 
-// Get feedback by course ID
-export const getFeedbackByCourseId = async (
+// Get QandA by course ID
+export const getQandAByCourseId = async (
   courseId: string,
   token: string
-): Promise<Feedback[]> => {
+): Promise<QandA[]> => {
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/api/feedback/getFeedbackByCourseId/${courseId}`,
+      `${API_BASE_URL}/api/QandA/getQandAByCourseId/${courseId}`,
       {
         headers: {
           Authorization: token,
@@ -96,23 +96,23 @@ export const getFeedbackByCourseId = async (
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to get feedback by course ID');
+    throw new Error('Failed to get QandA by course ID');
   }
 };
 
 
-// Update feedback by ID
-export const updateFeedback = async (
+// Update QandA by ID
+export const updateQandA = async (
   id: string,
   courseId: string,
   userEmail: string,
-  feedbackText: string,
+  QandAText: string,
   token: string
-): Promise<Feedback> => {
+): Promise<QandA> => {
   try {
     const response = await axios.put(
-      `${API_BASE_URL}/api/feedback/create/${id}`,
-      { courseId, userEmail, feedbackText },
+      `${API_BASE_URL}/api/QandA/create/${id}`,
+      { courseId, userEmail, QandAText },
       {
         headers: {
           Authorization: token,
@@ -126,14 +126,14 @@ export const updateFeedback = async (
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to update feedback');
+    throw new Error('Failed to update QandA');
   }
 };
 
-// Delete feedback by ID
-export const deleteFeedback = async (id: string, token: string): Promise<any> => {
+// Delete QandA by ID
+export const deleteQandA = async (id: string, token: string): Promise<any> => {
   try {
-    const response = await axios.delete(`${API_BASE_URL}/api/feedback/delete/${id}`, {
+    const response = await axios.delete(`${API_BASE_URL}/api/QandA/delete/${id}`, {
       headers: {
         Authorization: token,
       },
@@ -145,20 +145,20 @@ export const deleteFeedback = async (id: string, token: string): Promise<any> =>
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to delete feedback');
+    throw new Error('Failed to delete QandA');
   }
 };
 
-// Reply to feedback
-export const replyToFeedback = async (
-  feedbackId: string,
+// Reply to QandA
+export const replyToQandA = async (
+  QandAId: string,
   replyText: string,
   repliedBy: string,
   token: string
-): Promise<Feedback> => {
+): Promise<QandA> => {
   try {
     const response = await axios.post(
-      `${API_BASE_URL}/api/feedback/reply/${feedbackId}`,
+      `${API_BASE_URL}/api/QandA/reply/${QandAId}`,
       { replyText, repliedBy },
       {
         headers: {
@@ -173,19 +173,19 @@ export const replyToFeedback = async (
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to reply to feedback');
+    throw new Error('Failed to reply to QandA');
   }
 };
 
-// Delete a feedback reply by feedbackId and replyId
-export const deleteFeedbackReply = async (
-  feedbackId: string,
+// Delete a QandA reply by QandAId and replyId
+export const deleteQandAReply = async (
+  QandAId: string,
   replyId: string,
   token: string
 ): Promise<any> => {
   try {
     const response = await axios.delete(
-      `${API_BASE_URL}/api/feedback/deleteReply/${feedbackId}/${replyId}`,
+      `${API_BASE_URL}/api/QandA/deleteReply/${QandAId}/${replyId}`,
       {
         headers: {
           Authorization: token,
@@ -199,7 +199,7 @@ export const deleteFeedbackReply = async (
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to delete feedback reply');
+    throw new Error('Failed to delete QandA reply');
   }
 };
 

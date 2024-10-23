@@ -5,11 +5,11 @@ export interface Reply {
   createDate: string;  // Ngày tạo câu trả lời
 }
 
-export interface Feedback {
+export interface QandA {
   _id: string;         // ID của feedback (Mongoose _id)
   courseId: string;    // ID của khóa học
   userEmail: string;   // Email của người gửi feedback
-  feedbackText: string;// Nội dung của feedback
+  QandAText: string;// Nội dung của feedback
   createDate: string;  // Ngày tạo feedback
 
   replies?: Reply[];   // Mảng chứa các câu trả lời, có thể không có (dùng dấu ? để tùy chọn)
