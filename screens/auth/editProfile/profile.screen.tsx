@@ -18,7 +18,6 @@ import { UserInfo } from '@/constants/Profile/userInfo';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import defaultAvatar from '@/assets/default-avatar.png';
-import * as ScreenOrientation from 'expo-screen-orientation';
 const ProfileScreen = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
