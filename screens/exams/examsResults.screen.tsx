@@ -14,7 +14,7 @@ import {
 } from "@/API/Exams/examAPI";
 import { ExamResults } from "@/constants/Exams/examResults";
 import { Exam, Question } from "@/constants/Exams/exam";
-import { useRouter } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 
 
 export default function ExamResultScreen() {
@@ -22,7 +22,7 @@ export default function ExamResultScreen() {
   const [examData, setExamData] = useState<ExamResults | null>(null);
   const [examQuestions, setExamQuestions] = useState<Question[]>([]);
   const [hasAttempted, setHasAttempted] = useState<boolean>(false);
-
+  const navigation = useNavigation();
   useEffect(() => {
     const fetchExamData = async () => {
       const token = `Bearer ${await AsyncStorage.getItem("token")}`;
@@ -143,7 +143,7 @@ export default function ExamResultScreen() {
       <TouchableOpacity
         style={styles.backButton}
         onPress={() =>
-          router.push({ pathname: "/(routes)/content/content-list" })
+          navigation.goBack()
         }
       >
         <Text style={styles.backButtonText}>Go Back to Course List</Text>

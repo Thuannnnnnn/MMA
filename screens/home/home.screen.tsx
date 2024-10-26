@@ -57,7 +57,7 @@ export default function HomeScreen() {
           const fetchedSearchCourses = await fetchSearchCourses(query, token);
           setSearchResults(fetchedSearchCourses as unknown as Course[]);
         } catch (error) {
-          console.log('Search error:', error);
+          console.error('Search error:', error);
         }
       } else {
         setIsSearching(false);

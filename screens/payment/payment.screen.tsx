@@ -100,7 +100,6 @@ export default function Payment() {
 
           const amount = amountString ? parseFloat(amountString) : 0;
           creatOrder(userEmail, amount, courses, token);
-          console.log(courses)
           createProcessForUser(courses[0].courseId, userEmail, token)
           await AsyncStorage.removeItem('courseId');
           await AsyncStorage.removeItem('totalPrice');

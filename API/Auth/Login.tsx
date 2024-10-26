@@ -13,10 +13,6 @@ export const handleLoginBase = async (
         password,
       }
     );
-
-    const { user, token } = response.data;
-    console.log("User data:", user);
-    console.log("Token:", token);
     return response.data;
   } catch (error: any) {
     if (error.response && error.response.data) {
