@@ -111,7 +111,7 @@ export const updateQandA = async (
 ): Promise<QandA> => {
   try {
     const response = await axios.put(
-      `${API_BASE_URL}/api/QandA/create/${id}`,
+      `${API_BASE_URL}/api/QandA/update/${id}`,
       { courseId, userEmail, QandAText },
       {
         headers: {
@@ -200,6 +200,33 @@ export const deleteQandAReply = async (
       console.error('Error:', error);
     }
     throw new Error('Failed to delete QandA reply');
+  }
+};
+// Update a reply in QandA
+export const updateReplyQandA = async (
+  QandAId: string,
+  replyId: string,
+  replyText: string,
+  token: string
+): Promise<QandA> => {
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/api/QandA/updateReply/${QandAId}/${replyId}`,
+      { replyText },
+      {
+        headers: {
+          Authorization: token,
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Axios error:', error.response?.data || error.message);
+    } else {
+      console.error('Error:', error);
+    }
+    throw new Error('Failed to update QandA reply');
   }
 };
 

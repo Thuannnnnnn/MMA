@@ -17,6 +17,8 @@ import {
   deleteQandA,
   replyToQandA,
   deleteQandAReply,
+  updateQandA,
+  updateReplyQandA,
 } from "@/API/QandA/QandA";
 
 import {
@@ -29,8 +31,15 @@ import { useRouter } from "expo-router";
 import { ResizeMode, Video } from "expo-av";
 import { useFocusEffect } from "@react-navigation/native";
 
-import { getAverageRatingForCourse, createRating, getRatingsCountByType, hasUserProvidedFeedbackAndRating, getRatingByUserEmail, updateRating    } from '@/API/Rating/ratingAPI';
-import { AirbnbRating } from 'react-native-ratings';
+import {
+  getAverageRatingForCourse,
+  createRating,
+  getRatingsCountByType,
+  hasUserProvidedFeedbackAndRating,
+  getRatingByUserEmail,
+  updateRating,
+} from "@/API/Rating/ratingAPI";
+import { AirbnbRating } from "react-native-ratings";
 import { Rating } from "@/constants/Rating/Rating";
 
 const { width, height } = Dimensions.get("window");
@@ -46,6 +55,12 @@ export default function CourseDetailsScreen() {
   const [newReplyText, setNewReplyText] = useState<string>("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [shouldPlay, setShouldPlay] = useState(true);
+  const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(
+    null
+  );
+  const [updatedFeedbackText, setUpdatedFeedbackText] = useState<string>("");
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [updatedReplyText, setUpdatedReplyText] = useState<string>("");
   useFocusEffect(
     useCallback(() => {
       setShouldPlay(true);
@@ -66,24 +81,25 @@ export default function CourseDetailsScreen() {
   const [totalRatings, setTotalRatings] = useState<number>(0);
   const [token, setToken] = useState<string | null>(null);
 
- 
-
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   useEffect(() => {
     const checkIfUserRated = async () => {
       if (currentUserEmail && courseId && token) {
         const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-        const result = await hasUserProvidedFeedbackAndRating(currentUserEmail, courseId, token);
+        const result = await hasUserProvidedFeedbackAndRating(
+          currentUserEmail,
+          courseId,
+          token
+        );
         setHasRated(result || false); // Cập nhật trạng thái hasRated
       }
     };
-  
+
     if (token && courseId && currentUserEmail) {
       checkIfUserRated();
     }
   }, [token, courseId, currentUserEmail]);
-  
-  
+
   const renderHTMLText = (htmlString: string) => {
     const parts = htmlString.split(
       /(<strong>|<\/strong>|<p>|<\/p>|<i>|<\/i>)/g
@@ -116,7 +132,48 @@ export default function CourseDetailsScreen() {
       ).email;
 
       await replyToQandA(feedbackId, newReplyText, userEmail, token);
+      const updatedFeedbacks = await getQandAByCourseId(
+        courseId as string,
+        token
+      );
 
+      const sortedFeedbacks = updatedFeedbacks.sort(
+        (a, b) =>
+          new Date(b.createDate).getTime() - new Date(a.createDate).getTime()
+      );
+
+      setFeedbacks(sortedFeedbacks);
+      setNewReplyText("");
+      setReplyingTo(null);
+    } catch (error) {
+      Alert.alert("Error", "There was an error submitting your reply.");
+      console.error("Error submitting reply:", error);
+    }
+  };
+
+  const handleUpdateQandA = async (feedbackId: string) => {
+    if (!updatedFeedbackText.trim()) {
+      Alert.alert("Error", "Please enter updated text before submitting.");
+      return;
+    }
+
+    try {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const userEmail = JSON.parse(
+        (await AsyncStorage.getItem("user")) || "{}"
+      ).email;
+
+      setUpdatedFeedbackText("");
+      setEditingFeedbackId(null);
+
+      // Persist update to backend
+      await updateQandA(
+        feedbackId,
+        courseId as string,
+        userEmail,
+        updatedFeedbackText,
+        token
+      );
       const updatedFeedbacks = await getQandAByCourseId(
         courseId as string,
         token
@@ -129,11 +186,83 @@ export default function CourseDetailsScreen() {
 
       setFeedbacks(sortedFeedbacks);
 
-      setNewReplyText("");
-      setReplyingTo(null);
+      Alert.alert("Success", "Your Q&A has been updated.");
     } catch (error) {
-      Alert.alert("Error", "There was an error submitting your reply.");
-      console.error("Error submitting reply:", error);
+      Alert.alert("Error", "Failed to update Q&A.");
+      console.error("Error updating Q&A:", error);
+    }
+  };
+
+  const handleUpdateQandAReply = async (
+    feedbackId: string,
+    replyId: string
+  ) => {
+    if (!updatedReplyText.trim()) {
+      Alert.alert(
+        "Error",
+        "Please enter the updated reply text before submitting."
+      );
+      return;
+    }
+
+    try {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+
+      // Optimistically update reply locally, safely handle possibly undefined replies array
+
+      setUpdatedReplyText("");
+      setEditingReplyId(null);
+
+      // Persist update to backend
+      await updateReplyQandA(feedbackId, replyId, updatedReplyText, token);
+      const updatedFeedbacks = await getQandAByCourseId(
+        courseId as string,
+        token
+      );
+
+      const sortedFeedbacks = updatedFeedbacks.sort(
+        (a, b) =>
+          new Date(b.createDate).getTime() - new Date(a.createDate).getTime()
+      );
+
+      setFeedbacks(sortedFeedbacks);
+      Alert.alert("Success", "Your reply has been updated.");
+    } catch (error) {
+      Alert.alert("Error", "Failed to update reply.");
+      console.error("Error updating reply:", error);
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!newFeedbackText.trim()) {
+      Alert.alert("Error", "Please enter your feedback before submitting.");
+      return;
+    }
+
+    try {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const userEmail = JSON.parse(
+        (await AsyncStorage.getItem("user")) || "{}"
+      ).email;
+
+      // Create new Q&A entry on the backend and get the response
+      await createQandA(courseId as string, userEmail, newFeedbackText, token);
+
+      const updatedFeedbacks = await getQandAByCourseId(
+        courseId as string,
+        token
+      );
+
+      const sortedFeedbacks = updatedFeedbacks.sort(
+        (a, b) =>
+          new Date(b.createDate).getTime() - new Date(a.createDate).getTime()
+      );
+
+      setFeedbacks(sortedFeedbacks);
+      setNewFeedbackText(""); // Clear the input field
+    } catch (error) {
+      Alert.alert("Error", "There was an error submitting your feedback.");
+      console.error("Error submitting feedback:", error);
     }
   };
 
@@ -154,19 +283,19 @@ export default function CourseDetailsScreen() {
               const token = `Bearer ${await AsyncStorage.getItem("token")}`;
               await deleteQandA(feedbackId, token);
 
-              // Update feedback list after deletion
               const updatedFeedbacks = await getQandAByCourseId(
                 courseId as string,
                 token
               );
-              // Sắp xếp lại feedback từ mới nhất đến cũ nhất
-              setFeedbacks(
-                updatedFeedbacks.sort(
-                  (a, b) =>
-                    new Date(b.createDate).getTime() -
-                    new Date(a.createDate).getTime()
-                )
+        
+              const sortedFeedbacks = updatedFeedbacks.sort(
+                (a, b) =>
+                  new Date(b.createDate).getTime() - new Date(a.createDate).getTime()
               );
+        
+              setFeedbacks(sortedFeedbacks);
+
+              // Update feedback list after deletion
             } catch (error) {
               console.error("Error deleting feedback:", error);
             }
@@ -198,14 +327,13 @@ export default function CourseDetailsScreen() {
                 courseId as string,
                 token
               );
-
-              setFeedbacks(
-                updatedFeedbacks.sort(
-                  (a, b) =>
-                    new Date(b.createDate).getTime() -
-                    new Date(a.createDate).getTime()
-                )
+        
+              const sortedFeedbacks = updatedFeedbacks.sort(
+                (a, b) =>
+                  new Date(b.createDate).getTime() - new Date(a.createDate).getTime()
               );
+        
+              setFeedbacks(sortedFeedbacks);
             } catch (error) {
               console.error("Error deleting reply:", error);
             }
@@ -257,12 +385,8 @@ export default function CourseDetailsScreen() {
           const fetchedCourse = await getCourseById(courseId, token);
           setCourse(fetchedCourse);
           const fetchedFeedbacks = await getQandAByCourseId(courseId, token);
-          const sortedFeedbacks = fetchedFeedbacks.sort(
-            (a, b) =>
-              new Date(b.createDate).getTime() -
-            new Date(a.createDate).getTime()
-          );
-          setFeedbacks(sortedFeedbacks);
+
+          setFeedbacks(fetchedFeedbacks);
           const userString = await AsyncStorage.getItem("user");
           if (userString) {
             const user = JSON.parse(userString);
@@ -284,42 +408,6 @@ export default function CourseDetailsScreen() {
 
     fetchCourse();
   }, [courseId]);
-
-  const handleSubmitFeedback = async () => {
-    if (!newFeedbackText.trim()) {
-      Alert.alert("Error", "Please enter your feedback before submitting.");
-      return;
-    }
-
-    try {
-      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-      const userEmail = JSON.parse(
-        (await AsyncStorage.getItem("user")) || "{}"
-      ).email;
-
-      await createQandA(
-        courseId as string,
-        userEmail,
-        newFeedbackText,
-        token
-      );
-
-      const updatedFeedbacks = await getQandAByCourseId(
-        courseId as string,
-        token
-      );
-      const sortedFeedbacks = updatedFeedbacks.sort(
-        (a, b) =>
-          new Date(b.createDate).getTime() - new Date(a.createDate).getTime()
-      );
-      setFeedbacks(sortedFeedbacks);
-
-      setNewFeedbackText("");
-    } catch (error) {
-      Alert.alert("Error", "There was an error submitting your feedback.");
-      console.error("Error submitting feedback:", error);
-    }
-  };
 
   const handleAddToCart = async (_id: string) => {
     try {
@@ -370,7 +458,10 @@ export default function CourseDetailsScreen() {
   useEffect(() => {
     const fetchTokenAndCourseId = async () => {
       try {
-        const values = await AsyncStorage.multiGet(["token", "courseId_detail"]);
+        const values = await AsyncStorage.multiGet([
+          "token",
+          "courseId_detail",
+        ]);
         const fetchedToken = values[0][1];
         const fetchedCourseId = values[1][1];
 
@@ -385,7 +476,10 @@ export default function CourseDetailsScreen() {
   }, []);
 
   useEffect(() => {
-    const fetchCourseAndRelatedData = async (token: string, courseId: string) => {
+    const fetchCourseAndRelatedData = async (
+      token: string,
+      courseId: string
+    ) => {
       try {
         const authToken = `Bearer ${token}`;
         // Gọi tất cả các API liên quan trong cùng một lầ
@@ -399,7 +493,6 @@ export default function CourseDetailsScreen() {
 
         setAverageRating(avgRating ? avgRating.toString() : "0");
 
-        
         const ratingCounts = [
           ratingsResponse[5] || 0,
           ratingsResponse[4] || 0,
@@ -408,9 +501,9 @@ export default function CourseDetailsScreen() {
           ratingsResponse[1] || 0,
         ];
         setRatingsCount(ratingCounts);
-        
-      const total = ratingCounts.reduce((acc, count) => acc + count, 0);
-      setTotalRatings(total);
+
+        const total = ratingCounts.reduce((acc, count) => acc + count, 0);
+        setTotalRatings(total);
       } catch (error) {
         console.error("Failed to fetch course or rating:", error);
       }
@@ -421,7 +514,6 @@ export default function CourseDetailsScreen() {
     }
   }, [token, courseId]);
 
-  
   useEffect(() => {
     const fetchAverageRating = async (token: string, courseId: string) => {
       try {
@@ -434,14 +526,12 @@ export default function CourseDetailsScreen() {
         console.error("Error fetching average rating:", error);
       }
     };
-  
-    
+
     if (token && courseId) {
       fetchAverageRating(token, courseId);
     }
   }, [token, courseId]);
 
-  
   const handleSubmitRating = async () => {
     try {
       if (starCount === 0) {
@@ -449,8 +539,10 @@ export default function CourseDetailsScreen() {
         return;
       }
       const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-      const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
-      
+      const userEmail = JSON.parse(
+        (await AsyncStorage.getItem("user")) || "{}"
+      ).email;
+
       if (course) {
         if (courseId) {
           await createRating(userEmail, starCount, courseId, feedback, token);
@@ -466,82 +558,86 @@ export default function CourseDetailsScreen() {
       Alert.alert("Error", "Your rating could not be submitted.");
       console.error("Error submitting rating:", error);
     }
-};
-
-useEffect(() => {
-  const checkIfUserRated = async () => {
-    if (currentUserEmail && courseId && token) {
-      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-      const result = await hasUserProvidedFeedbackAndRating(currentUserEmail, courseId, token);
-      setHasRated(result || false); // Cập nhật trạng thái hasRated
-    }
   };
 
-  if (token && courseId && currentUserEmail) {
-    checkIfUserRated();
-  }
-}, [token, courseId, currentUserEmail]);
+  useEffect(() => {
+    const checkIfUserRated = async () => {
+      if (currentUserEmail && courseId && token) {
+        const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+        const result = await hasUserProvidedFeedbackAndRating(
+          currentUserEmail,
+          courseId,
+          token
+        );
+        setHasRated(result || false); // Cập nhật trạng thái hasRated
+      }
+    };
 
+    if (token && courseId && currentUserEmail) {
+      checkIfUserRated();
+    }
+  }, [token, courseId, currentUserEmail]);
 
-const shouldShowRatingForm = isOwner && !hasRated;
-const shouldShowUpdateRatingForm = isOwner && hasRated;
+  const shouldShowRatingForm = isOwner && !hasRated;
+  const shouldShowUpdateRatingForm = isOwner && hasRated;
 
-useEffect(() => {
-  const fetchPreviousRating = async () => {
+  useEffect(() => {
+    const fetchPreviousRating = async () => {
+      try {
+        const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+        const userEmail = JSON.parse(
+          (await AsyncStorage.getItem("user")) || "{}"
+        ).email;
+
+        if (!userEmail || !courseId) {
+          return;
+        }
+
+        const ratings = await getRatingByUserEmail(userEmail, token);
+
+        const userRating = ratings?.find(
+          (rating) => rating.courseId === courseId
+        );
+
+        if (userRating) {
+          setPreviousRating(userRating);
+          setStarCount(userRating.ratingPoint);
+          setFeedback(userRating.feedback);
+        }
+      } catch (error) {
+        Alert.alert("Error", "Unable to load your previous rating.");
+        console.error("Error fetching previous rating:", error);
+      }
+    };
+
+    if (token && courseId) {
+      fetchPreviousRating();
+    }
+  }, [token, courseId]);
+
+  const handleUpdateRating = async () => {
     try {
-      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-      const userEmail = JSON.parse((await AsyncStorage.getItem("user")) || "{}").email;
-
-      if (!userEmail || !courseId) {
+      if (starCount === 0) {
+        Alert.alert("Error", "Please select a star rating before updating.");
         return;
       }
 
-     
-      const ratings = await getRatingByUserEmail(userEmail, token);
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const ratingId = previousRating?._id;
 
-      
-      const userRating = ratings?.find(rating => rating.courseId === courseId);
+      if (ratingId) {
+        await updateRating(ratingId, starCount, feedback, token);
 
-      if (userRating) {
-        setPreviousRating(userRating);
-        setStarCount(userRating.ratingPoint);
-        setFeedback(userRating.feedback);
+        setIsRatingSubmitted(true);
+        Alert.alert("Success", "Your rating has been successfully updated!");
+      } else {
+        Alert.alert("Error", "Unable to find the rating ID for update.");
       }
     } catch (error) {
-      Alert.alert("Error", "Unable to load your previous rating.");
-      console.error("Error fetching previous rating:", error);
+      Alert.alert("Error", "Your rating could not be updated.");
+      console.error("Error updating rating:", error);
     }
   };
-
-  if (token && courseId) {
-    fetchPreviousRating();
-  }
-}, [token, courseId]);
-
-
-const handleUpdateRating = async () => {
-  try {
-    if (starCount === 0) {
-      Alert.alert("Error", "Please select a star rating before updating.");
-      return;
-    }
-
-    const token = `Bearer ${await AsyncStorage.getItem("token")}`;
-    const ratingId = previousRating?._id;
-
-    if (ratingId) {
-      await updateRating(ratingId, starCount, feedback, token);
-
-      setIsRatingSubmitted(true);
-      Alert.alert("Success", "Your rating has been successfully updated!");
-    } else {
-      Alert.alert("Error", "Unable to find the rating ID for update.");
-    }
-  } catch (error) {
-    Alert.alert("Error", "Your rating could not be updated.");
-    console.error("Error updating rating:", error);
-  }
-};
 
   if (!course) {
     return (
@@ -576,110 +672,110 @@ const handleUpdateRating = async () => {
           </View>
 
           <View style={styles.averageRatingContainer}>
-  {averageRating === null || averageRating === "0" ? (
-    
-    <Text style={styles.noRatingText}>There are no rating for this course yet!</Text>
-  ) : (
-    
-    <>
-      <Text style={styles.averageRatingText}>{averageRating}</Text>
-      <AirbnbRating
-        isDisabled
-        defaultRating={parseFloat(averageRating)}
-        showRating={false}
-        size={20}
-        starContainerStyle={styles.starsContainer}
-      />
-    </>
-  )}
-</View>
+            {averageRating === null || averageRating === "0" ? (
+              <Text style={styles.noRatingText}>
+                There are no rating for this course yet!
+              </Text>
+            ) : (
+              <>
+                <Text style={styles.averageRatingText}>{averageRating}</Text>
+                <AirbnbRating
+                  isDisabled
+                  defaultRating={parseFloat(averageRating)}
+                  showRating={false}
+                  size={20}
+                  starContainerStyle={styles.starsContainer}
+                />
+              </>
+            )}
+          </View>
 
-      {/* Rating Bars */}
-      <View style={styles.ratingBarsContainer}>
-        {[5, 4, 3, 2, 1].map((rating, index) => (
-          <View key={rating} style={styles.ratingRow}>
-            <Text style={styles.ratingNumber}>{rating}</Text>
-            <View style={styles.barBackground}>
-              <View
-                style={[
-                  styles.barFill,
-                  {
-                    width: totalRatings === 0 ? '0%' : `${(ratingsCount[index] / totalRatings) * 100}%`,
-                  },
-                ]}
+          {/* Rating Bars */}
+          <View style={styles.ratingBarsContainer}>
+            {[5, 4, 3, 2, 1].map((rating, index) => (
+              <View key={rating} style={styles.ratingRow}>
+                <Text style={styles.ratingNumber}>{rating}</Text>
+                <View style={styles.barBackground}>
+                  <View
+                    style={[
+                      styles.barFill,
+                      {
+                        width:
+                          totalRatings === 0
+                            ? "0%"
+                            : `${(ratingsCount[index] / totalRatings) * 100}%`,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {shouldShowRatingForm && (
+            <View style={styles.ratingFormContainer}>
+              <Text style={styles.ratingPrompt}>Please rate the course</Text>
+
+              <AirbnbRating
+                defaultRating={starCount}
+                onFinishRating={setStarCount}
+                size={30}
               />
+
+              <TextInput
+                style={styles.feedbackInput}
+                placeholder="Enter your rating..."
+                value={feedback}
+                onChangeText={setFeedback}
+                multiline
+              />
+
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  isRatingSubmitted && styles.disabledButton,
+                ]}
+                onPress={isRatingSubmitted ? undefined : handleSubmitRating}
+                disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã gửi đánh giá
+              >
+                <Text style={styles.submitButtonText}>
+                  {isRatingSubmitted ? "Has Submit" : "Submit"}
+                </Text>
+              </TouchableOpacity>
             </View>
-          </View>
-        ))}
-      </View>
+          )}
 
-
- {shouldShowRatingForm && (
-          <View style={styles.ratingFormContainer}>
-            <Text style={styles.ratingPrompt}>Please rate the course</Text>
-            
-            
-            <AirbnbRating
-              defaultRating={starCount} 
-              onFinishRating={setStarCount}
-              size={30}
-            />
-
-            
-            <TextInput
-              style={styles.feedbackInput}
-              placeholder="Enter your rating..."
-              value={feedback}
-              onChangeText={setFeedback}
-              multiline
-            />
-
-            
-<TouchableOpacity
-  style={[
-    styles.submitButton, 
-    isRatingSubmitted && styles.disabledButton
-  ]}
-  onPress={isRatingSubmitted ? undefined : handleSubmitRating}
-  disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã gửi đánh giá
->
-  <Text style={styles.submitButtonText}>
-    {isRatingSubmitted ? "Has Submit" : "Submit"}
-  </Text>
-</TouchableOpacity>
-          </View>
-        )}
-
-        
-      {shouldShowUpdateRatingForm && previousRating && (
-        <View style={styles.ratingFormContainer}>
-          <Text style={styles.ratingPrompt}>Update your rating for the course</Text>
-          <AirbnbRating
-            defaultRating={starCount}
-            onFinishRating={setStarCount}
-            size={30}
-          />
-          <TextInput
-            style={styles.feedbackInput}
-            placeholder="Update your rating..."
-            value={feedback}
-            onChangeText={setFeedback}
-            multiline
-          />
-          <TouchableOpacity
-  style={[
-    styles.submitButton, 
-    isRatingSubmitted && styles.disabledButton
-  ]}
-  onPress={isRatingSubmitted ? undefined : handleUpdateRating}
-  disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã cập nhật đánh giá
->
-  <Text style={styles.submitButtonText}>
-    {isRatingSubmitted ? "Has Updated" : "Update"}
-  </Text>
-</TouchableOpacity>
-        </View>
-      )}
+          {shouldShowUpdateRatingForm && previousRating && (
+            <View style={styles.ratingFormContainer}>
+              <Text style={styles.ratingPrompt}>
+                Update your rating for the course
+              </Text>
+              <AirbnbRating
+                defaultRating={starCount}
+                onFinishRating={setStarCount}
+                size={30}
+              />
+              <TextInput
+                style={styles.feedbackInput}
+                placeholder="Update your rating..."
+                value={feedback}
+                onChangeText={setFeedback}
+                multiline
+              />
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  isRatingSubmitted && styles.disabledButton,
+                ]}
+                onPress={isRatingSubmitted ? undefined : handleUpdateRating}
+                disabled={isRatingSubmitted} // Vô hiệu hóa nút sau khi đã cập nhật đánh giá
+              >
+                <Text style={styles.submitButtonText}>
+                  {isRatingSubmitted ? "Has Updated" : "Update"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Add Feedback Section */}
           <View style={styles.addFeedbackSection}>
@@ -710,9 +806,7 @@ const handleUpdateRating = async () => {
                   {feedbacks.map((QandA) => (
                     <View key={QandA._id} style={styles.feedbackItem}>
                       <View style={styles.feedbackHeaderRow}>
-                        <Text style={styles.userEmail}>
-                          {QandA.userEmail}
-                        </Text>
+                        <Text style={styles.userEmail}>{QandA.userEmail}</Text>
                         {currentUserEmail === QandA.userEmail && (
                           <View style={styles.feedbackButtons}>
                             <TouchableOpacity
@@ -724,10 +818,44 @@ const handleUpdateRating = async () => {
                             </TouchableOpacity>
                           </View>
                         )}
+                        {currentUserEmail === QandA.userEmail && (
+                          <View style={styles.feedbackButtons}>
+                            <TouchableOpacity
+                              onPress={() => {
+                                setEditingFeedbackId(QandA._id);
+                                setUpdatedFeedbackText(QandA.QandAText); // Prefill with current feedback text
+                              }}
+                            >
+                              <Text style={styles.updateButtonText}>
+                                Update
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
                       </View>
-                      <Text style={styles.feedbackText}>
-                        {QandA.QandAText}
-                      </Text>
+
+                      {editingFeedbackId === QandA._id ? (
+                        <View>
+                          <TextInput
+                            style={styles.updateInput}
+                            placeholder="Update your feedback..."
+                            value={updatedFeedbackText}
+                            onChangeText={setUpdatedFeedbackText}
+                          />
+                          <TouchableOpacity
+                            onPress={() => handleUpdateQandA(QandA._id)}
+                          >
+                            <Text style={styles.submitUpdateButton}>
+                              Submit Update
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <Text style={styles.feedbackText}>
+                          {QandA.QandAText}
+                        </Text>
+                      )}
+
                       <Text style={styles.date}>
                         {new Date(QandA.createDate).toLocaleDateString()}
                       </Text>
@@ -743,9 +871,7 @@ const handleUpdateRating = async () => {
                           <TouchableOpacity
                             onPress={() =>
                               setReplyingTo(
-                                replyingTo === QandA._id
-                                  ? null
-                                  : QandA._id
+                                replyingTo === QandA._id ? null : QandA._id
                               )
                             } // Toggle visibility of replies
                           >
@@ -779,8 +905,45 @@ const handleUpdateRating = async () => {
                                       </Text>
                                     </TouchableOpacity>
                                   )}
+
+                                  {currentUserEmail === reply.repliedBy && (
+                                    <TouchableOpacity
+                                      onPress={() => {
+                                        setEditingReplyId(reply.replyId);
+                                        setUpdatedReplyText(reply.replyText); // Prefill current reply text
+                                      }}
+                                    >
+                                      <Text style={styles.updateButtonText}>
+                                        Update
+                                      </Text>
+                                    </TouchableOpacity>
+                                  )}
                                 </View>
-                                <Text>{reply.replyText}</Text>
+
+                                {editingReplyId === reply.replyId ? (
+                                  <View>
+                                    <TextInput
+                                      style={styles.updateInput}
+                                      placeholder="Update your reply..."
+                                      value={updatedReplyText}
+                                      onChangeText={setUpdatedReplyText}
+                                    />
+                                    <TouchableOpacity
+                                      onPress={() =>
+                                        handleUpdateQandAReply(
+                                          QandA._id,
+                                          reply.replyId
+                                        )
+                                      }
+                                    >
+                                      <Text style={styles.submitUpdateButton}>
+                                        Submit Update
+                                      </Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                ) : (
+                                  <Text>{reply.replyText}</Text>
+                                )}
                               </View>
                             ))}
                         </View>
@@ -1175,11 +1338,10 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   replyRow: {
-    flexDirection: "row",       // Align items horizontally
+    flexDirection: "row", // Align items horizontally
     justifyContent: "space-between", // Spread items apart
-    alignItems: "center",       // Center them vertically
+    alignItems: "center", // Center them vertically
   },
-  
 
   // Reply count text
   replyCount: {
@@ -1188,7 +1350,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontWeight: "bold", // Make reply count stand out
   },
-  
+
   ratingPrompt: {
     fontSize: 14,
     color: "#333",
@@ -1209,10 +1371,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 2,
   },
-  
+
   averageAndBarsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   totalRatingsText: {
@@ -1226,37 +1388,37 @@ const styles = StyleSheet.create({
   },
 
   ratingBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 5,
   },
 
   ratingCountText: {
     width: 40,
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#555',
+    fontWeight: "bold",
+    color: "#555",
   },
 
   ratingFillContainer: {
     flex: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     borderRadius: 5,
     height: 20,
     marginHorizontal: 10,
   },
 
   ratingFill: {
-    backgroundColor: '#FFD700',
-    height: '100%',
+    backgroundColor: "#FFD700",
+    height: "100%",
     borderRadius: 5,
   },
 
   ratingNumberText: {
     width: 50,
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#555',
+    fontWeight: "bold",
+    color: "#555",
   },
 
   averageRatingContainer: {
@@ -1312,7 +1474,23 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   disabledButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: "#ccc",
   },
-  
+  updateButtonText: {
+    color: "orange",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  updateInput: {
+    borderColor: "gray",
+    borderWidth: 1,
+    padding: 8,
+    marginVertical: 10,
+    borderRadius: 5,
+  },
+  submitUpdateButton: {
+    color: "blue",
+    fontWeight: "bold",
+    marginVertical: 5,
+  },
 });

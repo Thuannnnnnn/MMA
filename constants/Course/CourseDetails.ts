@@ -11,5 +11,6 @@ import { Content } from "../Content/contentList";
     price: string;
     category: string;
     contents: Content[];
+    exam: string | null; // Reference to Exam ID, nullable
   }
   

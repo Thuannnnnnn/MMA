@@ -49,6 +49,11 @@ export default function RootLayout() {
                         <Stack.Screen name="(routes)/payment/paymentSuccess" />
                         <Stack.Screen name="(routes)/payment/paymentError" />
                         <Stack.Screen name="(routes)/cart/index" />
+                        
+                        <Stack.Screen name="(routes)/exams/index" />
+                        <Stack.Screen name="(routes)/exams/examResults" />
+                        <Stack.Screen name="(routes)/exams/examSuccess" />
+                        
                         <Stack.Screen name="(routes)/quizz/index" />
                         <Stack.Screen name="(routes)/quizz/quizzSuccess" />
                         <Stack.Screen 
