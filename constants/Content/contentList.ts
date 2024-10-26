@@ -13,26 +13,6 @@ export interface Docs {
   uploadDate: string;
 }
 
-interface ExamQuestion {
-  questionText: string;
-  answers: ExamAnswer[];
-}
-
-interface ExamAnswer {
-  answerText: string;
-  isCorrect: boolean;
-  _id: string;
-}
-
-interface Exam {
-  _id: string;
-  examId: string;
-  courseId: string;
-  content: ExamQuestion[];
-  createdAt: string;
-  updatedAt: string;
-}
-
 interface Question {
   _id: string;
   contentId: string;
@@ -48,14 +28,6 @@ export type Content =
       contentName: string;
       contentType: "videos";
       contentRef: Video;
-      _id: string;
-      createDate: string;
-    }
-  | {
-      contentId: string;
-      contentName: string;
-      contentType: "exams";
-      contentRef: Exam;
       _id: string;
       createDate: string;
     }
@@ -81,4 +53,5 @@ export interface Course {
   contents: Content[];
   _id: string;
   createDate: string;
+  exam: string | null;
 }
