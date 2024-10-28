@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
     width: screenWidth * 0.22,
     height: screenHeight * 0.1,
    resizeMode: 'stretch',
+   borderRadius: screenWidth * 0.02,
   },
   courseDetails: {
     flex: 1,
