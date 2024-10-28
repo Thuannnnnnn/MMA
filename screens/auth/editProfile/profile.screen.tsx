@@ -13,6 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import {
   getUserInfo,
   uploadUserAvatar,
+  updateUserAvatar,
 } from '@/API/editProfile/editProfileAPI';
 import { UserInfo } from '@/constants/Profile/userInfo';
 import { router } from 'expo-router';
@@ -70,36 +71,76 @@ const ProfileScreen = () => {
   }, []);
 
   /// Function to pick an image from the library
-const pickImage = async () => {
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 1,
-  });
-
-  if (!result.canceled) {
-    const selectedImage = result.assets[0];
-    if (selectedImage.uri.endsWith('.png') || selectedImage.uri.endsWith('.jpg')) {
-      const token = `Bearer ${await AsyncStorage.getItem('token')}`;
-      const userDataString = await AsyncStorage.getItem('user');
-      if (!userDataString) throw new Error('User data not found');
-
-      const userData = JSON.parse(userDataString);
-      const { _id } = userData;
-      if (token && _id) {
-        const fetchResponse = await fetch(selectedImage.uri);
-        const blob = await fetchResponse.blob();
-        const file = new File([blob], `avatar.${selectedImage.uri.split('.').pop()}`, { type: selectedImage.type });
-        await uploadUserAvatar(_id, file, token);
-      } else {
-        console.error('Token or User ID not found');
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+  
+      if (!result.canceled) {
+        const selectedImage = result.assets[0];
+        console.log('Selected Image Info:', selectedImage);
+  
+        const fileExtension = selectedImage.uri.split('.').pop();
+        if (fileExtension === 'jpg' || fileExtension === 'jpeg' || fileExtension === 'png') {
+          const token = await AsyncStorage.getItem('token');
+          const userDataString = await AsyncStorage.getItem('user');
+          if (!userDataString) throw new Error('User data not found');
+  
+          const userData = JSON.parse(userDataString);
+          const { _id, avatarUrl } = userData;
+  
+          if (token && _id) {
+            // Lấy Blob từ URI ảnh
+            const response = await fetch(selectedImage.uri);
+            const blob = await response.blob();
+  
+            // Tạo một File từ Blob
+            const file = new File([blob], `avatar.${fileExtension}`, { type: `image/${fileExtension}` });
+  
+            let apiResponse;
+  
+            // Kiểm tra avatarUrl để gọi upload hoặc update
+            if (!avatarUrl) {
+              // Nếu avatarUrl là null, gọi uploadUserAvatar
+              apiResponse = await uploadUserAvatar(_id, file, `Bearer ${token}`);
+              console.log('Upload response:', apiResponse);
+            } else {
+              // Nếu avatarUrl không null, gọi updateUserAvatar
+              apiResponse = await updateUserAvatar(_id, file, `Bearer ${token}`);
+              console.log('Update response:', apiResponse);
+            }
+  
+            if (apiResponse.fileUrl) {
+              // Cập nhật avatar trong state và AsyncStorage
+              setUserAvatar(apiResponse.fileUrl); // Cập nhật URL avatar mới
+              await AsyncStorage.setItem('userAvatarCache', apiResponse.fileUrl); // Lưu avatar mới vào cache
+  
+              // Cập nhật user info mới trong AsyncStorage
+              const updatedUserData = { ...userData, avatarUrl: apiResponse.fileUrl };
+              await AsyncStorage.setItem('user', JSON.stringify(updatedUserData));
+  
+              Alert.alert('Success', avatarUrl ? 'Avatar updated successfully' : 'Avatar uploaded successfully');
+            } else {
+              Alert.alert('Error', 'Failed to update avatar URL');
+            }
+          } else {
+            console.error('Token or User ID not found');
+          }
+        } else {
+          Alert.alert('Invalid Image', 'Please select a JPEG or PNG image');
+        }
       }
-    } else {
-      Alert.alert('Please select a .png or .jpg image');
+    } catch (error) {
+      console.error('Error picking or uploading image:', error);
+      Alert.alert('Error', 'Failed to upload avatar');
     }
-  }
-};
+  };
+  
+  
 
   
   // Fetch user data when the screen loads

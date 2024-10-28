@@ -55,24 +55,20 @@ export const getUserInfo = async (userId: string, token: string): Promise<UserIn
   }
 };
 
-
 export const uploadUserAvatar = async (userId: string, file: File, token: string): Promise<any> => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+
   try {
-    const formData = new FormData();
-    const blob = new Blob([file], { type: file.type });
-    formData.append('avatar', blob, file.name);
-
-    const response = await axios.post(
-      `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/profile/upload-avatar/${userId}`,
-      formData,
-      {
-        headers: {
-          Authorization: token,
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-
+    const response = await axios.post(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/profile/upload-avatar/${userId}`, 
+      formData, 
+      { 
+        headers: { 
+          Authorization: token, 
+          'Content-Type': 'multipart/form-data' 
+        } 
+      });
+      
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -83,4 +79,31 @@ export const uploadUserAvatar = async (userId: string, file: File, token: string
     throw new Error('Failed to upload avatar');
   }
 };
+
+export const updateUserAvatar = async (userId: string, file: File, token: string): Promise<any> => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  try {
+    const response = await axios.put(`${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/profile/update-avatar/${userId}`, 
+      formData, 
+      { 
+        headers: { 
+          Authorization: token, 
+          'Content-Type': 'multipart/form-data' 
+        } 
+      });
+      
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      
+      console.error('Axios error:', error.response?.data || error.message);
+    } else {
+      console.error('Error:', error);
+    }
+    throw new Error('Failed to update avatar');
+  }
+};
+
 
