@@ -121,7 +121,6 @@ export default function QuizzScreen() {
   };
 
   const saveResults = async () => {
-    console.log("saveResults called");
     const userString = await AsyncStorage.getItem("user");
     let user;
     if (userString) {
@@ -167,7 +166,6 @@ export default function QuizzScreen() {
 
       const token = await AsyncStorage.getItem("token");
       if (token) {
-        console.log("check resultData: " + JSON.stringify(resultData, null, 2));
         const response = await storeResult(token, resultData);
         if (response) {
           if (score / questions.length >= 0.8) {

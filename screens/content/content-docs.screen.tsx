@@ -75,7 +75,6 @@ const PDFViewer = () => {
         ?  item._id
         : "";
       const processId = user.email + "_" + _idCourseData;
-      console.log(processId)
       updateProcessContent(processId, id, true, token);
       router.push('/(routes)/content/content-list');
     }

@@ -8,6 +8,7 @@ import {
   View,
   Animated,
   StatusBar,
+  TouchableOpacity
 } from "react-native";
 import { Entypo, AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -133,7 +134,6 @@ export default function ContentList() {
     try {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(key, jsonValue);
-      console.log("Data saved successfully!");
     } catch (e) {
       console.error("Error saving data: ", e);
     }
@@ -162,11 +162,6 @@ export default function ContentList() {
       case 'questions':
         router.push({
           pathname: '/(routes)/quizz/quizzResults',
-        });
-        break;
-      case "exams":
-        router.push({
-          pathname: "/(routes)/content/content-video",
         });
         break;
       default:
@@ -201,8 +196,6 @@ export default function ContentList() {
               color="black"
             />
           );
-        case "exams":
-          return <AntDesign name="edit" size={30} color="black" />;
         default:
           return (
             <MaterialCommunityIcons name="book" size={30} color="black" />
@@ -240,6 +233,37 @@ export default function ContentList() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.titleHeader}>Content List</Text>
+      <TouchableOpacity
+  style={styles.courseCard}
+  onPress={async () => {
+    router.push({
+      pathname: "/(routes)/exams/examResults",
+    });
+  }}
+  accessible={true}
+  accessibilityLabel="Go to exam"
+>
+  <View style={styles.iconContainerType}>
+    <MaterialCommunityIcons name="file-document-edit" size={30} color="black" />
+  </View>
+  <View style={styles.courseDetails}>
+    <Text style={styles.courseTitle} accessible={false}>
+      Exam
+    </Text>
+    <Text style={styles.courseType}>
+      <MaterialCommunityIcons
+        name="format-list-bulleted-type"
+        size={18}
+        color="black"
+      />{" "}
+      Test
+    </Text>
+  </View>
+  <View style={styles.iconContainerPlay}>
+    <AntDesign name="caretright" size={20} color="black" />
+  </View>
+</TouchableOpacity>
+
       <FlatList
         data={data}
         renderItem={renderCourse}

@@ -21,35 +21,25 @@ const ResultsPage = () => {
 
   // Fetch kết quả từ API
   const fetchResults = async () => {
-    console.log("Fetching results...");
     setLoading(true);
     let currentSelectedItemId: string | undefined;
     try {
       const token = await AsyncStorage.getItem("token");
-      console.log("Token retrieved:", token);
       if (!token) {
         throw new Error("Token không tồn tại.");
       }
 
-      console.log("Fetching stored item...");
       const storedItem = await AsyncStorage.getItem("@selectedItem");
-      console.log("Stored item:", storedItem);
       if (storedItem) {
         const parsedItem = JSON.parse(storedItem);
         currentSelectedItemId = parsedItem?.contentRef?._id; // Gán ID từ contentRef
-        console.log("Parsed Item ID:", currentSelectedItemId);
       }
-
-      console.log("Fetching results from API...");
       const fetchedResults = await getResults(token);
-      console.log("Fetched Results:", fetchedResults);
 
       const filteredResults = fetchedResults.filter((result) => {
         const selectedItemId = result.selectedItemId;
         return currentSelectedItemId === selectedItemId;
       });
-
-      console.log("Filtered Results:", filteredResults);
       setResults(filteredResults);
     } catch (err) {
       console.error("Error occurred:", err);
@@ -60,7 +50,6 @@ const ResultsPage = () => {
       }
     } finally {
       setLoading(false);
-      console.log("Fetching results complete.");
     }
   };
 

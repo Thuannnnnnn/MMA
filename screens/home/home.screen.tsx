@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, Alert, Dimensions, TouchableOpacity, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator, Alert, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import AvatarPng from '@/assets/homePage/avatar.png';
@@ -11,16 +11,14 @@ import { router } from 'expo-router';
 
 import { fetchSearchCourses } from '@/API/SearchCourse/searchCourseAPI';
 
-import imgJava from '@/assets/java.jpg';
-import imgC from '@/assets/C.jpg';
-import imgNodejs from '@/assets/Nodejs.jpg';
+import avartar from "@/assets/homePage/1.png"
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const slides: SlideData[] = [
-  { key: '1', title: 'Slide 1', img: imgJava as ImageSourcePropType, backgroundColor: '#f7e9e9' },
-  { key: '2', title: 'Slide 2', img: imgC as ImageSourcePropType, backgroundColor: '#e2f9e2' },
-  { key: '3', title: 'Slide 3', img: imgNodejs as ImageSourcePropType, backgroundColor: '#e2e9f9' },
+  { key: '1', title: 'Langueges C', img: avartar, backgroundColor: '#CEECFE'},
+  { key: '2', title: 'Langueges Java', img: avartar, backgroundColor: '#EFE0FF' },
+  { key: '3', title: 'Langueges Nodejs', img: avartar, backgroundColor: '#e2e9f9' },
 ];
 export default function HomeScreen() {
   const [query, setQuery] = useState<string>('');
@@ -59,7 +57,7 @@ export default function HomeScreen() {
           const fetchedSearchCourses = await fetchSearchCourses(query, token);
           setSearchResults(fetchedSearchCourses as unknown as Course[]);
         } catch (error) {
-          console.log('Search error:', error);
+          console.error('Search error:', error);
         }
       } else {
         setIsSearching(false);
@@ -108,13 +106,16 @@ export default function HomeScreen() {
     items.map((item) => (
       <TouchableOpacity key={item.courseId} onPress={() => goToDetail(item.courseId)} style={styles.courseCard}>
         {item.posterLink ? (
-          <Image source={{ uri: item.posterLink }} style={styles.courseImage} />
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: item.posterLink }} style={styles.courseImage} />
+          </View>
+          
         ) : (
           <View style={styles.placeholderImage} />
         )}
         <View style={styles.courseDetails}>
           <Text style={styles.courseTitle}>{item.courseName}</Text>
-          <Text style={styles.coursePrice}>Price: {item.price}</Text>
+          <Text style={styles.coursePrice}>{item.price} VNĐ</Text>
         </View>
       </TouchableOpacity>
     ))
@@ -147,6 +148,9 @@ export default function HomeScreen() {
                 {slides.map((slide) => (
                   <View key={slide.key} style={[styles.slide, { backgroundColor: slide.backgroundColor }]}>
                     <Image source={slide.img} style={styles.image} />
+                    <Text style={styles.slideTextContainer}>
+                      {slide.title}
+                    </Text>
                   </View>
                 ))}
               </ScrollView>
@@ -207,30 +211,35 @@ const styles = StyleSheet.create({
   sliderContainer: {
     marginBottom: screenHeight * 0.02,
     borderRadius: screenWidth * 0.02,
-    overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
   slide: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: screenHeight * 0.33,
+    height: screenHeight * 0.15,
     width: screenWidth * 0.7,
-    borderRadius: screenWidth * 0.02,
-    marginHorizontal: screenWidth * 0.01,
+    borderRadius: screenWidth * 0.05,
+    marginHorizontal: screenWidth * 0.02,
     elevation: 2,
+    paddingHorizontal: screenWidth * 0.02,
   },
   image: {
-    width: '100%',
+    width: '100%', 
     height: '100%',
-    resizeMode: 'cover',
-    borderRadius: screenWidth * 0.02,
+    resizeMode: 'contain',
+    marginRight: screenWidth * 0.03, 
+    position:'absolute',
+    right: screenWidth * 0.16,
+    borderRadius: screenWidth * 0.05,
+  },
+  slideTextContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+    padding: screenWidth * 0.02,
+    borderTopLeftRadius: screenWidth * 0.05,
+    borderBottomLeftRadius: screenWidth * 0.05,
+    position: 'absolute',
+    left: screenWidth * 0.305,
+    top: screenWidth * 0.16,
+    minWidth: '60%',
+    fontWeight: 'bold',
+    fontSize: screenWidth * 0.04,
   },
   courseCard: {
     flexDirection: 'row',
@@ -240,9 +249,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     elevation: 2,
   },
+  imageContainer:{
+    margin: 10,
+  },
   courseImage: {
-    width: screenWidth * 0.25,
-    height: screenHeight * 0.12,
+    width: screenWidth * 0.22,
+    height: screenHeight * 0.1,
+   resizeMode: 'stretch',
+   borderRadius: screenWidth * 0.02,
   },
   courseDetails: {
     flex: 1,
@@ -254,7 +268,8 @@ const styles = StyleSheet.create({
   },
   coursePrice: {
     fontSize: screenWidth * 0.04,
-    color: '#000',
+    fontWeight: 'bold',
+    color: '#3D5CFF',
   },
   placeholderImage: {
     width: screenWidth * 0.25,
