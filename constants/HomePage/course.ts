@@ -10,4 +10,5 @@ export interface Course {
     price: string;
     category: string;
     contents: string;
+    averageRating: string;
   }
