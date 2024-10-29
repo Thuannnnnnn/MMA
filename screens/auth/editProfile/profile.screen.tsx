@@ -19,7 +19,6 @@ import { UserInfo } from '@/constants/Profile/userInfo';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import defaultAvatar from '@/assets/default-avatar.png';
-
 const ProfileScreen = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -190,8 +189,8 @@ const ProfileScreen = () => {
         <Ionicons name="chevron-forward" size={24} color="#000" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.menuItem}>
-        <Text style={styles.menuText}>Settings and Privacy</Text>
+      <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(routes)/orderHistory")}>
+        <Text style={styles.menuText}>Order History</Text>
         <Ionicons name="chevron-forward" size={24} color="#000" />
       </TouchableOpacity>
 
