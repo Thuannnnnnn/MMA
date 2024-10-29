@@ -4,9 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserInfo } from '@/API/editProfile/editProfileAPI';
 import { UserInfo } from '@/constants/Profile/userInfo';
 import { AntDesign, FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useNavigation } from 'expo-router';
 
 const UserInfoScreen = () => {
+  const navigation = useNavigation();
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   useFocusEffect(
@@ -54,7 +55,7 @@ const UserInfoScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} style={styles.backButton}> 
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}> 
           <AntDesign name="arrowleft" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>User Information</Text>
