@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserInfo } from '@/API/editProfile/editProfileAPI';
 import { UserInfo } from '@/constants/Profile/userInfo';
 import { AntDesign, FontAwesome, MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 
 const UserInfoScreen = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     const fetchUserInfo = async () => {
       try {
         const token = `Bearer ${await AsyncStorage.getItem('token')}`;
@@ -33,7 +33,7 @@ const UserInfoScreen = () => {
       }
     };
     fetchUserInfo();
-  }, []);
+  }, []))
 
   if (loading) {
     return (

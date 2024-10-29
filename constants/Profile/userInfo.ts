@@ -3,5 +3,4 @@ export interface UserInfo {
   email: string;
   gender: string;
   phoneNumber: string;
-  avatarUrl: string;
   }

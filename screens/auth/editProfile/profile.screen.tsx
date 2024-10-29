@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, {useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import {
   updateUserAvatar,
 } from '@/API/editProfile/editProfileAPI';
 import { UserInfo } from '@/constants/Profile/userInfo';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import defaultAvatar from '@/assets/default-avatar.png';
 
@@ -25,13 +25,25 @@ const ProfileScreen = () => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Function to fetch user data and avatar
+  // Hàm chuyển đổi Blob sang Base64
+  const blobToBase64 = (blob: any) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  // Hàm lấy dữ liệu người dùng và avatar
   const fetchUserDataAndAvatar = useCallback(async () => {
     try {
-      const token = `Bearer ${await AsyncStorage.getItem('token')}`;
+      setLoading(true);
+      const token = await AsyncStorage.getItem('token');
+      const authToken = `Bearer ${token}`;
       const cachedUserInfo = await AsyncStorage.getItem('userInfoCache');
 
-      // If cached data exists, set it to state
+      // Nếu có cache thì sử dụng
       if (cachedUserInfo) setUserInfo(JSON.parse(cachedUserInfo));
 
       const userDataString = await AsyncStorage.getItem('user');
@@ -41,36 +53,31 @@ const ProfileScreen = () => {
       const { _id, avatarUrl } = userData;
       if (!_id) throw new Error('User ID not found');
 
-      // Call API to get user info
-      const profileData = await getUserInfo(_id, token);
-      console.log('Using profile data from API:', profileData);
-
-      // Update user info
+      // Gọi API để lấy thông tin người dùng
+      const profileData = await getUserInfo(_id, authToken);
       setUserInfo(profileData);
 
-      // Update AsyncStorage with new data
+      // Lưu lại thông tin mới vào AsyncStorage
       await AsyncStorage.setItem('userInfoCache', JSON.stringify(profileData));
       await AsyncStorage.setItem('user', JSON.stringify(profileData));
 
-      // Update avatar
+      // Cập nhật avatar
       if (avatarUrl) {
-        console.log('Using avatar URL from user data:', avatarUrl);
         setUserAvatar(avatarUrl);
         await AsyncStorage.setItem('userAvatarCache', avatarUrl);
       } else {
-        console.warn('Avatar URL not found in user data, using default avatar');
         setUserAvatar(null);
       }
     } catch (error) {
       console.error('Failed to fetch user data or avatar:', error);
-      Alert.alert('Failed to load user data');
+      Alert.alert('Error', 'Failed to load user data');
       setUserAvatar(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  /// Function to pick an image from the library
+  // Hàm chọn ảnh từ thư viện
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -79,53 +86,50 @@ const ProfileScreen = () => {
         aspect: [1, 1],
         quality: 1,
       });
-  
+
       if (!result.canceled) {
+        setLoading(true);
         const selectedImage = result.assets[0];
-        console.log('Selected Image Info:', selectedImage);
-  
         const fileExtension = selectedImage.uri.split('.').pop();
         if (fileExtension === 'jpg' || fileExtension === 'jpeg' || fileExtension === 'png') {
           const token = await AsyncStorage.getItem('token');
+          const authToken = `Bearer ${token}`;
           const userDataString = await AsyncStorage.getItem('user');
           if (!userDataString) throw new Error('User data not found');
-  
+
           const userData = JSON.parse(userDataString);
           const { _id, avatarUrl } = userData;
-  
-          if (token && _id) {
-            // Lấy Blob từ URI ảnh
+
+          if (authToken && _id) {
+            // Chuyển đổi ảnh sang Base64
             const response = await fetch(selectedImage.uri);
             const blob = await response.blob();
-  
-            // Tạo một File từ Blob
-            const file = new File([blob], `avatar.${fileExtension}`, { type: `image/${fileExtension}` });
-  
-            let apiResponse;
-  
-            // Kiểm tra avatarUrl để gọi upload hoặc update
-            if (!avatarUrl) {
-              // Nếu avatarUrl là null, gọi uploadUserAvatar
-              apiResponse = await uploadUserAvatar(_id, file, `Bearer ${token}`);
-              console.log('Upload response:', apiResponse);
+            const base64data = await blobToBase64(blob);
+
+            if (typeof base64data === 'string') {
+              let apiResponse;
+
+              // Xác định API để tải lên hoặc cập nhật avatar
+              if (!avatarUrl) {
+                apiResponse = await uploadUserAvatar(_id, base64data, authToken);
+              } else {
+                apiResponse = await updateUserAvatar(_id, base64data, authToken);
+              }
+
+              if (apiResponse.fileUrl) {
+                setUserAvatar(apiResponse.fileUrl);
+                await AsyncStorage.setItem('userAvatarCache', apiResponse.fileUrl);
+
+                // Cập nhật user info trong AsyncStorage
+                const updatedUserData = { ...userData, avatarUrl: apiResponse.fileUrl };
+                await AsyncStorage.setItem('user', JSON.stringify(updatedUserData));
+
+                Alert.alert('Success', avatarUrl ? 'Avatar updated successfully' : 'Avatar uploaded successfully');
+              } else {
+                Alert.alert('Error', 'Failed to update avatar URL');
+              }
             } else {
-              // Nếu avatarUrl không null, gọi updateUserAvatar
-              apiResponse = await updateUserAvatar(_id, file, `Bearer ${token}`);
-              console.log('Update response:', apiResponse);
-            }
-  
-            if (apiResponse.fileUrl) {
-              // Cập nhật avatar trong state và AsyncStorage
-              setUserAvatar(apiResponse.fileUrl); // Cập nhật URL avatar mới
-              await AsyncStorage.setItem('userAvatarCache', apiResponse.fileUrl); // Lưu avatar mới vào cache
-  
-              // Cập nhật user info mới trong AsyncStorage
-              const updatedUserData = { ...userData, avatarUrl: apiResponse.fileUrl };
-              await AsyncStorage.setItem('user', JSON.stringify(updatedUserData));
-  
-              Alert.alert('Success', avatarUrl ? 'Avatar updated successfully' : 'Avatar uploaded successfully');
-            } else {
-              Alert.alert('Error', 'Failed to update avatar URL');
+              Alert.alert('Error', 'Failed to convert image to Base64');
             }
           } else {
             console.error('Token or User ID not found');
@@ -137,16 +141,17 @@ const ProfileScreen = () => {
     } catch (error) {
       console.error('Error picking or uploading image:', error);
       Alert.alert('Error', 'Failed to upload avatar');
+    } finally {
+      setLoading(false);
     }
   };
-  
-  
 
-  
-  // Fetch user data when the screen loads
-  useEffect(() => {
-    fetchUserDataAndAvatar();
-  }, [fetchUserDataAndAvatar]);
+  // Lấy dữ liệu khi screen load
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserDataAndAvatar();
+    }, [fetchUserDataAndAvatar])
+  );
 
   if (loading) {
     return (
@@ -169,8 +174,9 @@ const ProfileScreen = () => {
       <View style={styles.profileHeader}>
         <TouchableOpacity onPress={pickImage}>
           <Image
-            source={userAvatar ? { uri: userAvatar } : defaultAvatar}
+            source={userAvatar? { uri: `${userAvatar}?timestamp=${new Date().getTime()}` }: defaultAvatar}
             style={styles.avatar}
+            resizeMode="cover"
           />
         </TouchableOpacity>
         <Text style={styles.userName}>{userInfo.name}</Text>
