@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { UserInfo } from '@/constants/Profile/userInfo';
-import { UserAvatar } from '@/constants/Profile/userAvatar';
 import { UserPassword } from '@/constants/Profile/userPassword';
 
 
@@ -56,74 +55,51 @@ export const getUserInfo = async (userId: string, token: string): Promise<UserIn
   }
 };
 
-export const getUserAvatar = async (userId: string, token: string): Promise<UserAvatar> => {
+// Function to upload user avatar
+export const uploadUserAvatar = async (userId: string, base64: string, token: string): Promise<any> => {
+  // Ensure the base64 string is in the correct format
+  const dataUrl = base64.startsWith('data:image/') ? base64 : `data:image/jpeg;base64,${base64}`;
+
   try {
-    const response = await axios.get(
-      `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/profile/user-avatar/${userId}`,
-      { headers: { Authorization: token } }
-    );
-    const avatarMessage = response.data.message;
-    if (avatarMessage === 'avatar is null') {
-      return { avatarUrl: null };
-    }
-    const avatarUrl = response.data.avatarUrl;
-    return { avatarUrl };
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.error('Axios error:', error.response?.data || error.message);
-    } else {
-      console.error('Error:', error);
-    }
-    return { avatarUrl: null };
-  }
-};
-
-
-export const uploadUserAvatar = async (userId: string, file: File, token: string): Promise<any> => {
-  try {
-    const formData = new FormData();
-    formData.append('file', file);
-
     const response = await axios.post(
       `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/profile/upload-avatar/${userId}`,
-      formData,
+      { avatarBase64: dataUrl }, // Send base64 string directly
       {
         headers: {
-          Authorization: token,
-          'Content-Type': 'multipart/form-data',
+          'Authorization': token, // Set the token correctly
+          'Content-Type': 'application/json', // Use JSON content type
         },
       }
     );
 
-    return response.data;
+    return response.data; // Return data from response
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('Axios error:', error.response?.data || error.message);
     } else {
       console.error('Error:', error);
     }
-    throw new Error('Failed to upload user avatar');
+    throw new Error('Failed to upload avatar');
   }
 };
 
+// Function to update user avatar
+export const updateUserAvatar = async (userId: string, base64: string, token: string): Promise<any> => {
+  const dataUrl = base64.startsWith('data:image/') ? base64 : `data:image/jpeg;base64,${base64}`;
 
-export const updateUserAvatar = async (userId: string, file: File, token: string): Promise<any> => {
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-
     const response = await axios.put(
       `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/profile/update-avatar/${userId}`,
-      formData,
-      {
-        headers: {
-          Authorization: token,
-          
-        },
+      { avatarBase64: dataUrl }, // Send base64 string directly
+      { 
+        headers: { 
+          'Authorization': token,
+          'Content-Type': 'application/json', // Use JSON content type
+        } 
       }
     );
 
-    return response.data;
+    return response.data; // Return data from server
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('Axios error:', error.response?.data || error.message);
@@ -133,4 +109,3 @@ export const updateUserAvatar = async (userId: string, file: File, token: string
     throw new Error('Failed to update avatar');
   }
 };
-

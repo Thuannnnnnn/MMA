@@ -4,9 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { updateProfile, getUserInfo } from '@/API/editProfile/editProfileAPI';
 import { UserInfo } from '@/constants/Profile/userInfo';
 import { AntDesign } from '@expo/vector-icons';
-import { router } from 'expo-router';
-
+import { RadioButton } from 'react-native-paper';
+import { useNavigation } from 'expo-router';
 const EditProfileScreen = () => {
+  const navigation = useNavigation();
   const [userInfo, setUserInfo] = useState<UserInfo>({
     name: '',
     email: '',
@@ -75,7 +76,17 @@ const EditProfileScreen = () => {
       }
   
       await updateProfile(_id, userInfo, token);
-      Alert.alert('Success', 'Profile updated successfully');
+      Alert.alert(
+        'Success',
+        'Profile updated successfully',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ],
+        { cancelable: false }
+      );
     } catch (error) {
       console.error('Failed to update profile:', error);
       Alert.alert('Error', 'Failed to update profile');
@@ -87,7 +98,7 @@ const EditProfileScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push("/(routes)/editProfile/userInfo")} style={styles.backButton}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <AntDesign name="arrowleft" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
@@ -107,12 +118,22 @@ const EditProfileScreen = () => {
         onChangeText={(text) => setUserInfo({ ...userInfo, email: text })}
       />
 
-      <Text style={styles.label}>Gender:</Text>
-      <TextInput
-        style={styles.input}
-        value={userInfo.gender}
-        onChangeText={(text) => setUserInfo({ ...userInfo, gender: text })}
-      />
+<Text style={styles.label}>Gender:</Text>
+<View style={styles.pickerContainer}>
+<RadioButton.Group
+  onValueChange={(value) => setUserInfo({ ...userInfo, gender: value })}
+  value={userInfo.gender}
+>
+  <View style={styles.radioButtonContainer}>
+    <Text>Male</Text>
+    <RadioButton value="Male" />
+  </View>
+  <View style={styles.radioButtonContainer}>
+    <Text>Female</Text>
+    <RadioButton value="Female" />
+  </View>
+</RadioButton.Group>
+</View>
 
       <Text style={styles.label}>Phone Number:</Text>
       <TextInput
@@ -183,6 +204,21 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+  },
+  radioButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
 });
 
