@@ -39,7 +39,7 @@ import {
   getRatingByUserEmail,
   updateRating,
 } from "@/API/Rating/ratingAPI";
-import { AirbnbRating } from "react-native-ratings";
+import StarRating from 'react-native-star-rating-widget';
 import { Rating } from "@/constants/Rating/Rating";
 
 const { width, height } = Dimensions.get("window");
@@ -716,13 +716,13 @@ const reloadCourseData = async () => {
             ) : (
               <>
                 <Text style={styles.averageRatingText}>{averageRating}</Text>
-                <AirbnbRating
-                  isDisabled
-                  defaultRating={parseFloat(averageRating)}
-                  showRating={false}
-                  size={20}
-                  starContainerStyle={styles.starsContainer}
-                />
+                <StarRating
+        rating={parseFloat(averageRating)}
+        onChange={() => {}}
+        starSize={20}
+        enableHalfStar={false}
+        style={styles.starsContainer}
+      />
               </>
             )}
           </View>
@@ -754,10 +754,11 @@ const reloadCourseData = async () => {
 {shouldShowRatingForm && (
   <View style={styles.ratingFormContainer}>
     <Text style={styles.ratingPrompt}>Please rate the course</Text>
-    <AirbnbRating
-      defaultRating={starCount}
-      onFinishRating={setStarCount}
-      size={30}
+    <StarRating
+      rating={starCount}
+      onChange={setStarCount}
+      starSize={30}
+      enableHalfStar={false}
     />
     <TextInput
       style={styles.feedbackInput}
@@ -775,10 +776,11 @@ const reloadCourseData = async () => {
 {shouldShowUpdateRatingForm && previousRating && (
   <View style={styles.ratingFormContainer}>
     <Text style={styles.ratingPrompt}>Update your rating for the course</Text>
-    <AirbnbRating
-      defaultRating={starCount}
-      onFinishRating={setStarCount}
-      size={30}
+    <StarRating
+      rating={starCount}
+      onChange={setStarCount}
+      starSize={30}
+      enableHalfStar={false}
     />
     <TextInput
       style={styles.feedbackInput}
