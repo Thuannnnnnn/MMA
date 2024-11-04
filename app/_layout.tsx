@@ -6,6 +6,7 @@ import TabsLayout from "./(tabs)/_layout";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { Text, TouchableOpacity, View } from "react-native";
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import React from "react";
 
 if (__DEV__) {
   const originalWarn = console.warn;
