@@ -24,7 +24,7 @@ import { useOAuth, useUser } from "@clerk/clerk-expo";
 import * as Linking from "expo-linking";
 import axios, { AxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {handleLoginBase} from "@/API/Auth/Login"
+import { handleLoginBase } from "@/API/Auth/Login";
 export const useWarmUpBrowser = () => {
   React.useEffect(() => {
     return () => {
@@ -38,40 +38,50 @@ export default function LoginScreen() {
   // sign gg
   useWarmUpBrowser();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-  const { user } = useUser();
+  const { user  } = useUser();
 
-  const saveUserData = async (data: any) => {
-    await AsyncStorage.setItem("token", data.token);
-    await AsyncStorage.setItem("user", JSON.stringify(data.user));
-    router.push("/(tabs)/");
-  };
 
   const handleGoogleSignIn = useCallback(async () => {
     try {
-      const { createdSessionId, setActive } = await startOAuthFlow({
+      // Call startOAuthFlow and log the result for debugging
+      const result = await startOAuthFlow({
         redirectUrl: Linking.createURL("/(tabs)/", { scheme: "myapp" }),
       });
+      console.log("OAuth result:", JSON.stringify(result,null, 2));
+
+      const { createdSessionId, setActive } = result;
 
       if (createdSessionId) {
+        console.log("chay vao day 1");
         setActive!({ session: createdSessionId });
         if (user) {
+          console.log("chay vao day 1");
           const response = await axios.post(
-            `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/withGoogle`, 
-            { email: user.emailAddresses?.[0]?.emailAddress, name: user.fullName }
+            `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/withGoogle`,
+            {
+              email: user.emailAddresses?.[0]?.emailAddress,
+              name: user.fullName,
+            }
           );
-          await saveUserData(response.data);
+          console.log("User data:", JSON.stringify(response.data));
+          console.log("User data:", JSON.stringify(response.data.user));
+          await AsyncStorage.setItem("token", response.data.token);
+          await AsyncStorage.setItem("user", JSON.stringify(response.data));
         }
+      } else {
+        console.warn("No session ID created.");
       }
     } catch (error) {
       console.error("OAuth Error:", error);
     }
   }, [startOAuthFlow, user]);
+
   // sign tranditional
 
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [buttonSpinner, setButtonSpinner] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    email: "harrybother33@gmail.com",
+    email: "thanhvinh1662003@gmail.com",
     password: "12345@",
   });
   const [required] = useState("");
@@ -111,19 +121,23 @@ export default function LoginScreen() {
     try {
       setButtonSpinner(true);
       try {
-        const response = await handleLoginBase(userInfo.email, userInfo.password);
-  
+        const response = await handleLoginBase(
+          userInfo.email,
+          userInfo.password
+        );
+
         if (response) {
           await AsyncStorage.setItem("token", response.token);
           const userData = JSON.stringify(response.user);
           await AsyncStorage.setItem("user", userData);
+
           router.push("/(tabs)/");
         } else {
           throw new Error("Invalid response from login");
         }
       } catch (error) {
         console.error("Login failed:", error);
-  
+
         if (error instanceof AxiosError) {
           setError({
             ...error.response?.data,
@@ -279,7 +293,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity  onPress={handleGoogleSignIn}>
+            <TouchableOpacity onPress={handleGoogleSignIn}>
               <View
                 style={{
                   padding: 16,

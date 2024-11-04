@@ -1,5 +1,5 @@
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Alert, Dimensions, StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,12 +7,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { deleteById, getAllCartByEmail } from "@/API/Cart/cartAPI";
 import { Cart, CartItem } from "@/constants/Cart/cartList";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 const { width, height } = Dimensions.get("window");
 
 export default function CartScreen() {
   const [cartItems, setCartItems] = useState<Cart | null>(null);
-  const email = "tranquocthuan2003@gmail.com";
   const router = useRouter();
 
   const calculateTotal = () => {
@@ -20,17 +19,21 @@ export default function CartScreen() {
       const price = item.courseId.price ? item.courseId.price : "0";
       return total + parseFloat(price);
     }, 0);
-  
     return total ? `${total} đ` : "0 đ";
   };
-  
   const cartLength = cartItems?.courses?.length ?? 0;
   const courseIdToDelete = (item: CartItem) => item.courseId._id;
 
   const handleDeleteCourse = async (courseId: string) => {
     try {
-      const token = "nhap token";
-      if (token) {
+      const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+      const userString = await AsyncStorage.getItem("user");
+      let email;
+      if (userString) {
+        const user = JSON.parse(userString);
+        email = user.email;
+      }
+      if (token && email) {
         if (cartItems && cartItems.cartId) {
           await deleteById(cartItems.cartId, token, courseId);
           const updatedCart = await getAllCartByEmail(email, token);
@@ -50,14 +53,13 @@ export default function CartScreen() {
     try {
       if (cartItems) {
         const totalPrice = calculateTotal();
-        const totalPriceNumber = Number(totalPrice);
-        if(totalPriceNumber>0){
+        const totalPriceNumber = parseFloat(totalPrice);
+        if (totalPriceNumber) {
           await AsyncStorage.setItem("cartItems", JSON.stringify(cartItems));
           await AsyncStorage.setItem("totalPrice", totalPrice);
           router.push("/(routes)/payment");
-        }
-        else{
-          Alert.alert("No Course In Cart")
+        } else {
+          Alert.alert("No Course In Cart");
         }
       }
     } catch (error) {
@@ -65,38 +67,47 @@ export default function CartScreen() {
     }
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = `Bearer ${await AsyncStorage.getItem('token')}`;
-        if (token) {
-          const result: Cart = await getAllCartByEmail(email, token);
-          if (result && result) {
-            const coursesArray = Array.isArray(result.courses)
-              ? result.courses
-              : [];
-            setCartItems({
-              ...result,
-              courses: coursesArray,
-            });
-          } else {
-            setCartItems({
-              _id: "",
-              cartId: "",
-              courses: [],
-              userGenerated: "",
-              __v: 0,
-            });
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        try {
+          const token = `Bearer ${await AsyncStorage.getItem("token")}`;
+          const userString = await AsyncStorage.getItem("user");
+          let email;
+          if (userString) {
+            const user = JSON.parse(userString);
+            email = user.email;
           }
-        } else {
-          console.warn("Token is null, unable to fetch content");
+          if (token && email) {
+            const result: Cart = await getAllCartByEmail(email, token);
+            if (result) {
+              const coursesArray = Array.isArray(result.courses)
+                ? result.courses
+                : [];
+              setCartItems({
+                ...result,
+                courses: coursesArray,
+              });
+            } else {
+              setCartItems({
+                _id: "",
+                cartId: "",
+                courses: [],
+                userGenerated: "",
+                __v: 0,
+              });
+            }
+          } else {
+            console.warn("Token is null, unable to fetch content");
+          }
+        } catch (error) {
+          console.error("Error fetching content:", error);
         }
-      } catch (error) {
-        console.error("Error fetching content:", error);
-      }
-    };
-    fetchData();
-  }, [email]);
+      };
+      fetchData();
+    }, [])
+  );
+
   const confirmDeleteCourse = (item: CartItem) => {
     Alert.alert(
       "Xác nhận xóa",
