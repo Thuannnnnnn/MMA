@@ -233,7 +233,13 @@ export default function ContentList() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.titleHeader}>Content List</Text>
-      <TouchableOpacity
+      <FlatList
+        data={data}
+        renderItem={renderCourse}
+        keyExtractor={(item) => item.contentId}
+        onEndReachedThreshold={0.5}
+      />
+          <TouchableOpacity
   style={styles.courseCard}
   onPress={async () => {
     router.push({
@@ -263,13 +269,6 @@ export default function ContentList() {
     <AntDesign name="caretright" size={20} color="black" />
   </View>
 </TouchableOpacity>
-
-      <FlatList
-        data={data}
-        renderItem={renderCourse}
-        keyExtractor={(item) => item.contentId}
-        onEndReachedThreshold={0.5}
-      />
     </SafeAreaView>
   );
 }

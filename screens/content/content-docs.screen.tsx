@@ -1,7 +1,7 @@
 import { updateProcessContent } from "@/API/process/procesAPI";
 import { Content } from "@/constants/Content/contentList"; // Adjust import based on actual structure
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import {useNavigation } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 
 const PDFViewer = () => {
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [item, setItem] = useState<Content | null>(null);
   const [_idCourseData, set_idCourseData] = useState<Content | null>(null);
@@ -76,7 +77,7 @@ const PDFViewer = () => {
         : "";
       const processId = user.email + "_" + _idCourseData;
       updateProcessContent(processId, id, true, token);
-      router.push('/(routes)/content/content-list');
+      navigation.goBack();
     }
   };
 
