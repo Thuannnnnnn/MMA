@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-  BackHandler,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -166,20 +165,6 @@ const ProfileScreen = () => {
       console.error("Logout Error:", error);
     }
   };
-
-  // Đăng ký sự kiện BackHandler
-  useEffect(() => {
-    const backAction = () => {
-      return true; // Chặn hành động back
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
-    );
-
-    return () => backHandler.remove(); // Hủy đăng ký khi component bị hủy
-  }, []);
 
   if (loading) {
     return (

@@ -4,7 +4,7 @@ import { Entypo } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
-import signInImage from '@/assets/sign-in/signup.png';
+import forgot from '@/assets/sign-in/forgot.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { OtpInput } from 'react-native-otp-entry';
 import { styles } from '@/styles/forgotPassword/forgotPassword';
@@ -50,7 +50,6 @@ export default function InputOtpScreen() {
     try {
       setButtonSpinner(true);
       await validateOtp({ email, otpCode: userInfo.otp });
-
       await AsyncStorage.setItem('otpCode', userInfo.otp);
       router.push({
         pathname: '/(routes)/forgotPassword/newPassword',
@@ -68,7 +67,7 @@ export default function InputOtpScreen() {
   return (
     <LinearGradient colors={['#E5ECF9', '#F6F7F9']} style={{ flex: 1, paddingTop: 20 }}>
       <ScrollView>
-        <Image style={styles.signInImage} source={signInImage} />
+        <Image style={styles.signInImage} source={forgot} />
 
         <Text style={styles.welcomeText}>OTP code authentication</Text>
         <Text style={styles.learningText}>We have sent a verification code to your email.</Text>

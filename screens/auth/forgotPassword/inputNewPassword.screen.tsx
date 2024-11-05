@@ -4,7 +4,7 @@ import { FontAwesome, Entypo } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useRoute } from '@react-navigation/native';
-import signInImage from '@/assets/sign-in/signup.png';
+import forgot from '@/assets/sign-in/forgot.png';
 import { styles } from '@/styles/forgotPassword/forgotPassword';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -116,7 +116,7 @@ export default function InputNewPasswordScreen() {
   return (
     <LinearGradient colors={['#E5ECF9', '#F6F7F9']} style={{ flex: 1, paddingTop: 20 }}>
       <ScrollView>
-        <Image style={styles.signInImage} source={signInImage} />
+        <Image style={styles.signInImage} source={forgot} />
         <Text style={styles1.welcomeText}>Enter new password</Text>
         <Text style={styles1.learningText}>Please enter a new password for your account: {email}</Text>
 

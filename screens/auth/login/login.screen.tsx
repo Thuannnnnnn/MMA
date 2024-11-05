@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  BackHandler,
 } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -35,6 +36,18 @@ export const useWarmUpBrowser = () => {
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
+  useEffect(() => {
+    const backAction = () => {
+      return true; // Chặn hành động back
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Hủy đăng ký khi component bị hủy
+  }, []);
   // sign ggc
   useWarmUpBrowser();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
@@ -170,7 +183,7 @@ export default function LoginScreen() {
 
         <Text style={style.welcomeText}>Welcome Back!</Text>
         <Text style={style.learningText}>
-          Login to your existing account of Tung dep zai
+          Login to your existing account
         </Text>
 
         <View style={[style.inputContainer]}>
@@ -254,12 +267,6 @@ export default function LoginScreen() {
                 </Text>
               </View>
             )}
-            <TouchableOpacity
-              onPress={() => router.push("/(routes)/content/content-docs")}
-            >
-              <Text style={[style.forgotSection]}>content-video</Text>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={{
                 padding: 16,

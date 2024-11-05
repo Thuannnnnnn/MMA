@@ -4,7 +4,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScrollView } from 'react-native-gesture-handler';
 import { router } from 'expo-router';
-import signInImage from '@/assets/sign-in/signup.png';
+import forgot from '@/assets/sign-in/forgot.png';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import  { AxiosError } from 'axios';
 import { styles } from '@/styles/forgotPassword/forgotPassword';
@@ -61,7 +61,7 @@ export default function InputEmailScreen() {
   return (
     <LinearGradient colors={['#E5ECF9', '#F6F7F9']} style={{ flex: 1, paddingTop: 20 }}>
       <ScrollView>
-        <Image style={styles.signInImage} source={signInImage} />
+        <Image style={styles.signInImage} source={forgot} />
 
         <Text style={styles.welcomeText}>Forgot password?</Text>
         <Text style={styles.learningText}>Enter your email address to reset your password</Text>
