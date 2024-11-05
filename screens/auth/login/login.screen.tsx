@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Entypo,
   FontAwesome,
@@ -20,7 +20,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { router } from "expo-router";
 import SignInPng from "@/assets/sign-in/sign_in.png";
 import * as WebBrowser from "expo-web-browser";
-import { useOAuth, useUser } from "@clerk/clerk-expo";
+import { useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
 import * as Linking from "expo-linking";
 import axios, { AxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -38,38 +38,47 @@ export default function LoginScreen() {
   // sign ggc
   useWarmUpBrowser();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-  const { user  } = useUser();
+  const { user } = useUser();
+  const { isSignedIn } = useAuth();
 
+  const onPress = React.useCallback(async () => {
+    try {
+      const { createdSessionId, setActive } = await startOAuthFlow({
+        redirectUrl: Linking.createURL("/(tabs)/", { scheme: "myapp" }),
+      });
+
+      if (createdSessionId) {
+        setActive!({ session: createdSessionId });
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error("OAuth Error:", error);
+    }
+  }, [startOAuthFlow]);
+
+  useEffect(() => {
+    if (user) {
+      handleGoogleSignIn();
+    }
+  }, [user]);
 
   const handleGoogleSignIn = useCallback(async () => {
     try {
-      const result = await startOAuthFlow({
-        redirectUrl: Linking.createURL("/(tabs)/", { scheme: "myapp" }),
-      });
-      console.log("OAuth result:", JSON.stringify(result,null, 2));
-
-      const { createdSessionId, setActive } = result;
-
-      if (createdSessionId) {
-        console.log("chay vao day 1");
-        setActive!({ session: createdSessionId });
-        if (result) {
-          console.log("chay vao day 2");
-          const response = await axios.post(
-            `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/withGoogle`,
-            {
-              email: result.signUp?.emailAddress,
-              name: result.signUp?.firstName,
-            }
-          );
-          if(response) {
-            await AsyncStorage.setItem("token", response.data.token);
-            const userData = JSON.stringify(response.data.user);
-            await AsyncStorage.setItem("user", userData);
+      if (user) {
+        console.log("chay vao day 2");
+        const response = await axios.post(
+          `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/withGoogle`,
+          {
+            email: user.emailAddresses?.[0]?.emailAddress,
+            name: user.fullName,
           }
+        );
+        if (response) {
+          await AsyncStorage.setItem("token", response.data.token);
+          const userData = JSON.stringify(response.data.user);
+          await AsyncStorage.setItem("user", userData);
         }
-      } else {
-        console.warn("No session ID created.");
       }
     } catch (error) {
       console.error("OAuth Error:", error);
@@ -293,7 +302,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity onPress={handleGoogleSignIn}>
+            <TouchableOpacity onPress={onPress}>
               <View
                 style={{
                   padding: 16,
