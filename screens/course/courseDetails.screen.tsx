@@ -428,7 +428,7 @@ export default function CourseDetailsScreen() {
           return;
         }
         await addToCart(cartId, token, _id);
-        router.push("/(routes)/cart");
+        router.push("/(tabs)/cart");
       } else {
         console.warn("Token is null, unable to add course to cart.");
       }

@@ -1,6 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useState } from "react";
-import { Alert, Dimensions, StyleSheet, Text, View } from "react-native";
+import { Alert, Dimensions, Image, StyleSheet, Text, View } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -148,9 +148,7 @@ export default function CartScreen() {
           {cartItems && cartItems.courses && cartItems.courses.length > 0 ? (
             cartItems.courses.map((item) => (
               <View key={item._id} style={styles.cart}>
-                <View style={styles.cart_img}>
-                  <Text></Text>
-                </View>
+                <Image style={styles.cart_img} source={{uri: item.courseId.posterLink}}></Image>
                 <View style={styles.cart_Text}>
                   <View>
                     <Text style={styles.cart_Text_One}>
