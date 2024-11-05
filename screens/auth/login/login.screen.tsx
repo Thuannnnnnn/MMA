@@ -20,7 +20,7 @@ import { ScrollView } from "react-native-gesture-handler";
 import { router } from "expo-router";
 import SignInPng from "@/assets/sign-in/sign_in.png";
 import * as WebBrowser from "expo-web-browser";
-import { useAuth, useOAuth, useUser } from "@clerk/clerk-expo";
+import { useOAuth, useUser } from "@clerk/clerk-expo";
 import * as Linking from "expo-linking";
 import axios, { AxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -39,7 +39,6 @@ export default function LoginScreen() {
   useWarmUpBrowser();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
   const { user } = useUser();
-  const { isSignedIn } = useAuth();
 
   const onPress = React.useCallback(async () => {
     try {
@@ -90,8 +89,8 @@ export default function LoginScreen() {
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [buttonSpinner, setButtonSpinner] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    email: "thanhvinh1662003@gmail.com",
-    password: "12345@",
+    email: "",
+    password: "",
   });
   const [required] = useState("");
   const [error, setError] = useState({
@@ -180,7 +179,7 @@ export default function LoginScreen() {
             <TextInput
               style={[style.input, { paddingLeft: 35 }]}
               keyboardType="email-address"
-              value={userInfo.email || "harrybother33@gmail.com"}
+              value={userInfo.email}
               placeholder="Please enter your Email"
               onChangeText={(value) =>
                 setUserInfo({ ...userInfo, email: value })
@@ -211,7 +210,6 @@ export default function LoginScreen() {
                   handlePasswordValidation(value);
                   setUserInfo({ ...userInfo, password: value });
                 }}
-                defaultValue="12345@"
               />
 
               <TouchableOpacity

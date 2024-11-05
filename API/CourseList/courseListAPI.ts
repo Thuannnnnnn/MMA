@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { CoursePurchase } from '@/constants/CourseList/courseList';
 
@@ -11,10 +10,11 @@ export const getCourseListByEmail = async (email: string, token: string): Promis
         },
       }
     );
+
     if (response.data && response.data.CoursePurchases) {
       return response.data.CoursePurchases;
     } else {
-      console.error('Expected CoursePurchases but got something else');
+      //console.warn('No course purchases found for this email.');
       return null;
     }
   } catch (error) {
@@ -23,6 +23,6 @@ export const getCourseListByEmail = async (email: string, token: string): Promis
     } else {
       console.error('Unexpected error:', error);
     }
-    throw new Error('Failed to get course list by email');
+    return null;
   }
 };
