@@ -221,7 +221,7 @@ export default function HomeScreen() {
             <View style={styles.header}>
               <Text style={styles.title}>Home Page</Text>
               <TouchableOpacity onPress={()=> router.push("/(tabs)/profile")}>
-              <Image style={styles.avatar} source={userAvatar ? { uri: userAvatar } : AvatarPng} />
+              <Image style={styles.avatar} source={userAvatar ? { uri: `${userAvatar}?timestamp=${new Date().getTime()}` } : AvatarPng} />
               </TouchableOpacity>
             </View>
             <View style={styles.inputContainer}>
