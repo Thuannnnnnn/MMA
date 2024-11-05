@@ -3,14 +3,14 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome, Entypo } from '@expo/vector-icons';
 import { updatePassword } from '@/API/editProfile/editProfileAPI';
-import { router } from 'expo-router';
+import {useNavigation } from 'expo-router';
 
 const EditPasswordScreen = () => {
+  const navigation = useNavigation()
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -77,7 +77,6 @@ const EditPasswordScreen = () => {
       await updatePassword(userId, passwordData, `Bearer ${token}`);
       
       setSuccessMessage('Password updated successfully.');
-      setSuccess(true);
       setErrorMessage('');
     } catch (error) {
       console.error('Failed to change password:', error);
@@ -90,7 +89,7 @@ const EditPasswordScreen = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push("/(routes)/editProfile/userInfo")} style={styles.backButton}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Change Password</Text>

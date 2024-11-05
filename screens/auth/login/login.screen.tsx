@@ -65,7 +65,6 @@ export default function LoginScreen() {
   const handleGoogleSignIn = useCallback(async () => {
     try {
       if (user) {
-        console.log("chay vao day 2");
         const response = await axios.post(
           `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/withGoogle`,
           {
