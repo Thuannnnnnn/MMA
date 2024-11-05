@@ -234,12 +234,12 @@ export default function ContentList() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.titleHeader}>Content List</Text>
       <FlatList
         data={data}
         renderItem={renderCourse}
         keyExtractor={(item) => item.contentId}
         onEndReachedThreshold={0.5}
+        style={{marginTop:20, marginBottom:10}}
       />
         <TouchableOpacity
         style={styles.courseCard}
@@ -248,10 +248,12 @@ export default function ContentList() {
             router.push({
               pathname: "/(routes)/exams/examResults",
             });
-          }Alert.alert(
-            "Exam Locked",
-            "You must complete all tasks before accessing the exam."
-          );
+          }else{
+            Alert.alert(
+              "Exam Locked",
+              "You must complete all tasks before accessing the exam."
+            );
+          }
         }}
         accessible={true}
         accessibilityLabel="Go to exam"
@@ -283,7 +285,7 @@ export default function ContentList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#F7F7F7",
     justifyContent: "center",
   },
   titleHeader: {

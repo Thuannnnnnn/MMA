@@ -340,7 +340,7 @@ export default function LoginScreen() {
 
 const style = StyleSheet.create({
   signInImage: {
-    width: "60%",
+    width: "18%",
     height: 190,
     alignSelf: "center",
     marginTop: 50,

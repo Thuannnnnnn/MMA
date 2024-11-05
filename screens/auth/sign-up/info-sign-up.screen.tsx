@@ -317,7 +317,7 @@ export default function InfoSignUpScreen() {
 const style = StyleSheet.create({
 
     signInImage: {
-      width: '60%',
+      width: '30%',
       height: 190,
       alignSelf: 'center',
       marginTop: 50,

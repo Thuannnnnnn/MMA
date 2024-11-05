@@ -60,10 +60,16 @@ export default function HomeScreen() {
   const [sortOrder, setSortOrder] = useState<
     "priceAsc" | "priceDesc" | "ratingDesc"
   >("priceAsc");
-
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   useEffect(() => {
     const loadCourses = async () => {
       try {
+        const userDataString = await AsyncStorage.getItem('user');
+        if(userDataString){
+          const userData = JSON.parse(userDataString);
+          const {avatarUrl } = userData;
+          setUserAvatar(avatarUrl)
+        }
         const token = `Bearer ${await AsyncStorage.getItem("token")}`;
         const fetchedCourses = await fetchCourses(token);
         setCourses(fetchedCourses);
@@ -214,7 +220,9 @@ export default function HomeScreen() {
           <View style={styles.container}>
             <View style={styles.header}>
               <Text style={styles.title}>Home Page</Text>
-              <Image style={styles.avatar} source={AvatarPng} />
+              <TouchableOpacity onPress={()=> router.push("/(tabs)/profile")}>
+              <Image style={styles.avatar} source={userAvatar ? { uri: userAvatar } : AvatarPng} />
+              </TouchableOpacity>
             </View>
             <View style={styles.inputContainer}>
               <TextInput
@@ -331,7 +339,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   title: {
-    fontSize: screenWidth * 0.08,
+    fontSize: screenWidth * 0.04,
     fontWeight: "bold",
   },
   avatar: {
