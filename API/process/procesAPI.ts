@@ -36,7 +36,6 @@ export const updateProcessContent = async (
   token: string
 ) => {
   try {
-    console.log(processId,contentId)
     const response = await axios.patch(
       `${BASE_URL}/update/${processId}`,
       { contentId, isComplete },

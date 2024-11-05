@@ -8,7 +8,8 @@ import {
   View,
   Animated,
   StatusBar,
-  TouchableOpacity
+  TouchableOpacity,
+  Alert
 } from "react-native";
 import { Entypo, AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -91,6 +92,7 @@ export default function ContentList() {
           (item) => item.isComplete === true
         ).length;
         const calculatedProgress = (completedTasks / totalTasks) * 100;
+
         setProgress(calculatedProgress);
       }
 
@@ -239,15 +241,20 @@ export default function ContentList() {
         keyExtractor={(item) => item.contentId}
         onEndReachedThreshold={0.5}
       />
-          <TouchableOpacity
-  style={styles.courseCard}
-  onPress={async () => {
-    router.push({
-      pathname: "/(routes)/exams/examResults",
-    });
-  }}
-  accessible={true}
-  accessibilityLabel="Go to exam"
+        <TouchableOpacity
+        style={styles.courseCard}
+        onPress={async () => {
+          if(progress === 100){
+            router.push({
+              pathname: "/(routes)/exams/examResults",
+            });
+          }Alert.alert(
+            "Exam Locked",
+            "You must complete all tasks before accessing the exam."
+          );
+        }}
+        accessible={true}
+        accessibilityLabel="Go to exam"
 >
   <View style={styles.iconContainerType}>
     <MaterialCommunityIcons name="file-document-edit" size={30} color="black" />
@@ -261,7 +268,7 @@ export default function ContentList() {
         name="format-list-bulleted-type"
         size={18}
         color="black"
-      />{" "}
+        />{" "}
       Test
     </Text>
   </View>

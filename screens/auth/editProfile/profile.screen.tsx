@@ -1,4 +1,4 @@
-import React, {useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  BackHandler,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -19,10 +20,13 @@ import { UserInfo } from '@/constants/Profile/userInfo';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import defaultAvatar from '@/assets/default-avatar.png';
+import { useAuth } from "@clerk/clerk-expo";
+
 const ProfileScreen = () => {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { signOut } = useAuth();
 
   // Hàm chuyển đổi Blob sang Base64
   const blobToBase64 = (blob: any) => {
@@ -152,6 +156,31 @@ const ProfileScreen = () => {
     }, [fetchUserDataAndAvatar])
   );
 
+  // Hàm xử lý logout
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      await AsyncStorage.clear();
+      router.push("/(routes)/login");
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
+
+  // Đăng ký sự kiện BackHandler
+  useEffect(() => {
+    const backAction = () => {
+      return true; // Chặn hành động back
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Hủy đăng ký khi component bị hủy
+  }, []);
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -173,7 +202,7 @@ const ProfileScreen = () => {
       <View style={styles.profileHeader}>
         <TouchableOpacity onPress={pickImage}>
           <Image
-            source={userAvatar? { uri: `${userAvatar}?timestamp=${new Date().getTime()}` }: defaultAvatar}
+            source={userAvatar ? { uri: `${userAvatar}?timestamp=${new Date().getTime()}` } : defaultAvatar}
             style={styles.avatar}
             resizeMode="cover"
           />
@@ -198,6 +227,11 @@ const ProfileScreen = () => {
         <Text style={styles.menuText}>Help</Text>
         <Ionicons name="chevron-forward" size={24} color="#000" />
       </TouchableOpacity>
+
+      <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+        <Text style={styles.menuText}>Log Out</Text>
+        <Ionicons name="chevron-forward" size={24} color="#000" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -206,23 +240,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    padding: 20,
-    paddingTop: 100,
+    padding: 16,
   },
   profileHeader: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
     marginBottom: 10,
-    borderColor: '#000000',
-    borderWidth: 1,
   },
   userName: {
-    color: '#000000',
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -230,18 +260,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomColor: '#E0E0E0',
+    padding: 15,
     borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
   },
   menuText: {
-    color: '#000000',
     fontSize: 16,
   },
   errorText: {
     color: 'red',
-    fontSize: 16,
-    textAlign: 'center',
   },
 });
 
