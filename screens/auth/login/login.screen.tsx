@@ -7,10 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Entypo,
-  FontAwesome,
   Fontisto,
   Ionicons,
   SimpleLineIcons,
@@ -19,62 +18,57 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ScrollView } from "react-native-gesture-handler";
 import { router } from "expo-router";
 import SignInPng from "@/assets/sign-in/sign_in.png";
-import * as WebBrowser from "expo-web-browser";
-import { useOAuth, useUser } from "@clerk/clerk-expo";
-import * as Linking from "expo-linking";
 import axios, { AxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { handleLoginBase } from "@/API/Auth/Login";
-export const useWarmUpBrowser = () => {
-  React.useEffect(() => {
-    return () => {
-      void WebBrowser.coolDownAsync();
-    };
-  }, []);
-};
-WebBrowser.maybeCompleteAuthSession();
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+} from "@react-native-google-signin/google-signin";
 
 export default function LoginScreen() {
   // sign gg
-  useWarmUpBrowser();
-  const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-  const { user  } = useUser();
+  const configureGoogleSignIn = () => {
+    GoogleSignin.configure({
+      androidClientId:
+        "300011708069-r0d40jj1abm5kih9o4l6st6lju80atgq.apps.googleusercontent.com",
+    } as any);
+  };
 
+  useEffect(() => {
+    configureGoogleSignIn();
+  });
 
   const handleGoogleSignIn = useCallback(async () => {
     try {
-      // Call startOAuthFlow and log the result for debugging
-      const result = await startOAuthFlow({
-        redirectUrl: Linking.createURL("/(tabs)/", { scheme: "myapp" }),
-      });
-      console.log("OAuth result:", JSON.stringify(result,null, 2));
+      console.log("Pressed sign in");
 
-      const { createdSessionId, setActive } = result;
+      // Kiểm tra Google Play Services
+      await GoogleSignin.hasPlayServices();
 
-      if (createdSessionId) {
-        console.log("chay vao day 1");
-        setActive!({ session: createdSessionId });
-        if (user) {
-          console.log("chay vao day 1");
-          const response = await axios.post(
-            `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/withGoogle`,
-            {
-              email: user.emailAddresses?.[0]?.emailAddress,
-              name: user.fullName,
-            }
-          );
-          console.log("User data:", JSON.stringify(response.data));
-          console.log("User data:", JSON.stringify(response.data.user));
-          await AsyncStorage.setItem("token", response.data.token);
-          await AsyncStorage.setItem("user", JSON.stringify(response.data));
-        }
+      // Đăng nhập với Google
+      const userInfo = await GoogleSignin.signIn();
+      console.log("OAuth result:", JSON.stringify(userInfo, null, 2));
+
+      if (userInfo) {
+        // Kiểm tra URL hợp lệ cho API endpoint
+        const apiUrl = `${process.env.EXPO_PUBLIC_BACKEND_URL}/api/auth/login/withGoogle`;
+
+        const response = await axios.post(apiUrl, {
+          email: userInfo.user.email,
+          name: userInfo.user.name,
+        });
+
+        console.log("User data:", JSON.stringify(response.data));
+        await AsyncStorage.setItem("token", response.data.token);
+        await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
       } else {
-        console.warn("No session ID created.");
+        console.warn("No user info retrieved.");
       }
     } catch (error) {
       console.error("OAuth Error:", error);
     }
-  }, [startOAuthFlow, user]);
+  }, []);
 
   // sign tranditional
 
@@ -293,31 +287,11 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity onPress={handleGoogleSignIn}>
-              <View
-                style={{
-                  padding: 16,
-                  borderRadius: 8,
-                  marginHorizontal: 16,
-                  backgroundColor: "white",
-                  marginTop: 10,
-                  borderColor: "black",
-                  borderWidth: 1,
-                }}
-              >
-                <Text
-                  style={{
-                    color: "black",
-                    textAlign: "center",
-                    fontSize: 16,
-                    fontWeight: 600,
-                  }}
-                >
-                  <FontAwesome name="google" size={24} />
-                  continue with google
-                </Text>
-              </View>
-            </TouchableOpacity>
+            <GoogleSigninButton
+              size={GoogleSigninButton.Size.Standard}
+              color={GoogleSigninButton.Color.Dark}
+              onPress={handleGoogleSignIn}
+            />
           </View>
         </View>
       </ScrollView>
