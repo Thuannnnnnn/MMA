@@ -193,7 +193,8 @@ export default function HomeScreen() {
         )}
         <View style={styles.courseDetails}>
           <Text style={styles.courseTitle}>{item.courseName}</Text>
-          <Text style={styles.coursePrice}>{item.price} VNĐ</Text>
+          <Text></Text>
+          <Text style={styles.coursePrice}>{parseFloat(item.price).toLocaleString("vi-VN")}{" "} ₫</Text>
           {sortOrder === "ratingDesc" && (
             <Text style={styles.courseRating}>
               Rating: {item.averageRating}

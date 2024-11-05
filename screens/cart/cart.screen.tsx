@@ -129,15 +129,9 @@ export default function CartScreen() {
     >
       <SafeAreaView style={styles.container}>
         <View style={styles.headerCart}>
-          <TouchableOpacity onPress={() => {}}>
-            <MaterialIcons name="arrow-back" size={30} color="#000" />
-          </TouchableOpacity>
           <View>
             <Text style={styles.headerCart_Text}>Shopping Cart</Text>
           </View>
-          <TouchableOpacity onPress={() => {}}>
-            <MaterialIcons name="shopping-cart" size={30} color="#000" />
-          </TouchableOpacity>
         </View>
         <View style={styles.bodyOne}>
           <Text style={styles.bodyOne_Text}>
@@ -148,14 +142,17 @@ export default function CartScreen() {
           {cartItems && cartItems.courses && cartItems.courses.length > 0 ? (
             cartItems.courses.map((item) => (
               <View key={item._id} style={styles.cart}>
-                <Image style={styles.cart_img} source={{uri: item.courseId.posterLink}}></Image>
+                <Image
+                  style={styles.cart_img}
+                  source={{ uri: item.courseId.posterLink }}
+                ></Image>
                 <View style={styles.cart_Text}>
                   <View>
                     <Text style={styles.cart_Text_One}>
                       {item.courseId.courseName}
                     </Text>
                     <Text></Text>
-                    <Text style={styles.cart_Text_One}>
+                    <Text style={styles.coursePrice}>
                       {parseFloat(item.courseId.price).toLocaleString("vi-VN")}{" "}
                       ₫
                     </Text>
@@ -203,7 +200,7 @@ const styles = StyleSheet.create({
   },
   headerCart: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 10,
     height: height * 0.1,
@@ -260,7 +257,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   cart_Text_One: {
-    fontSize: 14,
+    fontSize: width * 0.05,
+    fontWeight: "bold",
+  },
+  coursePrice: {
+    fontSize: width * 0.04,
+    fontWeight: "bold",
+    color: "#3D5CFF",
   },
   checkoutContainer: {
     flexDirection: "row",
