@@ -98,7 +98,7 @@ export default function CartScreen() {
               });
             }
           } else {
-            console.warn("Token is null, unable to fetch content");
+            console.log("Token is null, unable to fetch content");
           }
         } catch (error) {
           console.error("Error fetching content:", error);

@@ -35,7 +35,7 @@ export const useWarmUpBrowser = () => {
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
-  // sign gg
+  // sign ggc
   useWarmUpBrowser();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
   const { user  } = useUser();
@@ -43,7 +43,6 @@ export default function LoginScreen() {
 
   const handleGoogleSignIn = useCallback(async () => {
     try {
-      // Call startOAuthFlow and log the result for debugging
       const result = await startOAuthFlow({
         redirectUrl: Linking.createURL("/(tabs)/", { scheme: "myapp" }),
       });
@@ -54,19 +53,20 @@ export default function LoginScreen() {
       if (createdSessionId) {
         console.log("chay vao day 1");
         setActive!({ session: createdSessionId });
-        if (user) {
-          console.log("chay vao day 1");
+        if (result) {
+          console.log("chay vao day 2");
           const response = await axios.post(
             `${process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY}/api/auth/login/withGoogle`,
             {
-              email: user.emailAddresses?.[0]?.emailAddress,
-              name: user.fullName,
+              email: result.signUp?.emailAddress,
+              name: result.signUp?.firstName,
             }
           );
-          console.log("User data:", JSON.stringify(response.data));
-          console.log("User data:", JSON.stringify(response.data.user));
-          await AsyncStorage.setItem("token", response.data.token);
-          await AsyncStorage.setItem("user", JSON.stringify(response.data));
+          if(response) {
+            await AsyncStorage.setItem("token", response.data.token);
+            const userData = JSON.stringify(response.data.user);
+            await AsyncStorage.setItem("user", userData);
+          }
         }
       } else {
         console.warn("No session ID created.");
